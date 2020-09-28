@@ -11,6 +11,10 @@ from telegram.ext import MessageHandler, CommandHandler
 from sermons import cci_sermons, t30
 
 
+client = pymongo.MongoClient()
+db = client.test
+
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +29,7 @@ updater = Updater(config["bot_token"], use_context=True)
 dp = updater.dispatcher
 
 # Database
-client = pymongo.MongoClient(config["db"]["host"], config["db"]["port"])
+client = pymongo.MongoClient(config["db"]["client"])
 db = client[config["db"]["name"]]
 
 def start(update, context):

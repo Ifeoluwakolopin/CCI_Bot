@@ -2,8 +2,7 @@
     "bot_token":"1251287692:AAFZ2XDqrnNad00Okr8v2YLIYQGu_-awPw0",
     "event_token":"CRPJYEYO7GPBZJ7WHWU3",
     "db": {
-        "host": "localhost",
-        "port": 27017,
+        "client":"mongodb+srv://are:Lordflame1cluster0.acnn4.mongodb.net/cci_bot?retryWrites=true&w=majority",
         "name": "cci_bot"
       },
     "messages":{
