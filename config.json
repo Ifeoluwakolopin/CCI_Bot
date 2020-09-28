@@ -14,7 +14,7 @@
         "menu":"What do you want to do today?🤗\n\n• /latest_sermon\n• /get_sermon\n• /get_devotional\n• /help\n• /mute",
         "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
         "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
-        "empty":"No sermons found with title '{}'\n\nTry again with /get_sermon."
+        "empty":"No sermons found with title '{}'"
     }
     
 }
