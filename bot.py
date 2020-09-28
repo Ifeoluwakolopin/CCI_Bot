@@ -29,7 +29,9 @@ client = pymongo.MongoClient(config["db"]["client"])
 db = client[config["db"]["name"]]
 
 def start(update, context):
-    """This is the response of the bot on startup"""
+    """
+    This is the response of the bot on startup
+    """
     chat_id = update.effective_chat.id
     # add user to database
     if not db.users.find_one({"chat_id":chat_id}):
@@ -43,8 +45,9 @@ def start(update, context):
     )
 
 def latest_sermon(update, context):
-    """ This gets the most recent sermon"""
-
+    """ 
+    This gets the most recent sermon
+    """
     chat_id = update.effective_chat.id
     sermon = cci_sermons()[0]
     buttons = [[InlineKeyboardButton("Download Sermon", url=sermon["download"])],
@@ -59,26 +62,19 @@ def latest_sermon(update, context):
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     
 
-def sermon_list(update, context):
-    """ This get a list of all existing sermons"""
-    chat_id = update.effective_chat.id
-    sermons = db.sermons.find({}).limit(10)
-    s  = '\n'.join([config["messages"]["list"].format(i["title"], i["link"]) for i in sermons])
-    context.bot.send_message(
-        chat_id=chat_id, parse_mode="Markdown", disable_web_preview=True,
-        text=config["messages"]["sermon_list"].format(s)
-    )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-
 def helps(update, context):
-    """This sends a list of available commands for the bot"""
+    """
+    This sends a list of available commands for the bot
+    """
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["help"])
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def menu(update, context):
-    """This sends a list of available commands for the bot"""
+    """
+    This sends a list of available commands for the bot
+    """
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["menu"])
@@ -86,7 +82,9 @@ def menu(update, context):
 
 
 def get_sermon(update, context):
-    """ This gets a particular sermon user wants"""
+    """ 
+    This gets a particular sermon user wants
+    """
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["get_sermon"]
@@ -94,7 +92,9 @@ def get_sermon(update, context):
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_sermon"}})
 
 def get_devotional(update, context):
-    """This get the devotional for the particular day"""
+    """
+    This get the devotional for the particular day
+    """
     chat_id = update.effective_chat.id
     d = t30()
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
@@ -104,6 +104,9 @@ def get_devotional(update, context):
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def mute(update, context):
+    """
+    This set the user's mute status
+    """
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["mute"]
@@ -131,8 +134,9 @@ def search_db(title):
     return result
 
 def echo(update, context):
-    """Handles actions for messages"""
-
+    """
+    Handles actions for messages
+    """
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
     last_command = user["last_command"]
@@ -168,7 +172,6 @@ echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
 def main():
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("latest_sermon", latest_sermon))
-    dp.add_handler(CommandHandler("sermon_list", sermon_list))
     dp.add_handler(CommandHandler("menu", menu))
     dp.add_handler(CommandHandler("help", helps))
     dp.add_handler(CommandHandler("get_devotional", get_devotional))

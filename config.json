@@ -7,12 +7,11 @@
       },
     "messages":{
         "start":"Hi {}🤗\n\nExperiencing Progress and Joy in the faith?...Awesome!💃🎉\nHere's a couple of services I offer😁\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Instant notification of service tickets(Lagos branch Only)🔔\nand much more...\n\nExcited? Let's get started. Use /help to get a list of available commands\n\nAll sermons and devotionals gotten from [Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
-        "sermon_list":"Here's a list of recent CCI sermons\n\nDon't see what you need?\nUse /get_sermon to search for the sermon by title\n\n{}",
         "list":"[{0}]({1})",
         "get_sermon":"Enter the title of the sermon you wish to get",
         "tickets":"Yay🎉🎉.\n\nTickets are now available for {}!\nBook your seat now!",
-        "help":"Here's a list of available commands to use\n\n• /sermon_list - Gets a list of recent CCI Sermons\n• /latest_sermon - Stream or download the most recent CCI sermon\n• /get_sermon - Get a specific sermon by title\n• /get_devotional - Get today's devotional\n• /mute - Mute notifications",
-        "menu":"What do you want to do today?🤗\n\n• /sermon_list\n• /latest_sermon\n• /get_sermon\n• /get_devotional\n• /help\n• /mute",
+        "help":"Here's a list of available commands to use\n\n• /latest_sermon - Stream or download the most recent CCI sermon\n• /get_sermon - Get a specific sermon by title\n• /get_devotional - Get today's devotional\n• /mute - Mute notifications\n• /menu - Gives you a menu of available commands",
+        "menu":"What do you want to do today?🤗\n\n• /latest_sermon\n• /get_sermon\n• /get_devotional\n• /help\n• /mute",
         "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
         "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
         "empty":"No sermons found with title '{}'\n\nTry again with /get_sermon."
