@@ -13,3 +13,4 @@ six==1.15.0
 soupsieve==2.0.1
 tornado==6.0.4
 urllib3==1.25.10
+dnspython==2.0.0
