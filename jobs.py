@@ -2,10 +2,11 @@ import time
 import pymongo
 import json
 import telegram
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from sermons import cci_sermons, t30
 from events import service_ticket
+from timeloop import Timeloop
 
 config = json.load(open("config.json"))
 
@@ -13,14 +14,20 @@ client = pymongo.MongoClient(config["db"]["client"])
 db = client[config["db"]["name"]]
 bot = telegram.Bot(token=config["bot_token"])
 
+t = Timeloop()
 
+
+@t.job(interval=timedelta(days=1))
 def send_devotional():
     d = t30()
-    button = [[InlineKeyboardButton("Read more", url=d["link"])]]
-    for user in db.users.find({"mute":False}):
-        bot.send_photo(
-            chat_id=user["chat_id"], photo=d["image"], caption=d["title"], reply_markup=InlineKeyboardMarkup(button)
-        )
+    try:
+        button = [[InlineKeyboardButton("Read more", url=d["link"])]]
+        for user in db.users.find({"mute":False}):
+            bot.send_photo(
+                chat_id=user["chat_id"], photo=d["image"], caption=d["title"], reply_markup=InlineKeyboardMarkup(button)
+            )
+    except:
+        pass
 
 def notify_tickets(date):
 
@@ -36,3 +43,18 @@ def notify_tickets(date):
         return True
     except:
         return None
+
+@t.job(interval=timedelta(days=1))
+def ticket_task():
+    day = datetime.today().weekday()
+    if day != 2:
+        pass
+    else:
+        d = date.today()
+        while notify_tickets(d) == None:
+            time.sleep(1200)
+            notify_tickets(d)
+
+
+if __name__ == '__main__':
+    t.start(block=True)
