@@ -62,8 +62,8 @@ def latest_sermon(update, context):
 def sermon_list(update, context):
     """ This get a list of all existing sermons"""
     chat_id = update.effective_chat.id
-    sermons = db.sermons.find({})
-    s  = '\n'.join([config["messages"]["list"].format(i["title"], i["link"]) for i in sermons[0:40]])
+    sermons = db.sermons.find({}).limit(20)
+    s  = '\n'.join([config["messages"]["list"].format(i["title"], i["link"]) for i in sermons])
     context.bot.send_message(
         chat_id=chat_id, parse_mode="Markdown", disable_web_preview=True,
         text=config["messages"]["sermon_list"].format(s)
