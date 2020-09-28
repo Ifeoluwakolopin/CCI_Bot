@@ -145,11 +145,17 @@ def echo(update, context):
             )
         else:
             for sermon in sermons:
-                buttons = [[InlineKeyboardButton("Download Sermon", url=sermon["download"])],
-                    [InlineKeyboardButton("Watch Video", url=sermon["video"])]]
-                context.bot.send_photo(
-                    chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(buttons)
-                )
+                if sermon["video"] is not None:
+                    buttons = [[InlineKeyboardButton("Download Sermon", url=sermon["download"])],
+                        [InlineKeyboardButton("Watch Video", url=sermon["video"])]]
+                    context.bot.send_photo(
+                        chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(buttons)
+                    )
+                else:
+                    button = [[InlineKeyboardButton("Download Sermon", url=sermon["link"])]]
+                    context.bot.send_photo(
+                        chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
+                    )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}}) 
 
 
