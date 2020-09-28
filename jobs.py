@@ -17,14 +17,14 @@ bot = telegram.Bot(token=config["bot_token"])
 t = Timeloop()
 
 
-@t.job(interval=timedelta(minutes=2))
+@t.job(interval=timedelta(days=1))
 def send_devotional():
     d = t30()
     try:
         button = [[InlineKeyboardButton("Read more", url=d["link"])]]
         for user in db.users.find({"mute":False}):
             bot.send_message(
-                chat_id=user["chat_id"], text="Today's Devotional"
+                chat_id=user["chat_id"], text="TODAY'S DEVOTIONAL"
             )
             bot.send_photo(
                 chat_id=user["chat_id"], photo=d["image"], caption=d["title"], reply_markup=InlineKeyboardMarkup(button)
