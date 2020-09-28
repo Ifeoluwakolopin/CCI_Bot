@@ -11,10 +11,6 @@ from telegram.ext import MessageHandler, CommandHandler
 from sermons import cci_sermons, t30
 
 
-client = pymongo.MongoClient()
-db = client.test
-
-
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,7 +38,8 @@ def start(update, context):
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     # send message
     context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"])
+        chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
+        parse_mode="Markdown", disable_web_preview=True
     )
 
 def latest_sermon(update, context):
@@ -66,7 +63,7 @@ def sermon_list(update, context):
     """ This get a list of all existing sermons"""
     chat_id = update.effective_chat.id
     sermons = db.sermons.find({})
-    s  = '\n'.join([config["messages"]["list"].format(i["title"], i["link"]) for i in sermons])
+    s  = '\n'.join([config["messages"]["list"].format(i["title"], i["link"]) for i in sermons[0:40]])
     context.bot.send_message(
         chat_id=chat_id, parse_mode="Markdown", disable_web_preview=True,
         text=config["messages"]["sermon_list"].format(s)
@@ -112,6 +109,13 @@ def mute(update, context):
         chat_id=chat_id, text=config["messages"]["mute"]
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"mute":True}})
+
+def unmute(update, context):
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["unmute"]
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"mute":False}})
 
 
 def search_db(title):
@@ -169,6 +173,7 @@ def main():
     dp.add_handler(CommandHandler("help", helps))
     dp.add_handler(CommandHandler("get_devotional", get_devotional))
     dp.add_handler(CommandHandler("mute", mute)),
+    dp.add_handler(CommandHandler("unmute", unmute)),
     dp.add_handler(CommandHandler("get_sermon", get_sermon))
     dp.add_handler(echo_handler)
 
