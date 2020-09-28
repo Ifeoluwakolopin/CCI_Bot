@@ -9,7 +9,7 @@ from events import service_ticket
 
 config = json.load(open("config.json"))
 
-client = pymongo.MongoClient(config["db"]["host"], config["db"]["port"])
+client = pymongo.MongoClient(config["db"]["client"])
 db = client[config["db"]["name"]]
 bot = telegram.Bot(token=config["bot_token"])
 
