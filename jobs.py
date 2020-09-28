@@ -36,7 +36,3 @@ def notify_tickets(date):
         return True
     except:
         return None
-
-if __name__ == "__main__":
-    while True:
-        pass
