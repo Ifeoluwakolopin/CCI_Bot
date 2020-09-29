@@ -55,7 +55,7 @@ def ticket_task():
     if day != 2:
         pass
     else:
-        d = date.today()
+        d = date.today() + timedelta(days=4)
         while notify_tickets(d) == None:
             time.sleep(1200)
             notify_tickets(d)
