@@ -49,7 +49,7 @@ def notify_tickets(date):
     except:
         return None
 
-@t.job(interval=timedelta(days=1))
+@t.job(interval=timedelta(hours=8))
 def ticket_task():
     day = datetime.today().weekday()
     if day != 2:
