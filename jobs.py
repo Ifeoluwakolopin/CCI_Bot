@@ -33,7 +33,9 @@ def send_devotional():
         pass
 
 def notify_tickets(date):
-
+    """
+    Send a notification to users and returns True on success
+    """
     start_time = f'{date}T08:00:00'
     ticket = service_ticket(start_time)
     try:
