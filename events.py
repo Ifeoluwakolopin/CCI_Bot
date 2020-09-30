@@ -15,7 +15,7 @@ def service_ticket(start_time:'2020-10-31T08:00:00'):
         'only_public':'on',
         'start_date.range_start':f'{start_time}',
     }
-    base_url = 'https://www.eventbriteapi.com/v3/venues/53329211/events/'
+    base_url = 'https://www.eventbriteapi.com/v3/venues/53507837/events/'
     r = requests.get(base_url, params=params)
     try:
         return [{"name":event["name"]["text"],
