@@ -50,7 +50,7 @@ def notify_tickets(date):
     except:
         return None
 
-@sched.scheduled_job('cron', day_of_week='wed', hour=1, minute=15)
+@sched.scheduled_job('cron', day_of_week='wed', hour=13, minute=15)
 def ticket_task():
     d = date.today() + timedelta(days=4)
     print(d)
