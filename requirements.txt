@@ -14,4 +14,4 @@ soupsieve==2.0.1
 tornado==6.0.4
 urllib3==1.25.10
 dnspython==2.0.0
-timeloop==1.0.2
+APScheduler==3.6.3

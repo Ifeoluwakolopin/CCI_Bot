@@ -6,7 +6,8 @@ from datetime import date, datetime, timedelta
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from sermons import cci_sermons, t30
 from events import service_ticket
-from timeloop import Timeloop
+from apscheduler.schedulers.blocking import BlockingScheduler
+
 
 config = json.load(open("config.json"))
 
@@ -14,10 +15,10 @@ client = pymongo.MongoClient(config["db"]["client"])
 db = client[config["db"]["name"]]
 bot = telegram.Bot(token=config["bot_token"])
 
-t = Timeloop()
+sched = BlockingScheduler()
 
 
-@t.job(interval=timedelta(days=1))
+@sched.scheduled_job('cron', day_of_week='mon-sat', hour=6)
 def send_devotional():
     d = t30()
     try:
@@ -49,17 +50,14 @@ def notify_tickets(date):
     except:
         return None
 
-@t.job(interval=timedelta(hours=8))
+@sched.scheduled_job('cron', day_of_week='wed', hour=12)
 def ticket_task():
-    day = datetime.today().weekday()
-    if day != 2:
-        pass
-    else:
-        d = date.today() + timedelta(days=4)
-        while notify_tickets(d) == None:
-            time.sleep(1200)
-            notify_tickets(d)
+    d = date.today() + timedelta(days=4)
+    print(d)
+    while notify_tickets(d) == None:
+        time.sleep(300)
+        notify_tickets(d)
 
 
 if __name__ == '__main__':
-    t.start(block=True)
+    sched.start()
