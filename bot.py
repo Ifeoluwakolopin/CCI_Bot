@@ -202,7 +202,7 @@ def echo(update, context):
     elif last_command == "broadcast":
         message = update.message.text
         for user in db.users.find({"admin":True}):
-            x = send_bc(user[chat_id], message)
+            x = send_bc(user["chat_id"], message)
             if x is None:
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
         users = db.users.count_documents({})
