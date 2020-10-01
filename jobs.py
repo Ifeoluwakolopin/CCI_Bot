@@ -35,14 +35,15 @@ def send_devotional():
             if str(e) == "Forbidden: bot was blocked by the user":
                 db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
     u = db.users.count_documents({"mute":False, "active":True})
+    db.devotionals.insert_one(d)
     print(f"Succesfully sent devotional to {u} users")
+    
 
-def notify_tickets(date):
+def notify_tickets():
     """
     Send a notification to users and returns True on success
     """
-    start_time = f'{date}T08:00:00'
-    ticket = service_ticket(start_time)
+    ticket = service_ticket()
     buttons = [[InlineKeyboardButton("Book first service", url=ticket[0]["link"])],
         [InlineKeyboardButton("Book second service", url=ticket[1]["link"])]]
     for user in db.users.find({"mute":False}):
@@ -58,11 +59,9 @@ def notify_tickets(date):
 
 #@sched.scheduled_job('cron', day_of_week='wed', hour=12)
 def ticket_task():
-    d = date.today() + timedelta(days=4)
-    print(d)
-    while notify_tickets(d) == None:
-        time.sleep(300)
-        notify_tickets(d)
+    while notify_tickets() == None:
+        time.sleep(120)
+        notify_tickets()
     u = db.users.count_documents({"mute":False, "active":True})
     print(f"Succesfully notified {u} users for tickets")
 
