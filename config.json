@@ -11,12 +11,12 @@
         "get_sermon":"Enter the title of the sermon you wish to get",
         "tickets":"Yay🎉🎉.\n\nTickets are now available for {}!\nBook your seat now!",
         "help":"Here's a list of available commands to use\n\n• /latest_sermon - Stream or download the most recent CCI sermon\n• /get_sermon - Get a specific sermon by title\n• /get_devotional - Get today's devotional\n• /mute - Mute notifications\n• /menu - Gives you a menu of available commands",
-        "menu":"What do you want to do today?🤗\n\n• /latest_sermon\n• /get_sermon\n• /get_devotional\n• /help\n• /mute",
+        "menu":"What do you want to do today?🤗\n\n• /latest_sermon\n• /get_sermon\n• /get_devotional\n• /help\n• /mute\n• /stats",
         "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
         "broadcast":"Enter the message you want to broadcast:",
         "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
         "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
-        "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🥺\n\nTotal Sermons available: {}🔥",
+        "stats":"**CCI Bot** ⚙️\n\nTotal users: {}\n\nTotal Sermons available: {}🔥",
         "empty":"No sermons found with title '{}'"
     }
     
