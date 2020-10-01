@@ -41,7 +41,7 @@ def start(update, context):
     # send message
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
-        parse_mode="Markdown", disable_web_preview=True
+        parse_mode="Markdown", disable_web_preview="True"
     )
 
 def latest_sermon(update, context):
@@ -103,6 +103,29 @@ def get_devotional(update, context):
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
+def stats(update, context):
+    """
+    This function gives you statistics about the bot
+    """
+    chat_id = update.effective_chat.id
+    total_users = db.users.count_documents({})
+    total_sermons = db.sermons.count_documents({})
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["stats"].format(total_users, total_sermons)
+    )
+
+def broadcast(update, context):
+    """
+    This function allows for an admin personnel send broadcast
+    to all users
+    """
+    chat_id = update.effective_chat.id
+    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["broadcast"]
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"broadcast"}})
+
 def mute(update, context):
     """
     This set the user's mute status
@@ -151,6 +174,7 @@ def echo(update, context):
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["menu"]
             )
+            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
         else:
             for sermon in sermons:
                 if sermon["video"] is not None:
@@ -164,7 +188,19 @@ def echo(update, context):
                     context.bot.send_photo(
                         chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
                     )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}}) 
+                    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    elif last_command == "broadcast":
+        message = update.message.text
+        for user in db.users.find_one({'chat_id':792501227}):
+            bot.send_message(
+                chat_id="chat_id", text=message
+            )
+        users = db.users.count_documents({})
+        total_delivered = db.users.count_documents({"active": True})
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 
 echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
@@ -175,8 +211,10 @@ def main():
     dp.add_handler(CommandHandler("menu", menu))
     dp.add_handler(CommandHandler("help", helps))
     dp.add_handler(CommandHandler("get_devotional", get_devotional))
-    dp.add_handler(CommandHandler("mute", mute)),
-    dp.add_handler(CommandHandler("unmute", unmute)),
+    dp.add_handler(CommandHandler("mute", mute))
+    dp.add_handler(CommandHandler("unmute", unmute))
+    dp.add_handler(CommandHandler("stats", stats))
+    dp.add_handler(CommandHandler("broadcast", broadcast))
     dp.add_handler(CommandHandler("get_sermon", get_sermon))
     dp.add_handler(echo_handler)
 
