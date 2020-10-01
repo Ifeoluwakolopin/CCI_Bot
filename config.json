@@ -16,7 +16,7 @@
         "broadcast":"Enter the message you want to broadcast:",
         "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
         "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
-        "stats":"<b>CCI Bot ⚙️</b>\n\nTotal users: {}🥺\nTotal Sermons available: {}🔥",
+        "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🥺\n\nTotal Sermons available: {}🔥",
         "empty":"No sermons found with title '{}'"
     }
     

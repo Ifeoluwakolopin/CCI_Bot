@@ -41,7 +41,7 @@ def start(update, context):
     # send message
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
-        parse_mode="Markdown", disable_web_preview="True"
+        parse_mode="Markdown", disable_web_page_preview="True"
     )
 
 def latest_sermon(update, context):
@@ -111,7 +111,7 @@ def stats(update, context):
     total_users = db.users.count_documents({})
     total_sermons = db.sermons.count_documents({})
     context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["stats"].format(total_users, total_sermons)
+        chat_id=chat_id, text=config["messages"]["stats"].format(total_users, total_sermons), parse_mode="Markdown"
     )
 
 def broadcast(update, context):
@@ -191,10 +191,7 @@ def echo(update, context):
                     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "broadcast":
         message = update.message.text
-        for user in db.users.find_one({'chat_id':792501227}):
-            bot.send_message(
-                chat_id="chat_id", text=message
-            )
+        bot.send_message(chat_id=chat_id, text=message)
         users = db.users.count_documents({})
         total_delivered = db.users.count_documents({"active": True})
         context.bot.send_message(
