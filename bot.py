@@ -55,11 +55,12 @@ def start(update, context):
     This is the response of the bot on startup
     """
     chat_id = update.effective_chat.id
-    full_name = str(update["message"]["chat"]["first_name"]) + " " + str(update["message"]["chat"]["last_name"])
+    first_name = str(update["message"]["chat"]["first_name"])
+    last_name = str(update["message"]["chat"]["last_name"])
     # add user to database
     if not db.users.find_one({"chat_id":chat_id}):
         db.users.insert_one({
-            "chat_id":chat_id, "date":dt.now(), "admin":False, "mute":False, "full_name":full_name})
+            "chat_id":chat_id, "date":dt.now(), "admin":False, "mute":False, "full_name":first_name, "last_name":last_name})
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None, "active":True}})
     # send message
     context.bot.send_message(
