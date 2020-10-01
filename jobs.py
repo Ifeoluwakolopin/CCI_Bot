@@ -2,6 +2,7 @@ import time
 import pymongo
 import json
 import telegram
+import requests
 from datetime import date, datetime, timedelta
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from sermons import cci_sermons, t30
@@ -58,6 +59,10 @@ def ticket_task():
         time.sleep(300)
         notify_tickets(d)
 
+@sched.scheduled_job('interval', minutes=25)
+def wake():
+    requests.get('https://secret-sands-37903.herokuapp.com/')
+    print("Waking heroku app...")
 
 if __name__ == '__main__':
     sched.start()
