@@ -203,7 +203,7 @@ def echo(update, context):
         for user in db.users.find({"admin":True}):
             x = map(send_bc, (user["chat_id"], message))
             if x is not None:
-                db.users.update_one({"$set":{"active":False}})
+                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
         users = db.users.count_documents({})
         total_delivered = db.users.count_documents({"active": True})
         context.bot.send_message(
