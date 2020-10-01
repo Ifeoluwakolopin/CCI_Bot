@@ -4,7 +4,7 @@ from datetime import datetime as dt
 config = json.load(open("config.json"))
 
 
-def service_ticket(start_time:'2020-10-31T08:00:00'):
+def service_ticket():
     """
     This takes in a string of time
     in the format'yyy-mm-ddThh-mm-ss' and returns tickets available
@@ -12,10 +12,9 @@ def service_ticket(start_time:'2020-10-31T08:00:00'):
     """
     params = {
         'token':config["event_token"],
-        'only_public':'on',
-        'start_date.range_start':f'{start_time}',
+        'time_filter':'current_future'
     }
-    base_url = 'https://www.eventbriteapi.com/v3/venues/53507837/events/'
+    base_url = 'https://www.eventbriteapi.com/v3/organizations/180780002373/events/'
     r = requests.get(base_url, params=params)
     try:
         return [{"name":event["name"]["text"],
