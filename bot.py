@@ -41,13 +41,14 @@ def search_db(title):
 
     return result
 
-def send_bc(args):
+def send_bc(chat_id, message):
     try:
         bot.send_message(
-            chat_id=args[0], text=args[1], disable_web_page_preview="True"
+            chat_id=chat_id, text=message, disable_web_page_preview="True"
         )
+        return True
     except:
-        return args[0]
+        return None
 
 def start(update, context):
     """
@@ -201,8 +202,8 @@ def echo(update, context):
     elif last_command == "broadcast":
         message = update.message.text
         for user in db.users.find({"admin":True}):
-            x = map(send_bc, (user["chat_id"], message))
-            if x is not None:
+            x = send_bc(user[chat_id], message)
+            if x is None:
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
         users = db.users.count_documents({})
         total_delivered = db.users.count_documents({"active": True})
