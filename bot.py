@@ -201,7 +201,7 @@ def echo(update, context):
                     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "broadcast":
         message = update.message.text
-        for user in db.users.find({"admin":True}):
+        for user in db.users.find({}):
             x = send_bc(user["chat_id"], message)
             if x is None:
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
