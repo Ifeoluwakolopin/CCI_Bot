@@ -28,6 +28,27 @@ dp = updater.dispatcher
 client = pymongo.MongoClient(config["db"]["client"])
 db = client[config["db"]["name"]]
 
+
+def search_db(title):
+    """
+    This function queries the db for a particular sermon
+    """
+    sermons = db.sermons.find({})
+    result = []
+    for sermon in sermons:
+        if title.lower() in sermon["title"].lower():
+            result.append(sermon)
+
+    return result
+
+def send_bc(args):
+    try:
+        bot.send_message(
+            chat_id=args[0], text=args[1], disable_web_page_preview="True"
+        )
+    except:
+        return args[0]
+
 def start(update, context):
     """
     This is the response of the bot on startup
@@ -37,7 +58,7 @@ def start(update, context):
     if not db.users.find_one({"chat_id":chat_id}):
         db.users.insert_one({
             "chat_id":chat_id, "date":dt.now(), "admin":False, "mute":False})
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None, "active":True}})
     # send message
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
@@ -144,18 +165,6 @@ def unmute(update, context):
     db.users.update_one({"chat_id":chat_id}, {"$set":{"mute":False}})
 
 
-def search_db(title):
-    """
-    This function queries the db for a particular sermon
-    """
-    sermons = db.sermons.find({})
-    result = []
-    for sermon in sermons:
-        if title.lower() in sermon["title"].lower():
-            result.append(sermon)
-
-    return result
-
 def echo(update, context):
     """
     Handles actions for messages
@@ -191,13 +200,18 @@ def echo(update, context):
                     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "broadcast":
         message = update.message.text
-        bot.send_message(chat_id=chat_id, text=message)
+        for user in db.users.find({"admin":True}):
+            x = map(send_bc, (user["chat_id"], message))
+            if x is not None:
+                db.users.update_one({"$set":{"active":False}})
         users = db.users.count_documents({})
         total_delivered = db.users.count_documents({"active": True})
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
+
 
 
 echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
