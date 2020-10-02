@@ -19,7 +19,7 @@ bot = telegram.Bot(token=config["bot_token"])
 sched = BlockingScheduler()
 
 
-@sched.scheduled_job('cron', day_of_week='mon-sat', hour=6)
+@sched.scheduled_job('cron', day_of_week='mon-sat', hour=5)
 def send_devotional():
     d = t30()
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
@@ -57,7 +57,7 @@ def notify_tickets():
                 db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
             return None
 
-#@sched.scheduled_job('cron', day_of_week='wed', hour=12)
+#@sched.scheduled_job('cron', day_of_week='wed', hour=11)
 def ticket_task():
     while notify_tickets() == None:
         time.sleep(120)
@@ -65,7 +65,7 @@ def ticket_task():
     u = db.users.count_documents({"mute":False, "active":True})
     print(f"Succesfully notified {u} users for tickets")
 
-@sched.scheduled_job('interval', minutes=25)
+@sched.scheduled_job('interval', minutes=30)
 def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
     print("Waking heroku app...")

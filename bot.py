@@ -207,15 +207,20 @@ def echo(update, context):
                     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "broadcast":
         message = update.message.text
-        for user in db.users.find({}):
-            x = send_bc(user["chat_id"], message)
-            if x is None:
-                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
-        users = db.users.count_documents({})
-        total_delivered = db.users.count_documents({"active": True})
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
-        )
+        if message.lower() != 'cancel':
+            for user in db.users.find({}):
+                x = send_bc(user["chat_id"], message)
+                if x is None:
+                    db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+            users = db.users.count_documents({})
+            total_delivered = db.users.count_documents({"active": True})
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
+            )
+        else:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["cancel_broadcast"]
+            )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 
