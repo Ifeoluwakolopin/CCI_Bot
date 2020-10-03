@@ -3,6 +3,7 @@ import json
 import logging
 import telegram
 import pymongo
+from datetime import date
 from datetime import datetime as dt
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater
@@ -42,6 +43,9 @@ def search_db(title):
     return result
 
 def send_bc(chat_id, message):
+    """
+    This function sends a message to a user
+    """
     try:
         bot.send_message(
             chat_id=chat_id, text=message, disable_web_page_preview="True"
@@ -79,9 +83,7 @@ def latest_sermon(update, context):
     context.bot.send_photo(
         chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(buttons)
     )
-    try:
-        db.sermons.find({"title":sermon["title"]})[0]
-    except IndexError:
+    if db.sermons.find_one({"title":sermon["title"]}) is None:
         db.sermons.insert_one(sermon)
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     
@@ -124,7 +126,10 @@ def get_devotional(update, context):
     This get the devotional for the particular day
     """
     chat_id = update.effective_chat.id
-    d = t30()
+    try:
+        d = db.devotionals.find_one({"date":str(date.today())})
+    except:
+        d = t30()
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
     context.bot.send_photo(
         chat_id=chat_id, photo=d["image"], caption=d["title"], reply_markup=InlineKeyboardMarkup(button)
@@ -141,6 +146,7 @@ def stats(update, context):
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["stats"].format(total_users, total_sermons), parse_mode="Markdown"
     )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def broadcast(update, context):
     """
@@ -165,6 +171,9 @@ def mute(update, context):
     db.users.update_one({"chat_id":chat_id}, {"$set":{"mute":True}})
 
 def unmute(update, context):
+    """
+    This sets the user's mute status to false
+    """
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["unmute"]

@@ -1,4 +1,5 @@
 import requests
+from datetime import date as dt
 from bs4 import BeautifulSoup
 
 def cci_sermons():
@@ -46,8 +47,8 @@ def t30():
     title = soup.find('h3', {'class':'entry-title td-module-title'}).find('a').text
     link = soup.find('h3', {'class':'entry-title td-module-title'}).find('a').get('href')
     image = soup.find('div', {'class':'td-module-thumb'}).find('img').get('src')
-    time = soup.find('time', {'class':'entry-date updated td-module-date'}).get('datetime')
+    date = str(dt.today())
 
-    d = {"title":title, "link":link, "image":image, "time":time}
+    d = {"title":title, "link":link, "image":image, "date":date}
 
     return d
