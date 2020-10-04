@@ -15,7 +15,7 @@ def cci_sermons():
 
     sermons = []
 
-    for sermon in sermons_section[0:10]:
+    for sermon in sermons_section[0:5]:
         try:
             image = sermon.find('img').get('src')
             title = sermon.find('h3', {'class':'cmsmasters_sermon_title entry-title'}).find('a').text

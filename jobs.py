@@ -37,7 +37,21 @@ def send_devotional():
     u = db.users.count_documents({"mute":False, "active":True})
     db.devotionals.insert_one(d)
     print(f"Succesfully sent devotional to {u} users")
-    
+
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=1)    
+def insert_sermon():
+    """
+    Checks daily for new serons from the site and inserts into
+    db if any
+    """
+    sermons = cci_sermons()
+    for sermon in sermons:
+        if db.sermons.find_one({"title":sermon["title"]}) is not None:
+            pass
+        else:
+            print("Inserting {}".format(sermon["title"]))
+            db.sermons.insert_one(sermon)
+
 
 def notify_tickets():
     """

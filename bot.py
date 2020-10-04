@@ -83,8 +83,6 @@ def latest_sermon(update, context):
     context.bot.send_photo(
         chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(buttons)
     )
-    if db.sermons.find_one({"title":sermon["title"]}) is None:
-        db.sermons.insert_one(sermon)
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     
 
