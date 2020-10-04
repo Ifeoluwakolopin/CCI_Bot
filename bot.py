@@ -124,10 +124,7 @@ def get_devotional(update, context):
     This get the devotional for the particular day
     """
     chat_id = update.effective_chat.id
-    try:
-        d = db.devotionals.find_one({"date":str(date.today())})
-    except:
-        d = t30()
+    d = t30()
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
     context.bot.send_photo(
         chat_id=chat_id, photo=d["image"], caption=d["title"], reply_markup=InlineKeyboardMarkup(button)
