@@ -358,6 +358,7 @@ def echo(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
