@@ -41,7 +41,7 @@ def send_devotional():
 @sched.scheduled_job('cron', day_of_week='mon-sun', hour=1)    
 def insert_sermon():
     """
-    Checks daily for new serons from the site and inserts into
+    Checks daily for new sermons from the site and inserts into
     db if any
     """
     sermons = cci_sermons()
@@ -52,24 +52,27 @@ def insert_sermon():
             print("Inserting {}".format(sermon["title"]))
             db.sermons.insert_one(sermon)
 
-
 def notify_tickets():
     """
     Send a notification to users and returns True on success
     """
     ticket = service_ticket()
-    buttons = [[InlineKeyboardButton("Book first service", url=ticket[0]["link"])],
-        [InlineKeyboardButton("Book second service", url=ticket[1]["link"])]]
+    if len(ticket) == 2:
+        buttons = [[InlineKeyboardButton("Book first service", url=ticket[0]["link"])],
+            [InlineKeyboardButton("Book second service", url=ticket[1]["link"])]]
+    else:
+        buttons = [[InlineKeyboardButton("Reserve a seat", url=ticket[0]["link"])]]
     for user in db.users.find({"mute":False}):
         try:
-            bot.send_message(
-                chat_id=user["chat_id"], text=config["messages"]["tickets"].format(ticket[0]["name"]), reply_markup=InlineKeyboardMarkup(buttons)
+            bot.send_photo(
+                chat_id=user["chat_id"], photo=ticket[0]["image"], caption=config["messages"]["tickets"].format(ticket[0]["name"]), reply_markup=InlineKeyboardMarkup(buttons)
             )
             return True
         except Exception as e:
             if str(e) == "Forbidden: bot was blocked by the user":
                 db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
             return None
+
 
 @sched.scheduled_job('cron', day_of_week='wed', hour=11)
 def ticket_task():
