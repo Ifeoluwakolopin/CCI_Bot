@@ -7,19 +7,20 @@
       },
     "messages":{
         "start":"Hi {}🤗\n\nExperiencing Progress and Joy in the faith?...Awesome!💃🎉\nHere's a couple of services I offer😁\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Instant notification of service tickets(Lagos branch Only)🔔\nand much more...\n\nExcited? Let's get started. Use /help to get a list of available commands\n\nAll sermons and devotionals gotten from [Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
-        "list":"[{0}]({1})",
-        "get_sermon":"Enter the title of the sermon you wish to get",
+        "cancel":"You have succesfully cancelled action.\n\nUse /menu to get a list of commands.",
+        "get_sermon":"Enter the title of the sermon you wish to get.\n\nUse /cancel to cancel operation.",
         "tickets":"Yay🎉🎉.\n\nTickets are now available for {}!\nBook your seat now!",
         "help":"Here's a list of available commands to use\n\n• /latest_sermon - Stream or download the most recent CCI sermon\n• /get_sermon - Get a specific sermon by title\n• /get_devotional - Get today's devotional\n• /mute - Mute notifications\n• /menu - Gives you a menu of available commands",
         "menu":"What do you want to do today?🤗\n\n• /latest_sermon\n• /get_sermon\n• /get_devotional\n• /help\n• /mute",
-        "admin_menu":"Admin Commands\n\n• /stats - View bot statistics\n• /broadcast - This allows you to send broadcasts to all the users on the bot.\nUse carefully!😄.\n\nIf you tap the broadcast command by mistake just send 'cancel' (without the quotation marks) as the message to cancel the broadcast.",
+        "admin_menu":"Admin Commands\n\n• /stats - View bot statistics\n• /broadcast - This allows you to send broadcasts to all the users on the bot.\n\nUse /bc_help for instructions on how to send broadcasts.",
+        "bc_help":"How to use broadcast types • /bc_text - Send written text broadcast\n• /bc_photo - Send a photo with/without caption as broadcast.\n• /bc_video - Send a video clip (must be less than 50mb) as broadcast with/without caption\n• /bc_animation - Send short animated gif as broadcast with/without caption.\n\nTo view broadcast menu use /broadcast",
         "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
-        "broadcast":"Enter the message you want to broadcast:",
+        "broadcast":"Choose broadcast type:\n\n• /bc_text\n• /bc_photo\n• /bc_video\n• /bc_animation\n\nUse /cancel to cancel operation.",
+        "bc":"Enter {} you want to broadcast:\n\nUse /cancel to cancel operation.",
         "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
         "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
         "stats":"**CCI Bot** ⚙️\n\nTotal users: {}\n\nTotal Sermons available: {}🔥",
-        "empty":"No sermons found with title '{}'",
-        "cancel_broadcast":"You have succesfully cancelled broadcast"
+        "empty":"No sermons found with title '{}'"
     }
     
 }

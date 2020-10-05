@@ -42,13 +42,49 @@ def search_db(title):
 
     return result
 
-def send_bc(chat_id, message):
+def text_send(chat_id, message):
     """
     This function sends a message to a user
     """
     try:
         bot.send_message(
             chat_id=chat_id, text=message, disable_web_page_preview="True"
+        )
+        return True
+    except:
+        return None
+
+def photo_send(chat_id, photo, caption=""):
+    """
+    This function sends a photo to user with caption
+    """
+    try:
+        bot.send_photo(
+            chat_id=chat_id, photo=photo, caption=caption
+        )
+        return True
+    except:
+        return None
+
+def animation_send(chat_id, animation, caption=""):
+    """
+    This function sends an animation to a user with a caption
+    """
+    try:
+        bot.send_animation(
+            chat_id=chat_id, animation=animation, caption=caption
+        )
+        return True
+    except:
+        return None
+
+def video_send(chat_id, video, caption=""):
+    """
+    This function sends a video to a user with a caption
+    """
+    try:
+        bot.send_video(
+            chat_id=chat_id, video=video, caption=caption
         )
         return True
     except:
@@ -155,6 +191,72 @@ def broadcast(update, context):
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"broadcast"}})
 
+def bc_help(update, context):
+    """
+    This function sends instruction on how to use broadcasts
+    """
+    chat_id = update.effective_chat.id
+    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["bc_help"]
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
+def bc_text(update, context):
+    """
+    This function sends text as broadcast
+    """
+    chat_id = update.effective_chat.id
+    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["bc"].format("message")
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_text"}})
+
+def bc_photo(update, context):
+    """
+    This function sends photo as broadcast
+    """
+    chat_id = update.effective_chat.id
+    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["bc"].format("photo")
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_photo"}})
+
+def bc_video(update, context):
+    """
+    This function sends video as broadcast.
+    """
+    chat_id = update.effective_chat.id
+    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["bc"].format("video")
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_video"}})
+
+def bc_animation(update, context):
+    """
+    This function sends animation as broadcast
+    """
+    chat_id = update.effective_chat.id
+    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["bc"].format("animation")
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_animation"}})
+
+
+def cancel(update, context):
+    """
+    This function helps you cancel any existing action
+    """
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["cancel"]
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
 def mute(update, context):
     """
     This set the user's mute status
@@ -209,28 +311,56 @@ def echo(update, context):
                         chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
                     )
                     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-    elif last_command == "broadcast":
+    elif last_command == "bc_text":
         message = update.message.text
-        if update.message.text.lower() != 'cancel':
-            for user in db.users.find({"chat_id":chat_id}):
-                x = send_bc(user["chat_id"], message)
-                if x is None:
-                    db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
-            users = db.users.count_documents({})
-            total_delivered = db.users.count_documents({"active": True})
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
-            )
-        else:
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["cancel_broadcast"]
-            )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        for user in db.users.find({"chat_id":chat_id}):
+            x = text_send(user["chat_id"], message)
+            if x is None:
+                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+        users = db.users.count_documents({})
+        total_delivered = db.users.count_documents({"active": True})
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
+        )
+    elif last_command == "bc_photo":
+        photo = update.message.photo.file_id
+        caption = update.message.caption
+        for user in db.users.find({"chat_id":chat_id}):
+            x = photo_send(user["chat_id"], photo=photo, caption=caption)
+            if x is None:
+                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+        users = db.users.count_documents({})
+        total_delivered = db.users.count_documents({"active": True})
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
+        )
+    elif last_command == "bc_video":
+        video = update.message.video.file_id
+        caption = update.message.caption
+        for user in db.users.find({"chat_id":chat_id}):
+            x = video_send(user["chat_id"], video=video, caption=caption)
+            if x is None:
+                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+        users = db.users.count_documents({})
+        total_delivered = db.users.count_documents({"active": True})
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
+        )
+    elif last_command == "bc_animation":
+        animation = update.message.animation.file_id
+        caption = update.message.caption
+        for user in db.users.find({"chat_id":chat_id}):
+            x = animation_send(user["chat_id"], animation=animation, caption=caption)
+            if x is None:
+                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+        users = db.users.count_documents({})
+        total_delivered = db.users.count_documents({"active": True})
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
+        )
 
 
-
-
-echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
+echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
 
 def main():
     dp.add_handler(CommandHandler("start", start))
@@ -241,6 +371,12 @@ def main():
     dp.add_handler(CommandHandler("mute", mute))
     dp.add_handler(CommandHandler("unmute", unmute))
     dp.add_handler(CommandHandler("stats", stats))
+    dp.add_handler(CommandHandler("cancel", cancel))
+    dp.add_handler(CommandHandler("bc_help", bc_help))
+    dp.add_handler(CommandHandler("bc_text", bc_text))
+    dp.add_handler(CommandHandler("bc_photo", bc_photo))
+    dp.add_handler(CommandHandler("bc_video", bc_video))
+    dp.add_handler(CommandHandler("bc_animation", bc_animation))
     dp.add_handler(CommandHandler("broadcast", broadcast))
     dp.add_handler(CommandHandler("get_sermon", get_sermon))
     dp.add_handler(echo_handler)
