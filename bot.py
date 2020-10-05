@@ -211,7 +211,7 @@ def echo(update, context):
                     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "broadcast":
         message = update.message.message_id
-        if message.lower() != 'cancel':
+        if update.message.text.lower() != 'cancel':
             for user in db.users.find({"chat_id":chat_id}):
                 #x = send_bc(user["chat_id"], message)
                 x = bot.forward_message(
