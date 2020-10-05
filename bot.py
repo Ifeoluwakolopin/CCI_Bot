@@ -323,7 +323,7 @@ def echo(update, context):
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
     elif last_command == "bc_photo":
-        photo = update.message.photo.file_id
+        photo = update.message.document.file_id
         caption = update.message.caption
         for user in db.users.find({"chat_id":chat_id}):
             x = photo_send(user["chat_id"], photo=photo, caption=caption)
