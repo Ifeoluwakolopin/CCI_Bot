@@ -74,7 +74,7 @@ def notify_tickets():
             return None
 
 
-@sched.scheduled_job('cron', day_of_week='wed', hour=11)
+@sched.scheduled_job('cron', day_of_week='wed', hour=11, minute=15)
 def ticket_task():
     while notify_tickets() == None:
         time.sleep(120)
@@ -82,7 +82,7 @@ def ticket_task():
     u = db.users.count_documents({"mute":False, "active":True})
     print(f"Succesfully notified {u} users for tickets")
 
-#@sched.scheduled_job('interval', minutes=25)
+@sched.scheduled_job('interval', minutes=25)
 def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
     print("Waking heroku app...")
