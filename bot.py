@@ -5,7 +5,7 @@ import telegram
 import pymongo
 from datetime import date
 from datetime import datetime as dt
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Updater
 from telegram.ext import Filters
 from telegram.ext import MessageHandler, CommandHandler
@@ -90,6 +90,21 @@ def video_send(chat_id, video, caption=""):
     except:
         return None
 
+buttons = [
+    KeyboardButton("latest sermon"),
+    KeyboardButton("get sermon"),
+]
+
+buttons2 = [ 
+    KeyboardButton("devotional"),
+    KeyboardButton("help"),
+]
+
+buttons3 = [
+    KeyboardButton("statistics"),
+    KeyboardButton("broadcast")
+]
+
 def start(update, context):
     """
     This is the response of the bot on startup
@@ -103,10 +118,19 @@ def start(update, context):
             "chat_id":chat_id, "date":dt.now(), "admin":False, "mute":False, "first_name":first_name, "last_name":last_name})
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None, "active":True}})
     # send message
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
-        parse_mode="Markdown", disable_web_page_preview="True"
-    )
+    if db.users.find_one({"chat_id":chat_id, "admin":True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
+            parse_mode="Markdown", disable_web_page_preview="True",
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+        )
+    else:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
+            parse_mode="Markdown", disable_web_page_preview="True",
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+        )
+
 
 def latest_sermon(update, context):
     """ 
@@ -128,22 +152,9 @@ def helps(update, context):
     """
     chat_id = update.effective_chat.id
     context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["help"])
+        chat_id=chat_id, text=config["messages"]["help"],
+        parse_mode="Markdown")
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-
-def menu(update, context):
-    """
-    This sends a list of available commands for the bot
-    """
-    chat_id = update.effective_chat.id
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["menu"])
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["admin_menu"]
-        )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-
 
 def get_sermon(update, context):
     """ 
@@ -160,7 +171,10 @@ def get_devotional(update, context):
     This get the devotional for the particular day
     """
     chat_id = update.effective_chat.id
-    d = t30()
+    if not db.devotionals.find_one({"date":str(date.today())}):
+        d = t30()
+    else:
+        d = db.devotionals.find_one({"date":str(date.today())})
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
     context.bot.send_photo(
         chat_id=chat_id, photo=d["image"], caption=d["title"], reply_markup=InlineKeyboardMarkup(button)
@@ -179,6 +193,16 @@ def stats(update, context):
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
+bc_btns = [[
+    KeyboardButton("text"),
+    KeyboardButton("video"),
+    KeyboardButton("photo")],
+    [
+        KeyboardButton("animation"),
+        KeyboardButton("usage")
+    ]
+]
+
 def broadcast(update, context):
     """
     This function allows for an admin personnel send broadcast
@@ -187,9 +211,10 @@ def broadcast(update, context):
     chat_id = update.effective_chat.id
     if db.users.find_one({'chat_id':chat_id, 'admin':True}):
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["broadcast"]
+            chat_id=chat_id, text=config["messages"]["broadcast"],
+            reply_markup = ReplyKeyboardMarkup(bc_btns, resize_keyboard=True)
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"broadcast"}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def bc_help(update, context):
     """
@@ -252,9 +277,18 @@ def cancel(update, context):
     This function helps you cancel any existing action
     """
     chat_id = update.effective_chat.id
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["cancel"]
-    )
+    if db.users.find_one({"chat_id":chat_id, "admin":True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["cancel"],
+            parse_mode="Markdown", disable_web_page_preview="True",
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+        )
+    else:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["cancel"],
+            parse_mode="Markdown", disable_web_page_preview="True",
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+        )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def mute(update, context):
@@ -278,6 +312,35 @@ def unmute(update, context):
     db.users.update_one({"chat_id":chat_id}, {"$set":{"mute":False}})
 
 
+def handle_commands(update, context):
+    """
+    Handles logic for commands
+    """
+    title = update.message.text
+
+    if title == "devotional":
+        get_devotional(update, context)
+    elif title == "latest sermon":
+        latest_sermon(update, context)
+    elif title == "get sermon":
+        get_sermon(update, context)
+    elif title == "help":
+        helps(update, context)
+    elif title == "statistics":
+        stats(update, context)
+    elif title == "broadcast":
+        broadcast(update, context)
+    elif title == "usage":
+        bc_help(update, context)
+    elif title == "text":
+        bc_text(update, context)
+    elif title == "video":
+        bc_video(update, context)
+    elif title == "photo":
+        bc_photo(update, context)
+    elif title == "animation":
+        bc_animation(update, context)
+
 def echo(update, context):
     """
     Handles actions for messages
@@ -286,15 +349,14 @@ def echo(update, context):
     user = db.users.find_one({"chat_id": chat_id})
     last_command = user["last_command"]
 
-    if last_command == "get_sermon":
+    if last_command == None:
+        handle_commands(update, context)
+    elif last_command == "get_sermon":
         title = update.message.text.strip()
         sermons = search_db(title)
         if len(sermons) == 0:
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["empty"].format(title)
-            )
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["menu"]
             )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
         else:
@@ -322,6 +384,7 @@ def echo(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "bc_photo":
         photo = update.message.photo[-1].file_id
         caption = update.message.caption
@@ -334,6 +397,7 @@ def echo(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "bc_video":
         video = update.message.video.file_id
         caption = update.message.caption
@@ -346,6 +410,7 @@ def echo(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "bc_animation":
         animation = update.message.animation.file_id
         caption = update.message.caption
@@ -358,28 +423,16 @@ def echo(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
 
 def main():
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("latest_sermon", latest_sermon))
-    dp.add_handler(CommandHandler("menu", menu))
-    dp.add_handler(CommandHandler("help", helps))
-    dp.add_handler(CommandHandler("get_devotional", get_devotional))
     dp.add_handler(CommandHandler("mute", mute))
     dp.add_handler(CommandHandler("unmute", unmute))
-    dp.add_handler(CommandHandler("stats", stats))
     dp.add_handler(CommandHandler("cancel", cancel))
-    dp.add_handler(CommandHandler("bc_help", bc_help))
-    dp.add_handler(CommandHandler("bc_text", bc_text))
-    dp.add_handler(CommandHandler("bc_photo", bc_photo))
-    dp.add_handler(CommandHandler("bc_video", bc_video))
-    dp.add_handler(CommandHandler("bc_animation", bc_animation))
-    dp.add_handler(CommandHandler("broadcast", broadcast))
-    dp.add_handler(CommandHandler("get_sermon", get_sermon))
     dp.add_handler(echo_handler)
 
     updater.start_webhook(
