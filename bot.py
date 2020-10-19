@@ -271,6 +271,24 @@ def bc_animation(update, context):
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_animation"}})
 
+def done(update, context):
+    """
+    This function helps you cancel any existing action
+    """
+    chat_id = update.effective_chat.id
+    if db.users.find_one({"chat_id":chat_id, "admin":True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["done"],
+            parse_mode="Markdown", disable_web_page_preview="True",
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+        )
+    else:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["done"],
+            parse_mode="Markdown", disable_web_page_preview="True",
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+        )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def cancel(update, context):
     """
@@ -375,7 +393,7 @@ def echo(update, context):
                     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "bc_text":
         message = update.message.text
-        for user in db.users.find({}):
+        for user in db.users.find({"chat_id":chat_id}):
             x = text_send(user["chat_id"], message)
             if x is None:
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
@@ -384,7 +402,7 @@ def echo(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        done(update, context)
     elif last_command == "bc_photo":
         photo = update.message.photo[-1].file_id
         caption = update.message.caption
@@ -397,7 +415,7 @@ def echo(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        done(update, context)
     elif last_command == "bc_video":
         video = update.message.video.file_id
         caption = update.message.caption
@@ -410,7 +428,7 @@ def echo(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        done(update, context)
     elif last_command == "bc_animation":
         animation = update.message.animation.file_id
         caption = update.message.caption
@@ -423,7 +441,7 @@ def echo(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        done(update, context)
 
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
