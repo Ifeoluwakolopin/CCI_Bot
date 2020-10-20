@@ -25,9 +25,6 @@ def send_devotional():
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
     for user in db.users.find({"mute":False}):
         try:
-            bot.send_message(
-                chat_id=user["chat_id"], text="TODAY'S DEVOTIONAL"
-            )
             bot.send_photo(
                 chat_id=user["chat_id"], photo=d["image"],
                 caption=config["messages"]["t30_caption"].format(d["title"], d["excerpt"]),

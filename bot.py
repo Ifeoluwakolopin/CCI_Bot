@@ -175,11 +175,11 @@ def get_devotional(update, context):
         d = t30()
     else:
         d = db.devotionals.find_one({"date":str(date.today())})
-    #button = [[InlineKeyboardButton("Read more", url=d["link"])]]
+    button = [[InlineKeyboardButton("Read more", url=d["link"])]]
     context.bot.send_photo(
         chat_id=chat_id, photo=d["image"],
         caption=config["messages"]["t30_caption"].format(d["title"], d["excerpt"]),
-        #reply_markup=InlineKeyboardMarkup(button)
+        reply_markup=InlineKeyboardMarkup(button)
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
