@@ -29,7 +29,9 @@ def send_devotional():
                 chat_id=user["chat_id"], text="TODAY'S DEVOTIONAL"
             )
             bot.send_photo(
-                chat_id=user["chat_id"], photo=d["image"], caption=d["title"], reply_markup=InlineKeyboardMarkup(button)
+                chat_id=user["chat_id"], photo=d["image"],
+                caption=config["messages"]["t30_caption"].format(d["title"], d["excerpt"]),
+                reply_markup=InlineKeyboardMarkup(button)
             )
         except Exception as e:
             if str(e) == "Forbidden: bot was blocked by the user":

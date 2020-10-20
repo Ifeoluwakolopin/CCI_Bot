@@ -47,8 +47,12 @@ def t30():
     title = soup.find('h3', {'class':'entry-title td-module-title'}).find('a').text
     link = soup.find('h3', {'class':'entry-title td-module-title'}).find('a').get('href')
     image = soup.find('div', {'class':'td-module-thumb'}).find('img').get('src')
+    excerpt = soup.find('div', {'class':'td-excerpt'}).text.strip()
     date = str(dt.today())
 
-    d = {"title":title, "link":link, "image":image, "date":date}
+    d = {"title":title,
+        "link":link,
+        "image":image,
+        "date":date, "excerpt":excerpt}
 
     return d
