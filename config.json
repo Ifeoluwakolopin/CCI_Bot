@@ -17,7 +17,7 @@
         "bc":"Enter {} you want to broadcast:\n\nUse /cancel to cancel operation.",
         "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
         "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
-        "t30_caption":"{}\n{}\n\ntriumph30.com",
+        "t30_caption":"{}\n\n{}\n\nRead on triumph30.com",
         "stats":"**CCI Bot** ⚙️\n\nTotal users: {}\n\nTotal Sermons available: {}🔥",
         "empty":"😅No sermons found with title '{}'\n\n You can search for a keyword in the title or the full title.\n\nUse the get sermon button to try again.",
         "done":"Done.👌"
