@@ -9,7 +9,6 @@ from sermons import cci_sermons, t30
 from events import service_ticket
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-
 config = json.load(open("config.json"))
 
 client = pymongo.MongoClient(config["db"]["client"])
@@ -17,7 +16,6 @@ db = client[config["db"]["name"]]
 bot = telegram.Bot(token=config["bot_token"])
 
 sched = BlockingScheduler()
-
 
 @sched.scheduled_job('cron', day_of_week='mon-sat', hour=5)
 def send_devotional():
@@ -81,7 +79,7 @@ def ticket_task():
     u = db.users.count_documents({"mute":False, "active":True})
     print(f"Succesfully notified {u} users for tickets")
 
-@sched.scheduled_job('interval', minutes=25)
+#@sched.scheduled_job('interval', minutes=25)
 def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
     print("Waking heroku app...")

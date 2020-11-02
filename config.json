@@ -6,7 +6,7 @@
         "name": "cci_bot"
       },
     "messages":{
-        "start":"Hi {}🤗\n\nExperiencing Progress and Joy in the faith?...Awesome!💃🎉\nHere's a couple of services I offer😁\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Get instant ticket notifications😱(Lagos branch Only)🔔\n and much more...\n\nExcited?😋\nUse the help button below to get started!\n\nAll sermons and devotionals gotten from\n[Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
+        "start":"Hi {}🤗\n\nI am your personal CCI assistant.\nI am here to aid you in experiencing progress and joy in the faith🥳💃\nI can help you with a lot of things!\nBelow are some of them\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Get instant ticket notifications😱(Lagos branch Only)🔔\n and so much more...\n\nI'm so excited to do this with you\n\nTo get started\nAll you have to do is click on the icon with four dots or just type “/help”\n\nAll sermons and devotionals gotten from\n[Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
         "cancel":"You have succesfully cancelled action.",
         "get_sermon":"Enter the title of the sermon you wish to get.\n\nClick /cancel to cancel operation.",
         "tickets":"Yay🎉🎉.\n\nTickets are now available for {}!\nBook your seat now!",
