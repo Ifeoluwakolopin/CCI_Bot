@@ -84,7 +84,7 @@ def ticket_task():
 
 @sched.scheduled_job('interval', minutes=25)
 def wake():
-    requests.get('https://secret-sands-37903.herokuapp.com/'+config["bot_token"])
+    requests.get('https://secret-sands-37903.herokuapp.com/')
     print("Waking app...")
     
 
