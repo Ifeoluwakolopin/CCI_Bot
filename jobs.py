@@ -33,7 +33,10 @@ def send_devotional():
                 db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
     u = db.users.count_documents({"mute":False, "active":True})
     db.devotionals.insert_one(d)
-    print(f"Succesfully sent devotional to {u} users")
+    with open('jobs.log', 'a') as jl:
+        jl.write("{0}:DEVOTIONAL: Sent devotional to {1} users".format(datetime.now(), u))
+        jl.close()
+
 
 @sched.scheduled_job('cron', day_of_week='mon-sun', hour=1)    
 def insert_sermon():
@@ -46,8 +49,10 @@ def insert_sermon():
         if db.sermons.find_one({"title":sermon["title"]}) is not None:
             pass
         else:
-            print("Inserting {}".format(sermon["title"]))
             db.sermons.insert_one(sermon)
+            with open('jobs.log', 'a') as jl:
+                jl.write("{0}:SERMON: Inserted new sermon '{1}' to db".format(datetime.now(), sermon["title"]))
+                jl.close()
 
 def notify_tickets():
     """
@@ -64,25 +69,25 @@ def notify_tickets():
             bot.send_photo(
                 chat_id=user["chat_id"], photo=ticket[0]["image"], caption=config["messages"]["tickets"].format(ticket[0]["name"]), reply_markup=InlineKeyboardMarkup(buttons)
             )
-            return True
         except Exception as e:
             if str(e) == "Forbidden: bot was blocked by the user":
                 db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
-            return None
 
 
 @sched.scheduled_job('cron', day_of_week='wed', hour=11, minute=15)
 def ticket_task():
-    while notify_tickets() == None:
-        time.sleep(120)
-        notify_tickets()
+    notify_tickets()
     u = db.users.count_documents({"mute":False, "active":True})
-    print(f"Succesfully notified {u} users for tickets")
+    with open('jobs.log', 'a') as jl:
+        jl.write("{0}:TICKET: Notified {1} users".format(datetime.now(), u))
+        jl.close()
 
-#@sched.scheduled_job('interval', minutes=25)
+@sched.scheduled_job('interval', minutes=25)
 def wake():
-    requests.get('https://secret-sands-37903.herokuapp.com/')
-    print("Waking heroku app...")
+    requests.get('https://secret-sands-37903.herokuapp.com/'+config["bot_token"])
+    print("Waking app...")
+    
+
 
 if __name__ == '__main__':
     sched.start()
