@@ -25,7 +25,7 @@ def send_devotional():
         try:
             bot.send_photo(
                 chat_id=user["chat_id"], photo=d["image"],
-                caption=config["messages"]["t30_caption"].format(d["title"], d["excerpt"]),
+                caption=config["messages"]["t30_caption"].format(d["title"], d["excerpt"].split("\n")[0]),
                 reply_markup=InlineKeyboardMarkup(button)
             )
         except Exception as e:

@@ -184,7 +184,7 @@ def get_devotional(update, context):
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
     context.bot.send_photo(
         chat_id=chat_id, photo=d["image"],
-        caption=config["messages"]["t30_caption"].format(d["title"], d["excerpt"]),
+        caption=config["messages"]["t30_caption"].format(d["title"], d["excerpt"].split("\n")[0]),
         reply_markup=InlineKeyboardMarkup(button)
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
