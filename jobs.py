@@ -33,9 +33,7 @@ def send_devotional():
                 db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
     u = db.users.count_documents({"mute":False, "active":True})
     db.devotionals.insert_one(d)
-    with open('jobs.log', 'a') as jl:
-        jl.write("{0}:DEVOTIONAL: Sent devotional to {1} users".format(datetime.now(), u))
-        jl.close()
+    print(f"DEVOTIONAL: Sent devotional to {u} users")
 
 
 @sched.scheduled_job('cron', day_of_week='mon-sun', hour=1)    
@@ -50,9 +48,7 @@ def insert_sermon():
             pass
         else:
             db.sermons.insert_one(sermon)
-            with open('jobs.log', 'a') as jl:
-                jl.write("{0}:SERMON: Inserted new sermon '{1}' to db".format(datetime.now(), sermon["title"]))
-                jl.close()
+            print("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
 
 def notify_tickets():
     """
@@ -78,15 +74,12 @@ def notify_tickets():
 def ticket_task():
     notify_tickets()
     u = db.users.count_documents({"mute":False, "active":True})
-    with open('jobs.log', 'a') as jl:
-        jl.write("{0}:TICKET: Notified {1} users".format(datetime.now(), u))
-        jl.close()
+    print(f"TICKET: Notified {u} users")
 
-@sched.scheduled_job('interval', minutes=25)
+@sched.scheduled_job('interval', minutes=29)
 def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
     print("Waking app...")
-    
 
 
 if __name__ == '__main__':
