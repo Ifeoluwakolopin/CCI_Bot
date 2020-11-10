@@ -21,7 +21,7 @@
         "stats":"**CCI Bot** ⚙️\n\nTotal users: {}\n\nTotal Sermons available: {}🔥",
         "empty":"😅No sermons found with title '{}'\n\n You can search for a keyword in the title or the full title.\n\nUse the get sermon button to try again.",
         "done":"Done.👌",
-        "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands to use.\nYou can use the keyboard icon with four dots down here also👇."
+        "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.\n."
     }
     
 }
