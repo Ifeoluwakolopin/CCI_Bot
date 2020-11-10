@@ -189,6 +189,23 @@ def get_devotional(update, context):
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
+def random(update, context):
+    """
+    This handles unrecognized commands.
+    """
+    chat_id = update.effective_chat.id
+    if db.users.find_one({"chat_id":chat_id, "admin":True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["unknown"],
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+        )
+    else:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["unknown"],
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+        )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
 def stats(update, context):
     """
     This function gives you statistics about the bot
@@ -366,6 +383,8 @@ def handle_commands(update, context):
         bc_photo(update, context)
     elif title == "animation":
         bc_animation(update, context)
+    else:
+        random(update, context)
 
 def echo(update, context):
     """
