@@ -359,7 +359,7 @@ def handle_commands(update, context):
     """
     Handles logic for commands
     """
-    title = update.message.text
+    title = update.message.text.lower()
 
     if title == "devotional":
         get_devotional(update, context)
