@@ -526,7 +526,8 @@ def map_handle(update, context):
         )
     elif len(q.split("=")) == 2:
         x = q.split("=")
-        buttons = [[[[InlineKeyboardButton(i, callback_data=q+"="+i)] for i in list(set(LOCATIONS[x[0]][x[1]].keys()))]]]
+        towns = set([i["location"] for i in LOCATIONS[x[0]][x[1]]])
+        buttons = [[InlineKeyboardButton(i, callback_data=q+"="+i)] for i in list(towns)]
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["location2"].format(x[1]),
             reply_markup=InlineKeyboardMarkup(buttons)
