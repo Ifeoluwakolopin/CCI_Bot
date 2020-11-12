@@ -24,7 +24,9 @@
         "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
         "new_sermon":"🔔 New Sermons are now available on our platforms😄.\n\nSelect any sermon to stream or download👇.\n\bUse /menu to get back the default keyboard.",
         "menu":"Here you go.",
-        "map":"Meet and Pray(MAP)"
+        "map":"Meet and Pray(MAP)\n\n",
+        "location":"Find MAP locations closest to you.\n\nTap /cancel to cancel action.",
+        "location2":"Where in {} do you want to find a MAP centre?"
     }
     
 }

@@ -8,8 +8,10 @@ from datetime import datetime as dt
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Updater
 from telegram.ext import Filters
+from telegram.ext import CallbackQueryHandler
 from telegram.ext import MessageHandler, CommandHandler
 from sermons import cci_sermons, t30
+from maplocations import LOCATIONS
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -390,7 +392,8 @@ def map_loc(update, context):
         chat_id=chat_id, photo=open("MAP.jpg", "rb"),
         caption=config["messages"]["map"],
     )
-
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"map"}})
+    
 def handle_commands(update, context):
     """
     Handles logic for commands
@@ -506,9 +509,27 @@ def echo(update, context):
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
         done(update, context)
+    elif last_command == "map":
+        buttons = [[InlineKeyboardButton(i, callback_data=i)] for i in list(LOCATIONS.keys())]
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["location"],
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    
+def map_handle(update, context):
+    chat_id = update.effective_chat.id
+    q = update.callback_query.data
+    if q in list(LOCATIONS.keys()):
+        buttons = [[InlineKeyboardButton(i, callback_data=q+"="+i)] for i in list(LOCATIONS[q].keys())]
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["location2"].format(q),
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
+map_handler = CallbackQueryHandler(map_handle)
 
 def main():
     dp.add_handler(CommandHandler("start", start))
@@ -517,6 +538,7 @@ def main():
     dp.add_handler(CommandHandler("cancel", cancel))
     dp.add_handler(CommandHandler("menu", menu))
     dp.add_handler(echo_handler)
+    dp.add_handler(map_handler)
 
     updater.start_webhook(
         listen="0.0.0.0", port=int(PORT), url_path=config["bot_token"]
