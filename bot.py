@@ -525,18 +525,20 @@ def map_handle(update, context):
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     elif len(q.split("=")) == 2:
-        buttons = [[[[InlineKeyboardButton(i, callback_data=q+"="+i)] for i in list(set(LOCATIONS[q[0]][q[1]].keys()))]]]
+        x = q.split("=")
+        buttons = [[[[InlineKeyboardButton(i, callback_data=q+"="+i)] for i in list(set(LOCATIONS[x[0]][x[1]].keys()))]]]
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["location2"].format(q[1]),
+            chat_id=chat_id, text=config["messages"]["location2"].format(x[1]),
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     elif len(q.split("=")) == 3:
-        locs = [loc for loc in LOCATIONS[q[0]][q[1]] if loc["location"] is q[2]]
+        x = q.split("=")
+        locs = [loc for loc in LOCATIONS[x[0]][x[1]] if loc["location"] is x[2]]
         locations = ""
         for i in locs:
-            locations = location + i + '\n\n'
+            locations = locations + i + '\n\n'
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["location3"].format(q[2], locations)
+            chat_id=chat_id, text=config["messages"]["location3"].format(x[2], locations)
         )
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
