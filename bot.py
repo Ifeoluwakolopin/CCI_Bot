@@ -98,12 +98,13 @@ buttons = [
 buttons2 = [ 
     KeyboardButton("devotional"),
     KeyboardButton("help"),
-    KeyboardButton("map")
+    #KeyboardButton("map")
 ]
 
 buttons3 = [
     KeyboardButton("statistics"),
-    KeyboardButton("broadcast")
+    KeyboardButton("broadcast"),
+    KeyboardButton("map"),
 ]
 
 def start(update, context):
