@@ -397,7 +397,7 @@ def map_loc(update, context):
         chat_id=chat_id, text=config["messages"]["location"],
         reply_markup=InlineKeyboardMarkup(buttons)
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"map"}})
     
 def handle_commands(update, context):
     """
@@ -429,6 +429,8 @@ def handle_commands(update, context):
         bc_animation(update, context)
     elif title == "map":
         map_loc(update, context)
+    elif title == "cancel":
+        cancel(update, context)
     else:
         random(update, context)
 
@@ -514,6 +516,12 @@ def echo(update, context):
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
         done(update, context)
+    elif last_command == "map":
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["map_feedback"],
+            parse_mode="Markdown"
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     
 def map_handle(update, context):
     chat_id = update.effective_chat.id
@@ -543,6 +551,7 @@ def map_handle(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["location3"].format(x[2], locations)
         )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
 map_handler = CallbackQueryHandler(map_handle)
