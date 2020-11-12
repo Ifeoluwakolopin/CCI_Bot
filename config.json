@@ -29,7 +29,7 @@
         "location2":"Where in {} do you want to find a MAP centre?",
         "location3":"Here's a list of MAP locations in {0}.{1}",
         "location4":"\n\nAddress: {0}\nContact: {1}\nCapacity: {2} people.",
-        "map_feedback":"Can't find a MAP centre close to you😔?\n\n[Send us a mail](mailto:celebrationnigeria@gmail.com?subject=MAP%20LOCATION)."
+        "map_feedback":"Can't find a MAP centre close to you😔?\n\nSend us a mail: celebrationnigeria@gmail.com"
     }
     
 }
