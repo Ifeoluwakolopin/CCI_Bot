@@ -157,9 +157,16 @@ def helps(update, context):
     This sends a list of available commands for the bot
     """
     chat_id = update.effective_chat.id
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["help"],
-        parse_mode="Markdown")
+    if db.users.find_one({"chat_id":chat_id, "admin":True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["help"], parse_mode="Markdown",
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+        )
+    else:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["help"], parse_mode="Markdown",
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+        )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def get_sermon(update, context):
