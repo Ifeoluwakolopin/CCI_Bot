@@ -1,14 +1,16 @@
+import json
+
 LOCATIONS = {
-    "Lagos":{
-        "Island":[
+    "lagos":{
+        "island":[
             {
             "location":"lekki",
             "contact":"09085199354",
             "address":"27 Theophilus Oji Street Lekki Phase 1",
-            "capactiy":25
+            "capacity":25
             }
         ],
-        "Mainland":[
+        "mainland":[
             {
                 "location":"Ikeja/Maryland",
                 "contact":"08186104998",
@@ -108,3 +110,17 @@ LOCATIONS = {
         ]
     }
 }
+
+
+STATES = list(LOCATIONS.keys())
+
+PLACES = [i["location"] for i in LOCATIONS["lagos"]["island"]] + [i["location"] for i in LOCATIONS["lagos"]["mainland"]]
+PLACES = list(set(PLACES))
+
+print(STATES)
+print(PLACES)
+
+with open("maplocations.json", "a") as d:
+    json.dump(LOCATIONS, d, indent=2)
+    json.dump({"states":STATES}, d, indent=2)
+    d.close()
