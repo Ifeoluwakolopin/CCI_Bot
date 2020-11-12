@@ -98,6 +98,7 @@ buttons = [
 buttons2 = [ 
     KeyboardButton("devotional"),
     KeyboardButton("help"),
+    KeyboardButton("map")
 ]
 
 buttons3 = [
@@ -379,6 +380,15 @@ def unmute(update, context):
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"mute":False}})
 
+def map_loc(update, context):
+    """
+    This handles requests for map locations.
+    """
+    chat_id = update.effective_chat.id
+    context.bot.send_photo(
+        chat_id=chat_id, photo=open("MAP.jpg", "rb"),
+        caption=config["messages"]["map"],
+    )
 
 def handle_commands(update, context):
     """
@@ -408,6 +418,8 @@ def handle_commands(update, context):
         bc_photo(update, context)
     elif title == "animation":
         bc_animation(update, context)
+    elif title == "map":
+        map_loc(update, context)
     else:
         random(update, context)
 

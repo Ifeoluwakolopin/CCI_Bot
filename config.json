@@ -23,7 +23,8 @@
         "done":"Done.👌",
         "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
         "new_sermon":"🔔 New Sermons are now available on our platforms😄.\n\nSelect any sermon to stream or download👇.\n\bUse /menu to get back the default keyboard.",
-        "menu":"Here you go."
+        "menu":"Here you go.",
+        "map":"Meet and Pray(MAP)"
     }
     
 }
