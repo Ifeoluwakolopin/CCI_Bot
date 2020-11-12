@@ -417,17 +417,9 @@ def echo(update, context):
         title = update.message.text.strip()
         sermons = search_db(title)
         if len(sermons) == 0:
-            if db.users.find_one({"chat_id":chat_id, "admin":True}):
-                context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["empty"].format(title),
-                reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["empty"].format(title)
             )
-            else:
-                context.bot.send_message(
-                    chat_id=chat_id, text=config["messages"]["done"],
-                    reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
-                )
-            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
         else:
             for sermon in sermons:
                 if sermon["video"] is not None:
@@ -441,7 +433,7 @@ def echo(update, context):
                     context.bot.send_photo(
                         chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
                     )
-                menu(update, context)
+        menu(update, context)
     elif last_command == "bc_text":
         message = update.message.text
         for user in db.users.find({}):
