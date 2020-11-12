@@ -179,6 +179,7 @@ def get_devotional(update, context):
     chat_id = update.effective_chat.id
     if not db.devotionals.find_one({"date":str(date.today())}):
         d = t30()
+        db.devotionals.insert_one(d)
     else:
         d = db.devotionals.find_one({"date":str(date.today())})
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
