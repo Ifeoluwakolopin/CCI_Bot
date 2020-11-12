@@ -26,7 +26,8 @@
         "menu":"Here you go.",
         "map":"Meet and Pray(MAP)\n\n",
         "location":"Find MAP locations closest to you.\n\nTap /cancel to cancel action.",
-        "location2":"Where in {} do you want to find a MAP centre?"
+        "location2":"Where in {} do you want to find a MAP centre?",
+        "location3":"Here's a list of MAP locations in {}.\n\n{}"
     }
     
 }

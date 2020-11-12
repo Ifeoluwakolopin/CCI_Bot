@@ -1,6 +1,6 @@
 LOCATIONS = {
-    "lagos":{
-        "island":[
+    "Lagos":{
+        "Island":[
             {
             "location":"lekki",
             "contact":"09085199354",
@@ -8,7 +8,7 @@ LOCATIONS = {
             "capactiy":25
             }
         ],
-        "mainland":[
+        "Mainland":[
             {
                 "location":"Ikeja/Maryland",
                 "contact":"08186104998",

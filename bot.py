@@ -392,7 +392,12 @@ def map_loc(update, context):
         chat_id=chat_id, photo=open("MAP.jpg", "rb"),
         caption=config["messages"]["map"],
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"map"}})
+    buttons = [[InlineKeyboardButton(i, callback_data=i)] for i in list(LOCATIONS.keys())]
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["location"],
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     
 def handle_commands(update, context):
     """
@@ -509,12 +514,6 @@ def echo(update, context):
             chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
         )
         done(update, context)
-    elif last_command == "map":
-        buttons = [[InlineKeyboardButton(i, callback_data=i)] for i in list(LOCATIONS.keys())]
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["location"],
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
     
 def map_handle(update, context):
     chat_id = update.effective_chat.id
@@ -525,8 +524,20 @@ def map_handle(update, context):
             chat_id=chat_id, text=config["messages"]["location2"].format(q),
             reply_markup=InlineKeyboardMarkup(buttons)
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-
+    elif len(q.split("=")) == 2:
+        buttons = [[[[InlineKeyboardButton(i, callback_data=q+"="+i)] for i in list(set(LOCATIONS[q[0]][q[1]].keys()))]]]
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["location2"].format(q[1]),
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    elif len(q.split("=")) == 3:
+        locs = [loc for loc in LOCATIONS[q[0]][q[1]] if loc["location"] is q[2]]
+        locations = ""
+        for i in locs:
+            locations = location + i + '\n\n'
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["location3"].format(q[2], locations)
+        )
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
 map_handler = CallbackQueryHandler(map_handle)
