@@ -534,10 +534,12 @@ def map_handle(update, context):
         )
     elif len(q.split("=")) == 3:
         x = q.split("=")
-        locs = [loc for loc in LOCATIONS[x[0]][x[1]] if loc["location"] is x[2]]
         locations = ""
-        for i in locs:
-            locations = locations + i + '\n\n'
+        for loc in LOCATIONS[x[0]][x[1]]:
+            if loc["location"] == x[2]:
+                locations += config["messages"]["location4"].format(
+                    loc["address"], loc["contact"], loc["capacity"]
+                )
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["location3"].format(x[2], locations)
         )
