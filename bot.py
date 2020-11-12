@@ -137,7 +137,7 @@ def latest_sermon(update, context):
     This gets the most recent sermon
     """
     chat_id = update.effective_chat.id
-    sermon = cci_sermons()[0]
+    sermon = db.temporary.find_one({"latest_sermon":True})
     if sermon["video"] is not None:
         buttons = [[InlineKeyboardButton("Download Sermon", url=sermon["download"])],
             [InlineKeyboardButton("Watch Video", url=sermon["video"])]]
@@ -315,6 +315,23 @@ def done(update, context):
         )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
+def menu(update, context):
+    """
+    This restores the default keyboard.
+    """
+    chat_id = update.effective_chat.id
+    if db.users.find_one({"chat_id":chat_id, "admin":True}):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["menu"],
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+        )
+    else:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["menu"],
+            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+        )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
 def cancel(update, context):
     """
     This function helps you cancel any existing action
@@ -400,9 +417,16 @@ def echo(update, context):
         title = update.message.text.strip()
         sermons = search_db(title)
         if len(sermons) == 0:
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["empty"].format(title)
+            if db.users.find_one({"chat_id":chat_id, "admin":True}):
+                context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["empty"].format(title),
+                reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
             )
+            else:
+                context.bot.send_message(
+                    chat_id=chat_id, text=config["messages"]["done"],
+                    reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+                )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
         else:
             for sermon in sermons:
@@ -417,7 +441,7 @@ def echo(update, context):
                     context.bot.send_photo(
                         chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
                     )
-                    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+                menu(update, context)
     elif last_command == "bc_text":
         message = update.message.text
         for user in db.users.find({}):
@@ -478,6 +502,7 @@ def main():
     dp.add_handler(CommandHandler("mute", mute))
     dp.add_handler(CommandHandler("unmute", unmute))
     dp.add_handler(CommandHandler("cancel", cancel))
+    dp.add_handler(CommandHandler("menu", menu))
     dp.add_handler(echo_handler)
 
     updater.start_webhook(

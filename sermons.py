@@ -11,30 +11,29 @@ def cci_sermons():
     base_url = 'http://ccing.org/sermons/'
     r = requests.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, 'html.parser')
-    #sermons_section = soup.find_all('article')
-    sermon = soup.find("article")
+    sermons_section = soup.find_all('article')
     sermons = []
 
-    try:
-        image = sermon.find('img').get('src')
-        title = sermon.find('h3', {'class':'cmsmasters_sermon_title entry-title'}).find('a').text
-        link = sermon.find('h3', {'class':'cmsmasters_sermon_title entry-title'}).find('a').get('href')
-        download = sermon.find('a', {'class':'cmsmasters_sermon_media_item cmsmasters_theme_icon_sermon_download'}).get('href')
-        video = sermon.find('a', {'class':'cmsmasters_sermon_media_item cmsmasters_theme_icon_sermon_video'}).get('href')
-    
-        sermons.append({
-            "title":title,
-            "download":download,
-            "video":video,
-            "link":link,
-            "image":image})
-    except:
-        sermons.append({
-           "title":title,
-            "download":download,
-            "link":link,
-            "image":image,
-            "video":None})
+    for sermon in sermons_section[0:4]:
+        try:
+            image = sermon.find('img').get('src')
+            title = sermon.find('h3', {'class':'cmsmasters_sermon_title entry-title'}).find('a').text
+            link = sermon.find('h3', {'class':'cmsmasters_sermon_title entry-title'}).find('a').get('href')
+            download = sermon.find('a', {'class':'cmsmasters_sermon_media_item cmsmasters_theme_icon_sermon_download'}).get('href')
+            video = sermon.find('a', {'class':'cmsmasters_sermon_media_item cmsmasters_theme_icon_sermon_video'}).get('href')  
+            sermons.append({
+                "title":title,
+                "download":download,
+                "video":video,
+                "link":link,
+                "image":image})
+        except:
+            sermons.append({
+                "title":title,
+                "download":download,
+                "link":link,
+                "image":image,
+                "video":None})
     return sermons
 
 def t30():

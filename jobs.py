@@ -4,7 +4,7 @@ import json
 import telegram
 import requests
 from datetime import date, datetime, timedelta
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
 from sermons import cci_sermons, t30
 from events import service_ticket
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -30,25 +30,48 @@ def send_devotional():
             )
         except Exception as e:
             if str(e) == "Forbidden: bot was blocked by the user":
-                db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
+                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
     u = db.users.count_documents({"mute":False, "active":True})
     db.devotionals.insert_one(d)
     print(f"DEVOTIONAL: Sent devotional to {u} users")
-
-
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=1)    
-def insert_sermon():
+ 
+def insert_sermon(sermon):
     """
-    Checks daily for new sermons from the site and inserts into
-    db if any
+    Insert new sermons into db
     """
+    if db.sermons.find_one({"title":sermon["title"]}) is not None:
+        pass
+    else:
+        db.sermons.insert_one(sermon)
+        print("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
+        return True
+
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
+def new_sermons():
     sermons = cci_sermons()
+    titles = []
     for sermon in sermons:
-        if db.sermons.find_one({"title":sermon["title"]}) is not None:
-            pass
-        else:
-            db.sermons.insert_one(sermon)
-            print("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
+        if insert_sermon(sermon) is True:
+            titles.append(sermon)
+    try:
+        buttons = [[KeyboardButton("{}".format(s["title"]))] for s in titles]
+        for user in db.users.find({"mute":False}):
+            try:
+                db.db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"last_command":"get_sermon"}})
+                bot.send_message(
+                    chat_id=user["chat_id"],
+                    text=config["messages"]["new_sermon"],
+                    reply_markup=ReplyKeyboardMarkup(buttons)
+                )
+            except Exception as e:
+                if str(e) == "Forbidden: bot was blocked by the user":
+                    db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+        
+        lsermon = titles[0]
+        lsermon["latest_sermon"] = True
+        db.temporary.replace_one({"latest_sermon":True}, lsermon)
+    except:
+        pass
 
 def notify_tickets():
     """
