@@ -46,32 +46,35 @@ def insert_sermon(sermon):
         print("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
         return True
 
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
+#@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
 def new_sermons():
     sermons = cci_sermons()
     titles = []
     for sermon in sermons:
         if insert_sermon(sermon) is True:
             titles.append(sermon)
-    try:
-        buttons = [[KeyboardButton("{}".format(s["title"]))] for s in titles]
-        for user in db.users.find({"mute":False}):
-            try:
-                db.db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"last_command":"get_sermon"}})
-                bot.send_message(
-                    chat_id=user["chat_id"],
-                    text=config["messages"]["new_sermon"],
-                    reply_markup=ReplyKeyboardMarkup(buttons)
-                )
-            except Exception as e:
-                if str(e) == "Forbidden: bot was blocked by the user":
-                    db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+    if len(titles) > 0:
+        try:
+            buttons = [[KeyboardButton("{}".format(s["title"]))] for s in titles]
+            for user in db.users.find({"mute":False, "admin":True}):
+                try:
+                    db.db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"last_command":"get_sermon"}})
+                    bot.send_message(
+                        chat_id=user["chat_id"],
+                        text=config["messages"]["new_sermon"],
+                        reply_markup=ReplyKeyboardMarkup(buttons)
+                    )
+                except Exception as e:
+                    if str(e) == "Forbidden: bot was blocked by the user":
+                        db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
         
-        lsermon = titles[0]
-        lsermon["latest_sermon"] = True
-        db.temporary.replace_one({"latest_sermon":True}, lsermon)
-    except:
-        pass
+            lsermon = titles[0]
+            lsermon["latest_sermon"] = True
+            db.temporary.replace_one({"latest_sermon":True}, lsermon)
+        except:
+            pass
+
+new_sermons()
 
 def notify_tickets():
     """

@@ -100,13 +100,12 @@ buttons = [
 buttons2 = [ 
     KeyboardButton("devotional"),
     KeyboardButton("help"),
-    #KeyboardButton("map")
+    KeyboardButton("map")
 ]
 
 buttons3 = [
     KeyboardButton("statistics"),
     KeyboardButton("broadcast"),
-    KeyboardButton("map"),
 ]
 
 def start(update, context):
@@ -527,7 +526,7 @@ def map_handle(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     if q in list(LOCATIONS.keys()):
-        buttons = [[InlineKeyboardButton(i, callback_data=q+"="+i)] for i in list(LOCATIONS[q].keys())]
+        buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(LOCATIONS[q].keys())]
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["location2"].format(q),
             reply_markup=InlineKeyboardMarkup(buttons)
@@ -535,7 +534,7 @@ def map_handle(update, context):
     elif len(q.split("=")) == 2:
         x = q.split("=")
         towns = set([i["location"] for i in LOCATIONS[x[0]][x[1]]])
-        buttons = [[InlineKeyboardButton(i, callback_data=q+"="+i)] for i in list(towns)]
+        buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(towns)]
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["location2"].format(x[1]),
             reply_markup=InlineKeyboardMarkup(buttons)
