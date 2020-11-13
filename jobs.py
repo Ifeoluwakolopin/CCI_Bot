@@ -40,13 +40,13 @@ def insert_sermon(sermon):
     Insert new sermons into db
     """
     if db.sermons.find_one({"title":sermon["title"]}) is not None:
-        pass
+        return None
     else:
         db.sermons.insert_one(sermon)
         print("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
         return True
 
-#@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
 def new_sermons():
     sermons = cci_sermons()
     titles = []
@@ -56,7 +56,7 @@ def new_sermons():
     if len(titles) > 0:
         try:
             buttons = [[KeyboardButton("{}".format(s["title"]))] for s in titles]
-            for user in db.users.find({"mute":False, "admin":True}):
+            for user in db.users.find({"mute":False}):
                 try:
                     db.db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"last_command":"get_sermon"}})
                     bot.send_message(
@@ -73,8 +73,6 @@ def new_sermons():
             db.temporary.replace_one({"latest_sermon":True}, lsermon)
         except:
             pass
-
-new_sermons()
 
 def notify_tickets():
     """
