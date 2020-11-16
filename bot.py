@@ -163,6 +163,7 @@ def helps(update, context):
     if db.users.find_one({"chat_id":chat_id, "admin":True}):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["help"], parse_mode="Markdown",
+            disable_web_page_preview="True",
             reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
         )
     else:
