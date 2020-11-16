@@ -6,11 +6,11 @@
         "name": "cci_bot"
       },
     "messages":{
-        "start":"Hi {}🤗\n\nI am your personal CCI assistant.\nI am here to aid you in experiencing progress and joy in the faith🥳💃\nI can help you with a lot of things!\nBelow are some of them\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Get instant ticket notifications😱(Lagos branch Only)🔔\n and so much more...\n\nI'm so excited to do this with you\n\nTo get started\nAll you have to do is click on the icon with four dots or just type “help”\n\nAll sermons and devotionals gotten from\n[Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
+        "start":"Hi {}🤗\n\nI am your personal CCI assistant.\nI am here to aid you in experiencing progress and joy in the faith🥳💃\nI can help you with a lot of things!\nBelow are some of them\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Find a MAP location close to you! \n• Get instant ticket notifications😱(Lagos branch Only)🔔\n and so much more...\n\nI'm so excited to do this with you\n\nTo get started\nAll you have to do is click on the icon with four dots or just type “help”\n\nAll sermons and devotionals gotten from\n[Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
         "cancel":"You have succesfully cancelled action.",
         "get_sermon":"Enter the title of the sermon you wish to get.\n\nClick /cancel to cancel operation.",
         "tickets":"Yay🎉🎉.\n\nTickets are now available for {}!\nBook your seat now!",
-        "help":"Here's how the buttons below work\n\n• latest sermon - Stream or download the most recent sermon\n• get sermon - Get a specific sermon by title\n• devotional - Get today's devotional\n\nOther commands\n• /mute - Mute notifications\n• /unmute - Unmute notifications",
+        "help":"Here's how the buttons below work\n\n• latest sermon - This gives you the most recent sermon available on the [website](http://ccing.org/sermons/)\n\n• get sermon - This helps you get a specific sermon by it's title.\nYou can search using the name of the sermon or a certain word in the sermon if you don't remember the exact title.\n\n• devotional - Get today's devotional\n\n• map - This helps you find the nearest MAP centre to your location.\n\nOther commands\n• /mute - Mute notifications\n• /unmute - Unmute notifications",
         "bc_help":"How to use broadcast types\n\n• text - Send written text broadcast to all users\n• photo - Send a photo with/without caption as broadcast.\n• video - Send a video clip (must be less than 50mb) as broadcast with/without caption\n• animation - Send short animated gif as broadcast with/without caption.\n\nUse /cancel to cancel operation.",
         "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
         "broadcast":"Choose broadcast type📣📣\nYou can check out how to use broadcast by clicking the usage button below.\n\nUse /cancel to cancel operation.",
@@ -18,7 +18,7 @@
         "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
         "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
         "t30_caption":"📍 {}\n\n{}\n\nRead on triumph30.org",
-        "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🧍🏽‍♀️🧍🏽‍♂️\n\nActive users: {}\n\nTotal Sermons available: {}🔥",
+        "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🧍🏽‍♀️🧍🏽‍♂\n\nActive users: {} 👥\n\nTotal Sermons available: {}🔥",
         "empty":"😅No sermons found with title '{}'\n\n You can search for a keyword in the title or the full title.\n\nUse the get sermon button to try again.",
         "done":"Done.👌",
         "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
