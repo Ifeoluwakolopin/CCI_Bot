@@ -223,9 +223,10 @@ def stats(update, context):
     """
     chat_id = update.effective_chat.id
     total_users = db.users.count_documents({})
+    active_users = db.users.count_documents({})
     total_sermons = db.sermons.count_documents({})
     context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["stats"].format(total_users, total_sermons), parse_mode="Markdown"
+        chat_id=chat_id, text=config["messages"]["stats"].format(total_users, active_users, total_sermons), parse_mode="Markdown"
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 

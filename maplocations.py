@@ -110,17 +110,3 @@ LOCATIONS = {
         ]
     }
 }
-
-
-STATES = list(LOCATIONS.keys())
-
-PLACES = [i["location"] for i in LOCATIONS["lagos"]["island"]] + [i["location"] for i in LOCATIONS["lagos"]["mainland"]]
-PLACES = list(set(PLACES))
-
-print(STATES)
-print(PLACES)
-
-with open("maplocations.json", "a") as d:
-    json.dump(LOCATIONS, d, indent=2)
-    json.dump({"states":STATES}, d, indent=2)
-    d.close()
