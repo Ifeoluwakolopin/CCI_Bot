@@ -538,7 +538,7 @@ def map_handle(update, context):
         towns = set([i["location"] for i in LOCATIONS[x[0]][x[1]]])
         buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(towns)]
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["location2"].format(x[1]),
+            chat_id=chat_id, text=config["messages"]["location2"].format(x[1].capitalize()),
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     elif len(q.split("=")) == 3:
@@ -547,10 +547,10 @@ def map_handle(update, context):
         for loc in LOCATIONS[x[0]][x[1]]:
             if loc["location"] == x[2]:
                 locations += config["messages"]["location4"].format(
-                    loc["address"], loc["contact"], loc["capacity"]
+                    loc["name"], loc["contact"]
                 )
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["location3"].format(x[2], locations)
+            chat_id=chat_id, text=config["messages"]["location3"].format(x[2].capitalize(), locations)
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 

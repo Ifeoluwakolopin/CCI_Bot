@@ -27,8 +27,8 @@
         "map":"Meet and Pray(MAP)\n\nMAP is a platform where members residing around the same geographical location gather to pray and break bread.\n\n",
         "location":"📍Find MAP locations closest to you.\n\nUse the buttons to make selections.\n\nTap /cancel to cancel action.",
         "location2":"Where in {} do you want to find a MAP centre?",
-        "location3":"Here's a list of MAP locations in {0}.{1}",
-        "location4":"\n\nAddress🏠: {0}\nContact📞: {1}\nCapacity👥: {2} people.",
+        "location3":"To join a MAP center in {0}.{1}",
+        "location4":"\n\nContact {} on {}",
         "map_feedback":"Can't find a MAP centre close to you😔?\n\nSend us a mail: celebrationnigeria@gmail.com"
     }
     
