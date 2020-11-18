@@ -481,7 +481,7 @@ def echo(update, context):
     elif last_command == "bc_photo":
         photo = update.message.photo[-1].file_id
         caption = update.message.caption
-        for user in db.users.find({"chat_id":792501227}):
+        for user in db.users.find({}):
             x = photo_send(user["chat_id"], photo=photo, caption=caption.format(user["first_name"]))
             if x is None:
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
