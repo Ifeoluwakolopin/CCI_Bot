@@ -394,7 +394,7 @@ def map_loc(update, context):
         chat_id=chat_id, photo=open("MAP.jpg", "rb"),
         caption=config["messages"]["map"],
     )
-    buttons = [[InlineKeyboardButton(i, callback_data=i)] for i in list(LOCATIONS.keys())]
+    buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=i)] for i in list(LOCATIONS.keys())]
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["location"],
         reply_markup=InlineKeyboardMarkup(buttons)
@@ -482,7 +482,7 @@ def echo(update, context):
     elif last_command == "bc_photo":
         photo = update.message.photo[-1].file_id
         caption = update.message.caption
-        for user in db.users.find({}):
+        for user in db.users.find({"chat_id":792501227}):
             x = photo_send(user["chat_id"], photo=photo, caption=caption.format(user["first_name"]))
             if x is None:
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
