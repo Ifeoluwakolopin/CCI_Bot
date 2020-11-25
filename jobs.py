@@ -58,11 +58,11 @@ def new_sermons():
             buttons = [[KeyboardButton("{}".format(s["title"]))] for s in titles]
             for user in db.users.find({"mute":False}):
                 try:
-                    db.db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"last_command":"get_sermon"}})
+                    db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"last_command":"get_sermon"}})
                     bot.send_message(
                         chat_id=user["chat_id"],
                         text=config["messages"]["new_sermon"],
-                        reply_markup=ReplyKeyboardMarkup(buttons)
+                        reply_markup=ReplyKeyboardMarkup(buttons, resize_keyboard=True)
                     )
                 except Exception as e:
                     if str(e) == "Forbidden: bot was blocked by the user":
