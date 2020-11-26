@@ -31,6 +31,7 @@ def send_devotional():
         except Exception as e:
             if str(e) == "Forbidden: bot was blocked by the user":
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+        db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"last_command":None}})
     u = db.users.count_documents({"mute":False, "active":True})
     db.devotionals.insert_one(d)
     print(f"DEVOTIONAL: Sent devotional to {u} users")
@@ -54,6 +55,10 @@ def new_sermons():
         if insert_sermon(sermon) is True:
             titles.append(sermon)
     if len(titles) > 0:
+        lsermon = titles[0]
+        lsermon["latest_sermon"] = True
+        db.temporary.replace_one({"latest_sermon":True}, lsermon)
+        print("Updated latest Sermon to {}".format(lsermon["title"]))
         try:
             buttons = [[KeyboardButton("{}".format(s["title"]))] for s in titles]
             for user in db.users.find({"mute":False}):
@@ -67,10 +72,6 @@ def new_sermons():
                 except Exception as e:
                     if str(e) == "Forbidden: bot was blocked by the user":
                         db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
-        
-            lsermon = titles[0]
-            lsermon["latest_sermon"] = True
-            db.temporary.replace_one({"latest_sermon":True}, lsermon)
         except:
             pass
 
