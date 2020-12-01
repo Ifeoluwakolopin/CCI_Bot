@@ -442,7 +442,14 @@ def echo(update, context):
     """
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
-    last_command = user["last_command"]
+    if user is not None:
+        last_command = user["last_command"]
+    else:
+        if not db.users.find_one({"chat_id":chat_id}):
+            db.users.insert_one({
+            "chat_id":chat_id, "date":dt.now(), "admin":False, "mute":False, "first_name":first_name, "last_name":last_name})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None, "active":True}})
+        last_command = None
 
     if last_command == None:
         handle_commands(update, context)
