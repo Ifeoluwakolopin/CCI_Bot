@@ -403,9 +403,9 @@ def map_loc(update, context):
     
 def notify_new_sermon(chat_id, sermons):
     try:
-        buttons = [[InlineKeyboardButton(i, callback_data="s="+i)] for i in sermons]
-    except:
         buttons = [[InlineKeyboardButton(i, callback_data="s="+i.split("–")[1])] for i in sermons]
+    except:
+        buttons = [[InlineKeyboardButton(i, callback_data="s="+i)] for i in sermons]
     bot.send_message(
         chat_id=chat_id, text=config["messages"]["new_sermon"],
         reply_markup=InlineKeyboardMarkup(buttons)
