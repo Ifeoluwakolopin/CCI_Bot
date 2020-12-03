@@ -507,7 +507,7 @@ def echo(update, context):
         video = update.message.video.file_id
         caption = update.message.caption
         for user in db.users.find({}):
-            x = video_send(user["chat_id"], video=video, caption=caption)
+            x = video_send(user["chat_id"], video=video, caption=caption.format(user["first_name"]))
             if x is None:
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
         users = db.users.count_documents({})
