@@ -394,13 +394,24 @@ def map_loc(update, context):
         chat_id=chat_id, photo=open("MAP.jpg", "rb"),
         caption=config["messages"]["map"],
     )
-    buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=i)] for i in list(LOCATIONS.keys())]
+    buttons = [[InlineKeyboardButton(i.capitalize(), callback_data="map="+i)] for i in list(LOCATIONS.keys())]
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["location"],
         reply_markup=InlineKeyboardMarkup(buttons)
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"map"}})
     
+def notify_new_sermon(chat_id, sermons):
+    buttons = [[InlineKeyboardButton(i, callback_data="sermon="+i)] for i in sermons]
+    try:
+        bot.send_message(
+            chat_id=chat_id, text=config["messages"]["new_sermon"],
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+        return True
+    except:
+        return None
+
 def handle_commands(update, context):
     """
     Handles logic for commands
@@ -442,14 +453,7 @@ def echo(update, context):
     """
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
-    if user is not None:
-        last_command = user["last_command"]
-    else:
-        if not db.users.find_one({"chat_id":chat_id}):
-            db.users.insert_one({
-            "chat_id":chat_id, "date":dt.now(), "admin":False, "mute":False, "first_name":first_name, "last_name":last_name})
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None, "active":True}})
-        last_command = None
+    last_command = user["last_command"]
 
     if last_command == None:
         handle_commands(update, context)
@@ -532,38 +536,42 @@ def echo(update, context):
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     
-def map_handle(update, context):
+def cb_handle(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
-    if q in list(LOCATIONS.keys()):
-        buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(LOCATIONS[q].keys())]
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["location2"].format(q),
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-    elif len(q.split("=")) == 2:
-        x = q.split("=")
-        towns = set([i["location"] for i in LOCATIONS[x[0]][x[1]]])
-        buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(towns)]
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["location2"].format(x[1].capitalize()),
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-    elif len(q.split("=")) == 3:
-        x = q.split("=")
-        locations = ""
-        for loc in LOCATIONS[x[0]][x[1]]:
-            if loc["location"] == x[2]:
-                locations += config["messages"]["location4"].format(
-                    loc["name"], loc["contact"]
-                )
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["location3"].format(x[2].capitalize(), locations)
-        )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    if q.split("=")[0] == "map":
+        q = q[4:]
+        if q in list(LOCATIONS.keys()):
+            buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(LOCATIONS[q].keys())]
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["location2"].format(q),
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        elif len(q.split("=")) == 2:
+            x = q.split("=")
+            towns = set([i["location"] for i in LOCATIONS[x[0]][x[1]]])
+            buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(towns)]
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["location2"].format(x[1].capitalize()),
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        elif len(q.split("=")) == 3:
+            x = q.split("=")
+            locations = ""
+            for loc in LOCATIONS[x[0]][x[1]]:
+                if loc["location"] == x[2]:
+                    locations += config["messages"]["location4"].format(
+                        loc["name"], loc["contact"]
+                    )
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["location3"].format(x[2].capitalize(), locations)
+            )
+            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    elif q.split("=")[0] == "sermon":
+        print("sermon")
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
-map_handler = CallbackQueryHandler(map_handle)
+cb_handler = CallbackQueryHandler(cb_handle)
 
 def main():
     dp.add_handler(CommandHandler("start", start))
@@ -572,7 +580,7 @@ def main():
     dp.add_handler(CommandHandler("cancel", cancel))
     dp.add_handler(CommandHandler("menu", menu))
     dp.add_handler(echo_handler)
-    dp.add_handler(map_handler)
+    dp.add_handler(cb_handler)
 
     updater.start_webhook(
         listen="0.0.0.0", port=int(PORT), url_path=config["bot_token"]
