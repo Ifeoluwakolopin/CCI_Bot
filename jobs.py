@@ -8,6 +8,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton,
 from sermons import cci_sermons, t30
 from events import service_ticket
 from apscheduler.schedulers.blocking import BlockingScheduler
+from bot import notify_new_sermon
 
 config = json.load(open("config.json"))
 
@@ -47,7 +48,7 @@ def insert_sermon(sermon):
         print("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
         return True
 
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
+#@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
 def new_sermons():
     sermons = cci_sermons()
     titles = []
@@ -57,23 +58,11 @@ def new_sermons():
     if len(titles) > 0:
         lsermon = titles[0]
         lsermon["latest_sermon"] = True
-        db.temporary.replace_one({"latest_sermon":True}, lsermon)
+        db.sermon.delete_one({"latest_sermon":True})
+        db.temporary.insert_one(lsermon)
         print("Updated latest Sermon to {}".format(lsermon["title"]))
-        try:
-            buttons = [[KeyboardButton("{}".format(s["title"]))] for s in titles]
-            for user in db.users.find({"mute":False}):
-                try:
-                    db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"last_command":"get_sermon"}})
-                    bot.send_message(
-                        chat_id=user["chat_id"],
-                        text=config["messages"]["new_sermon"],
-                        reply_markup=ReplyKeyboardMarkup(buttons, resize_keyboard=True)
-                    )
-                except Exception as e:
-                    if str(e) == "Forbidden: bot was blocked by the user":
-                        db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
-        except:
-            pass
+        for user in db.users.find({}):
+            notify_new_sermon(user["chat_id"], titles)
 
 def notify_tickets():
     """
