@@ -543,7 +543,7 @@ def cb_handle(update, context):
         if q[4:] in list(LOCATIONS.keys()):
             buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(LOCATIONS[q[4:]].keys())]
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["location2"].format(q),
+                chat_id=chat_id, text=config["messages"]["location2"].format(q[4:].capitalize()),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
         elif len(q.split("=")) == 3:
