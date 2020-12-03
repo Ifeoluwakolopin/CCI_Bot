@@ -540,8 +540,7 @@ def cb_handle(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     if q.split("=")[0] == "map":
-        q = q[4:]
-        print(q)
+        q = update.callback_query.data[4:]
         if q in list(LOCATIONS.keys()):
             buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(LOCATIONS[q].keys())]
             context.bot.send_message(
