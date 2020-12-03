@@ -541,29 +541,29 @@ def cb_handle(update, context):
     q = update.callback_query.data
     if q.split("=")[0] == "map":
         if q[4:] in list(LOCATIONS.keys()):
-            buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(LOCATIONS[q].keys())]
+            buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(LOCATIONS[q[4:]].keys())]
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["location2"].format(q),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
-        elif len(q.split("=")) == 2:
-            x = q.split("=")
-            towns = set([i["location"] for i in LOCATIONS[x[0]][x[1]]])
-            buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(towns)]
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["location2"].format(x[1].capitalize()),
-                reply_markup=InlineKeyboardMarkup(buttons)
-            )
         elif len(q.split("=")) == 3:
             x = q.split("=")
+            towns = set([i["location"] for i in LOCATIONS[x[1]][x[2]]])
+            buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(towns)]
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["location2"].format(x[2].capitalize()),
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        elif len(q.split("=")) == 4:
+            x = q.split("=")
             locations = ""
-            for loc in LOCATIONS[x[0]][x[1]]:
-                if loc["location"] == x[2]:
+            for loc in LOCATIONS[x[1]][x[2]]:
+                if loc["location"] == x[3]:
                     locations += config["messages"]["location4"].format(
                         loc["name"], loc["contact"]
                     )
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["location3"].format(x[2].capitalize(), locations)
+                chat_id=chat_id, text=config["messages"]["location3"].format(x[3].capitalize(), locations)
             )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif q.split("=")[0] == "sermon":
