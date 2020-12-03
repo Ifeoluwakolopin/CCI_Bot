@@ -402,15 +402,14 @@ def map_loc(update, context):
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"map"}})
     
 def notify_new_sermon(chat_id, sermons):
-    buttons = [[InlineKeyboardButton(i, callback_data="sermon="+i)] for i in sermons]
     try:
-        bot.send_message(
-            chat_id=chat_id, text=config["messages"]["new_sermon"],
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-        return True
+        buttons = [[InlineKeyboardButton(i, callback_data="s="+i)] for i in sermons]
     except:
-        return None
+        buttons = [[InlineKeyboardButton(i, callback_data="s="+i.split("–")[1])] for i in sermons]
+    bot.send_message(
+        chat_id=chat_id, text=config["messages"]["new_sermon"],
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )    
 
 def handle_commands(update, context):
     """
@@ -566,8 +565,18 @@ def cb_handle(update, context):
                 chat_id=chat_id, text=config["messages"]["location3"].format(x[3].capitalize(), locations)
             )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-    elif q.split("=")[0] == "sermon":
-        print("sermon")
+    elif q.split("=")[0] == "s":
+        sermon = search_db(q[2:])[0]
+        if sermon["video"] is not None:
+            buttons = [[InlineKeyboardButton("Download Sermon", url=sermon["download"])],
+                    [InlineKeyboardButton("Watch Video", url=sermon["video"])]]
+            context.bot.send_photo(
+                chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(buttons)                )
+        else:
+            button = [[InlineKeyboardButton("Download Sermon", url=sermon["link"])]]
+            context.bot.send_photo(
+                chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
+           )
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
 cb_handler = CallbackQueryHandler(cb_handle)
