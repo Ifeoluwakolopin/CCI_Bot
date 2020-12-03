@@ -541,6 +541,7 @@ def cb_handle(update, context):
     q = update.callback_query.data
     if q.split("=")[0] == "map":
         q = q[4:]
+        print(q)
         if q in list(LOCATIONS.keys()):
             buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(LOCATIONS[q].keys())]
             context.bot.send_message(
