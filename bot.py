@@ -406,8 +406,9 @@ def notify_new_sermon(chat_id, sermons):
         buttons = [[InlineKeyboardButton(i, callback_data="s="+i.split("–")[1])] for i in sermons]
     except:
         buttons = [[InlineKeyboardButton(i, callback_data="s="+i)] for i in sermons]
+    user = db.users.find_one({"chat_id":chat_id})
     bot.send_message(
-        chat_id=chat_id, text=config["messages"]["new_sermon"],
+        chat_id=chat_id, text=config["messages"]["new_sermon_reboot"].format(user["first_name"]),
         reply_markup=InlineKeyboardMarkup(buttons)
     )    
 

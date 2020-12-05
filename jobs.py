@@ -48,7 +48,7 @@ def insert_sermon(sermon):
         print("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
         return True
 
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
+#@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
 def new_sermons():
     sermons = cci_sermons()
     titles = []
