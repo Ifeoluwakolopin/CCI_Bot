@@ -58,7 +58,7 @@ def new_sermons():
     if len(titles) > 0:
         lsermon = titles[0]
         lsermon["latest_sermon"] = True
-        db.sermon.delete_one({"latest_sermon":True})
+        db.temporary.delete_one({"latest_sermon":True})
         db.temporary.insert_one(lsermon)
         print("Updated latest Sermon to {}".format(lsermon["title"]))
         t = [i["title"] for i in titles]
