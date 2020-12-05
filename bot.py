@@ -577,6 +577,8 @@ def cb_handle(update, context):
             context.bot.send_photo(
                 chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
            )
+    elif q.split("=")[0] == "loc":
+        pass
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
 cb_handler = CallbackQueryHandler(cb_handle)

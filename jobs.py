@@ -48,7 +48,7 @@ def insert_sermon(sermon):
         print("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
         return True
 
-#@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
 def new_sermons():
     sermons = cci_sermons()
     titles = []
@@ -61,8 +61,9 @@ def new_sermons():
         db.sermon.delete_one({"latest_sermon":True})
         db.temporary.insert_one(lsermon)
         print("Updated latest Sermon to {}".format(lsermon["title"]))
+        t = [i["title"] for i in titles]
         for user in db.users.find({}):
-            notify_new_sermon(user["chat_id"], titles)
+            notify_new_sermon(user["chat_id"], t)
 
 def notify_tickets():
     """
