@@ -59,5 +59,3 @@ def t30():
         "excerpt":excerpt}
 
     return d
-
-print(t30())
