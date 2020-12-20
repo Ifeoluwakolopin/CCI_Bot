@@ -538,7 +538,25 @@ def echo(update, context):
             parse_mode="Markdown"
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-    
+
+def location_prompt(chat_id):
+    buttons = [
+        [InlineKeyboardButton("Lagos - Ikeja", callback_data="loc=Ikeja")],
+        [InlineKeyboardButton("Lagos - Lekki", callback_data="loc=Lekki")],
+        [InlineKeyboardButton("PortHarcourt", callback_data="loc=PH")],
+        [InlineKeyboardButton("Canada", callback_data="loc=Canada")],
+        [InlineKeyboardButton("Abuja", callback_data="loc=Abuja")],
+        [InlineKeyboardButton("Online Member", callback_data="loc=Online")],
+        [InlineKeyboardButton("None", callback_data="loc=None")]]
+    user = db.users.find_one({"chat_id":chat_id})
+    try:
+        bot.send_message(
+            chat_id=chat_id, text=config["messages"]["lc"].format(user["first_name"]),
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    except:
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"active":False}})
+
 def cb_handle(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
@@ -582,7 +600,11 @@ def cb_handle(update, context):
                 chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
            )
     elif q.split("=")[0] == "loc":
-        pass
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"location":q[4:]}})
+        bot.send_message(
+            chat_id=chat_id, text=config["messages"]["lc_confirm"].format(q[4:]),
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
 cb_handler = CallbackQueryHandler(cb_handle)
