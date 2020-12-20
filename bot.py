@@ -602,8 +602,7 @@ def cb_handle(update, context):
     elif q.split("=")[0] == "loc":
         db.users.update_one({"chat_id":chat_id}, {"$set":{"location":q[4:]}})
         bot.send_message(
-            chat_id=chat_id, text=config["messages"]["lc_confirm"].format(q[4:]),
-            reply_markup=InlineKeyboardMarkup(buttons)
+            chat_id=chat_id, text=config["messages"]["lc_confirm"].format(q[4:])
         )
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
