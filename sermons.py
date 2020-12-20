@@ -55,6 +55,9 @@ def t30():
     d = {"title":title,
         "link":link,
         "image":image,
-        "date":date, "excerpt":excerpt}
+        "date":date,
+        "excerpt":excerpt}
 
     return d
+
+print(t30())
