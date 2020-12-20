@@ -403,7 +403,7 @@ def map_loc(update, context):
     
 def notify_new_sermon(chat_id, sermons):
     try:
-        buttons = [[InlineKeyboardButton(i, callback_data="s="+i.split("–")[2]+i.split("–")[1])] for i in sermons]
+        buttons = [[InlineKeyboardButton(i, callback_data="s="+i.split("–")[2]+" "+i.split("–")[1])] for i in sermons]
     except:
         buttons = [[InlineKeyboardButton(i, callback_data="s="+i)] for i in sermons]
     user = db.users.find_one({"chat_id":chat_id})
