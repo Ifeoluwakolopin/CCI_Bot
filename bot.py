@@ -248,9 +248,9 @@ def location(update, context):
     ch = ""
     for church in list(CHURCHES.keys()):
         ch += config["messages"]["church"].format(
-        church.upper(), CHURCHES[church]["name"], CHURCHES[church]["link"]
+        church.capitalize(), CHURCHES[church]["name"], CHURCHES[church]["link"]
         )
-        ch += "\n\n\n"
+        ch += "\n\n"
 
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["find_church"].format(ch),
