@@ -97,6 +97,11 @@ buttons = [
     KeyboardButton("get sermon"),
 ]
 
+buttons1 = [
+    KeyboardButton("location"),
+    KeyboardButton("membership"),
+]
+
 buttons2 = [ 
     KeyboardButton("devotional"),
     KeyboardButton("help"),
@@ -107,6 +112,9 @@ buttons3 = [
     KeyboardButton("statistics"),
     KeyboardButton("broadcast"),
 ]
+
+normal_keyboard = [buttons, buttons2]
+admin_keyboard = [buttons, buttons1, buttons2, buttons3]
 
 def start(update, context):
     """
@@ -125,13 +133,13 @@ def start(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
             parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
         )
     else:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
             parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
         )
 
 
@@ -164,12 +172,12 @@ def helps(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["help"], parse_mode="Markdown",
             disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
         )
     else:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["help"], parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
         )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
@@ -209,12 +217,12 @@ def random(update, context):
     if db.users.find_one({"chat_id":chat_id, "admin":True}):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["unknown"],
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
         )
     else:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["unknown"],
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
         )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
@@ -231,6 +239,14 @@ def stats(update, context):
         chat_id=chat_id, text=config["messages"]["stats"].format(total_users, active_users, mute_users, total_sermons), parse_mode="Markdown"
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
+def mem_school(update, context):
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["membership"]
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
 
 bc_btns = [[
     KeyboardButton("text"),
@@ -319,13 +335,13 @@ def done(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["done"],
             parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
         )
     else:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["done"],
             parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
         )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
@@ -337,12 +353,12 @@ def menu(update, context):
     if db.users.find_one({"chat_id":chat_id, "admin":True}):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["menu"],
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
         )
     else:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["menu"],
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
         )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
@@ -355,13 +371,13 @@ def cancel(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cancel"],
             parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2, buttons3], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
         )
     else:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cancel"],
             parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup([buttons, buttons2], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
         )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
