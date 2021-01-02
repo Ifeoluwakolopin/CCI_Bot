@@ -11,7 +11,7 @@ from telegram.ext import Filters
 from telegram.ext import CallbackQueryHandler
 from telegram.ext import MessageHandler, CommandHandler
 from sermons import cci_sermons, t30
-from maplocations import LOCATIONS
+from locations import MAP_LOCATIONS, CHURCHES
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -240,6 +240,24 @@ def stats(update, context):
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
+def location(update, context):
+    """ 
+    This gives a list of church locations.
+    """
+    chat_id = update.effective_chat.id
+    ch = ""
+    for church in list(CHURCHES.keys()):
+        ch += config["messages"]["church"].format(
+        church.upper(), CHURCHES[church]["name"], CHURCHES[church]["link"]
+        )
+        ch += "\n\n\n"
+
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["find_church"].format(ch),
+        parse_mode="Markdown", disable_web_page_preview="True"
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
 def mem_school(update, context):
     chat_id = update.effective_chat.id
     context.bot.send_message(
@@ -410,7 +428,7 @@ def map_loc(update, context):
         chat_id=chat_id, photo=open("MAP.jpg", "rb"),
         caption=config["messages"]["map"],
     )
-    buttons = [[InlineKeyboardButton(i.capitalize(), callback_data="map="+i)] for i in list(LOCATIONS.keys())]
+    buttons = [[InlineKeyboardButton(i.capitalize(), callback_data="map="+i)] for i in list(MAP_LOCATIONS.keys())]
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["location"],
         reply_markup=InlineKeyboardMarkup(buttons)
@@ -449,6 +467,8 @@ def handle_commands(update, context):
         stats(update, context)
     elif title == "broadcast":
         broadcast(update, context)
+    elif title == "location":
+        location(update, context)
     elif title == "usage":
         bc_help(update, context)
     elif title == "text":
@@ -577,15 +597,15 @@ def cb_handle(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     if q.split("=")[0] == "map":
-        if q[4:] in list(LOCATIONS.keys()):
-            buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(LOCATIONS[q[4:]].keys())]
+        if q[4:] in list(MAP_LOCATIONS.keys()):
+            buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(MAP_LOCATIONS[q[4:]].keys())]
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["location2"].format(q[4:].capitalize()),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
         elif len(q.split("=")) == 3:
             x = q.split("=")
-            towns = set([i["location"] for i in LOCATIONS[x[1]][x[2]]])
+            towns = set([i["location"] for i in MAP_LOCATIONS[x[1]][x[2]]])
             buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(towns)]
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["location2"].format(x[2].capitalize()),
@@ -594,7 +614,7 @@ def cb_handle(update, context):
         elif len(q.split("=")) == 4:
             x = q.split("=")
             locations = ""
-            for loc in LOCATIONS[x[1]][x[2]]:
+            for loc in MAP_LOCATIONS[x[1]][x[2]]:
                 if loc["location"] == x[3]:
                     locations += config["messages"]["location4"].format(
                         loc["name"], loc["contact"]

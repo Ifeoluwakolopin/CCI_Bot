@@ -1,6 +1,6 @@
 import json
 
-LOCATIONS = {
+MAP_LOCATIONS = {
     "lagos":{
         "island":[
             {
@@ -172,4 +172,24 @@ LOCATIONS = {
             }
         ]
     }
+}
+
+CHURCHES = {
+
+        "lagos mainland":{
+            "name":"JFK EVENT CENTRE\n\nPlot 15, Block C, NERDC Rd, Opposite Tisco Plaza, Alausa, Ikeja.",
+            "link":"https://goo.gl/maps/Jo455DQkk1M4eWGJ8"
+        },
+        "lagos island":{
+            "name":"ROYAL OAKS CENTRE\n\nKm 14, Lekki Epe Expressway by Chisco Bus Stop, Enyo Petrol Station, Lekki.",
+            "link":"https://g.page/royaloaksng?share"
+        },
+        "abuja":{
+            "name":"EDEN PARKS AND GARDEN\n\nPlot 1126, Augustus Aikhomu Street, Opposite Chida Hotel, Utako, Abuja.",
+            "link":"https://goo.gl/maps/oaF2CjMYC1rJ7KULA"
+        },
+        "port harcourt":{
+            "name":"The AUTOGRAPH\n\n30, Sani Abacha Road, GRA Phase 3, Port Harcourt.",
+            "link":"https://goo.gl/maps/fHCKSibeP6sAN1s16"
+        }
 }

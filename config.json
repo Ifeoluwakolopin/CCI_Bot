@@ -31,6 +31,9 @@
         "location4":"\n\nContact {} on {}",
         "map_feedback":"Can't find a MAP centre close to you😔?\n\nSend us a mail: celebrationnigeria@gmail.com",
         "new_sermon_reboot":"Good news {} 🥳!\n\nAll sermons so far from the Reboot Camp 2020 are now available.\n\nSelect any sermon to stream or download👇",
+        "membership":"",
+        "church":"{}\n\n{}\n{}",
+        "find_church":"Find the nearest Celebration CHurch International centre to you.\n\nNeed Directions?\nHere are a few locations\n\n{}",
         "lc":"Heyy there {}!\n\nWhere do you attend Celebration Church?",
         "lc_confirm":"Your broadcasts will be personalized to {}"
     }
