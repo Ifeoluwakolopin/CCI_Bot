@@ -10,7 +10,7 @@
         "cancel":"You have succesfully cancelled action.",
         "get_sermon":"Enter the title of the sermon you wish to get.\n\nClick /cancel to cancel operation.",
         "tickets":"Yay🎉🎉.\n\nTickets are now available for {}!\nBook your seat now!",
-        "help":"Here's how the buttons below work\n\n👉 latest sermon - This gives you the most recent sermon available on the [website](http://ccing.org/sermons/)\n\n👉 get sermon - This helps you get a specific sermon by it's title. You can search using the exact title or a keyword.\nSearching for a keyword (e.g Grace) would give you all sermon containing the keyword in their titles.\n\n👉 devotional - Get today's devotional\n\n👉 map - This helps you find the nearest MAP centre to your location.\n\nOther commands\n• /mute - Mute notifications\n• /unmute - Unmute notifications",
+        "help":"Here's how the buttons below work\n\n👉 latest sermon - This gives you the most recent sermon available on the [website](http://ccing.org/sermons/)\n\n👉 get sermon - This helps you get a specific sermon by it's title. You can search using the exact title or a keyword.\nSearching for a keyword (e.g Grace) would give you all sermon containing the keyword in their titles.\n\n👉 devotional - Get today's devotional\n\n👉 map - This helps you find the nearest MAP centre to your location.\n\n👉 location - Gives you the address of the nearest CCI branch to you.\n\n👉 membership - Register for CCI membership class.\n\nOther commands\n• /mute - Mute notifications\n• /unmute - Unmute notifications",
         "bc_help":"How to use broadcast types\n\n👉 text - Send written text broadcast to all users\n👉 photo - Send a photo with/without caption as broadcast.\n👉 video - Send a video clip (must be less than 50mb) as broadcast with/without caption\n👉 animation - Send short animated gif as broadcast with/without caption.\n\nUse /cancel to cancel operation.",
         "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
         "broadcast":"Choose broadcast type📣📣\nYou can check out how to use broadcast by clicking the usage button below.\n\nUse /cancel to cancel operation.",
@@ -31,9 +31,9 @@
         "location4":"\n\nContact {} on {}",
         "map_feedback":"Can't find a MAP centre close to you😔?\n\nSend us a mail: celebrationnigeria@gmail.com",
         "new_sermon_reboot":"Good news {} 🥳!\n\nAll sermons so far from the Reboot Camp 2020 are now available.\n\nSelect any sermon to stream or download👇",
-        "membership":"",
         "church":"{}📍\n[{}]({})",
         "find_church":"🔗 Worship with us at a CCI branch close to you.\n\nNeed Directions?\nHere are a few branches close to you.\n\n{}",
+        "membership":"Want to attend Celebration Church International Membership class? ",
         "lc":"Heyy there {}!\n\nWhere do you attend Celebration Church?",
         "lc_confirm":"Your broadcasts will be personalized to {}"
     }

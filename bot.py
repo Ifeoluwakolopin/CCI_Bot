@@ -260,7 +260,7 @@ def location(update, context):
 
 def mem_school(update, context):
     chat_id = update.effective_chat.id
-    button = [[InlineKeyboardButton("Register", link="http://bit.ly/ccimemschool")]]
+    button = [[InlineKeyboardButton("Register", url="http://bit.ly/ccimemschool")]]
     context.bot.send_photo(
         chat_id=chat_id, photo=open("membership.jpg", "rb"),
         caption=config["messages"]["membership"], reply_markup=InlineKeyboardMarkup(button)
