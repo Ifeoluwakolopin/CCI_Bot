@@ -113,7 +113,7 @@ buttons3 = [
     KeyboardButton("broadcast"),
 ]
 
-normal_keyboard = [buttons, buttons2]
+normal_keyboard = [buttons,buttons1, buttons2]
 admin_keyboard = [buttons, buttons1, buttons2, buttons3]
 
 def start(update, context):
