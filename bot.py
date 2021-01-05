@@ -260,8 +260,10 @@ def location(update, context):
 
 def mem_school(update, context):
     chat_id = update.effective_chat.id
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["membership"]
+    button = [[InlineKeyboardButton("Register", link="http://bit.ly/ccimemschool")]]
+    context.bot.send_photo(
+        chat_id=chat_id, photo=open("membership.jpg", "rb"),
+        caption=config["messages"]["membership"], reply_markup=InlineKeyboardMarkup(button)
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
@@ -469,6 +471,8 @@ def handle_commands(update, context):
         broadcast(update, context)
     elif title == "location":
         location(update, context)
+    elif title == "membership":
+        mem_school(update, context)
     elif title == "usage":
         bc_help(update, context)
     elif title == "text":

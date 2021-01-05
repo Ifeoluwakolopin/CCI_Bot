@@ -191,5 +191,9 @@ CHURCHES = {
         "port harcourt":{
             "name":"The AUTOGRAPH\n30, Sani Abacha Road, GRA Phase 3, Port Harcourt.",
             "link":"https://goo.gl/maps/fHCKSibeP6sAN1s16"
+        },
+        "ibadan":{
+            "name":"TAFO ARENA EVENT CENTRE\nWAEC Road Junction, Polytechnic Road Oyo.",
+            "link":"https://goo.gl/maps/335ejVk4wH34a8Sj7"
         }
 }
