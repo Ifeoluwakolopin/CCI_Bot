@@ -65,16 +65,14 @@ def new_sermons():
         for user in db.users.find({}):
             notify_new_sermon(user["chat_id"], t)
 
+numbers = {1:"first", 2:"second", 3:"third"}
+
 def notify_tickets():
     """
     Send a notification to users and returns True on success
     """
     ticket = service_ticket()
-    if len(ticket) == 2:
-        buttons = [[InlineKeyboardButton("Book first service", url=ticket[0]["link"])],
-            [InlineKeyboardButton("Book second service", url=ticket[1]["link"])]]
-    else:
-        buttons = [[InlineKeyboardButton("Reserve a seat", url=ticket[0]["link"])]]
+    buttons =[[InlineKeyboardButton("Register for {} service".format(numbers[ticket.index(service)+1]), url=service["link"])] for service in ticket]
     for user in db.users.find({"mute":False}):
         try:
             bot.send_photo(
