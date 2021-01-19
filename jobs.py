@@ -36,7 +36,7 @@ def send_devotional():
     u = db.users.count_documents({"mute":False, "active":True})
     db.devotionals.insert_one(d)
     print(f"DEVOTIONAL: Sent devotional to {u} users")
- 
+
 def insert_sermon(sermon):
     """
     Insert new sermons into db
@@ -89,7 +89,7 @@ def ticket_task():
     u = db.users.count_documents({"mute":False, "active":True})
     print(f"TICKET: Notified {u} users")
 
-@sched.scheduled_job('interval', minutes=29)
+@sched.scheduled_job('interval', minutes=27)
 def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
     print("Waking app...")
