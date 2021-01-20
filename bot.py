@@ -597,6 +597,29 @@ def location_prompt(chat_id):
     except:
         db.users.update_one({"chat_id":chat_id}, {"$set":{"active":False}})
 
+def birthday_prompt(chat_id):
+    buttons = [
+        [InlineKeyboardButton("January", callback_data="bd=1"),
+        InlineKeyboardButton("February", callback_data="bd=2"),
+        InlineKeyboardButton("March", callback_data="bd=3")],
+        [InlineKeyboardButton("April", callback_data="bd=4"),
+        InlineKeyboardButton("May", callback_data="bd=5"),
+        InlineKeyboardButton("June", callback_data="bd=6")],
+        [InlineKeyboardButton("July", callback_data="bd=7"),
+        InlineKeyboardButton("August", callback_data="bd=8"),
+        InlineKeyboardButton("September", callback_data="bd=9")],
+        [InlineKeyboardButton("October", callback_data="bd=10"),
+        InlineKeyboardButton("November", callback_data="bd=11"),
+        InlineKeyboardButton("December", callback_data="bd=12")]]
+    #user = db.users.find_one({"chat_id":chat_id})
+    try:
+        bot.send_message(
+            chat_id=chat_id, text=config["messages"]["birthday_prompt"],
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    except:
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"active":False}})
+
 def cb_handle(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
@@ -644,6 +667,18 @@ def cb_handle(update, context):
         bot.send_message(
             chat_id=chat_id, text=config["messages"]["lc_confirm"].format(q[4:])
         )
+    elif q.split("=")[0] == "bd":
+        if len(q.split("=")) == 2:
+            btns = [[InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(1,11)],
+                [InlineKeyboardButton(str(i), callback_data=q+"="+i) for i in range(11,21)],
+            [InlineKeyboardButton(str(i), callback_data=q+"="+i) for i in range(21,31)]]
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["birthday_prompt"],
+                reply_markup=InlineKeyboardMarkup(btns)
+            )
+        else:
+            db.users.update_one({"chat_id":chat_id}, {"$set":{"birthday":q.split("=")[1]+"/"+q.split("=")[2]}})
+        
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
 cb_handler = CallbackQueryHandler(cb_handle)

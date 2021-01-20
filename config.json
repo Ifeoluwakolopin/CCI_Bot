@@ -35,7 +35,9 @@
         "find_church":"🔗 Worship with us at a CCI branch close to you.\n\nNeed Directions?\nHere are a few branches close to you.\n\n{}",
         "membership":"Want to attend Celebration Church International Membership class? ",
         "lc":"Heyy there {}!\n\nWhere do you attend Celebration Church?",
-        "lc_confirm":"Your broadcasts will be personalized to {}"
+        "lc_confirm":"Your broadcasts will be personalized to {}",
+        "birthday_prompt":"When is your birthday?",
+        "birthday_confirm":""
     }
     
 }
