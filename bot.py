@@ -672,14 +672,24 @@ def cb_handle(update, context):
             btns = [[InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(1,8)],
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(8,15)],
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(15,22)],
-                [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(22,29)],
-                [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,32)]]
+                [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(22,29)]]
+            extra = [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,{})]
+            if q.split("=")[1] in ["9", "4", "6", "11"]:
+                btns.append(extra.format(30))
+            elif q.split("=")[1] == "2":
+                btns.append(extra.format(29))
+            else:
+                btns.append(extra.format(31))
+                
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["birthday_prompt"],
                 reply_markup=InlineKeyboardMarkup(btns)
             )
         else:
             db.users.update_one({"chat_id":chat_id}, {"$set":{"birthday":q.split("=")[1]+"/"+q.split("=")[2]}})
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["birthday_confirm"]
+            )
         
 
 echo_handler = MessageHandler(Filters.all & (~Filters.command), echo)
