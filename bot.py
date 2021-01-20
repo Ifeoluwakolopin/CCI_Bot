@@ -670,8 +670,8 @@ def cb_handle(update, context):
     elif q.split("=")[0] == "bd":
         if len(q.split("=")) == 2:
             btns = [[InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(1,11)],
-                [InlineKeyboardButton(str(i), callback_data=q+"="+i) for i in range(11,21)],
-            [InlineKeyboardButton(str(i), callback_data=q+"="+i) for i in range(21,31)]]
+                [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(11,21)],
+            [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(21,31)]]
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["birthday_prompt"],
                 reply_markup=InlineKeyboardMarkup(btns)
