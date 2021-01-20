@@ -673,13 +673,13 @@ def cb_handle(update, context):
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(8,15)],
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(15,22)],
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(22,29)]]
-            extra = [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,{})]
+            
             if q.split("=")[1] in ["9", "4", "6", "11"]:
-                btns.append(extra.format(30))
+                btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,31)])
             elif q.split("=")[1] == "2":
-                btns.append(extra.format(29))
+                btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,29)])
             else:
-                btns.append(extra.format(31))
+                btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,32)])
                 
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["birthday_prompt"],
