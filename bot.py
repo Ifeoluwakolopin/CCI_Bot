@@ -677,7 +677,7 @@ def cb_handle(update, context):
             if q.split("=")[1] in ["9", "4", "6", "11"]:
                 btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,31)])
             elif q.split("=")[1] == "2":
-                btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,29)])
+                btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,30)])
             else:
                 btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,32)])
                 
