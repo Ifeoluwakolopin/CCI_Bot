@@ -697,7 +697,7 @@ def cb_handle(update, context):
         else:
             db.users.update_one({"chat_id":chat_id}, {"$set":{"birthday":q.split("=")[1]+"-"+q.split("=")[2]}})
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["birthday_confirm"].format(q.split("=")[1:].join("/"))
+                chat_id=chat_id, text=config["messages"]["birthday_confirm"].format(q.split("=")[1]+"/"+q.split("=")[2])
             )
         
 
