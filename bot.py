@@ -581,13 +581,14 @@ def echo(update, context):
 
 def location_prompt(chat_id):
     buttons = [
-        [InlineKeyboardButton("Lagos - Ikeja", callback_data="loc=Ikeja")],
-        [InlineKeyboardButton("Lagos - Lekki", callback_data="loc=Lekki")],
-        [InlineKeyboardButton("PortHarcourt", callback_data="loc=PH")],
-        [InlineKeyboardButton("Canada", callback_data="loc=Canada")],
-        [InlineKeyboardButton("Abuja", callback_data="loc=Abuja")],
-        [InlineKeyboardButton("Online Member", callback_data="loc=Online")],
-        [InlineKeyboardButton("None", callback_data="loc=None")]]
+        [InlineKeyboardButton("Lagos - Ikeja", callback_data="loc=Ikeja"),
+        InlineKeyboardButton("Lagos - Lekki", callback_data="loc=Lekki")],
+        [InlineKeyboardButton("Ibadan", callback_data="loc=Ibadan"),
+        InlineKeyboardButton("PortHarcourt", callback_data="loc=PH")],
+        [InlineKeyboardButton("Canada", callback_data="loc=Canada"),
+        InlineKeyboardButton("Abuja", callback_data="loc=Abuja")],
+        [InlineKeyboardButton("Online Member", callback_data="loc=Online"),
+        InlineKeyboardButton("None", callback_data="loc=None")]]
     user = db.users.find_one({"chat_id":chat_id})
     try:
         bot.send_message(
@@ -611,10 +612,10 @@ def birthday_prompt(chat_id):
         [InlineKeyboardButton("October", callback_data="bd=10"),
         InlineKeyboardButton("November", callback_data="bd=11"),
         InlineKeyboardButton("December", callback_data="bd=12")]]
-    #user = db.users.find_one({"chat_id":chat_id})
+    user = db.users.find_one({"chat_id":chat_id})
     try:
         bot.send_message(
-            chat_id=chat_id, text=config["messages"]["birthday_prompt"],
+            chat_id=chat_id, text=config["messages"]["birthday_prompt"].format(user["first_name"]),
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     except:
@@ -682,13 +683,13 @@ def cb_handle(update, context):
                 btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,32)])
                 
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["birthday_prompt"],
+                chat_id=chat_id, text=config["messages"]["birthday_day"],
                 reply_markup=InlineKeyboardMarkup(btns)
             )
         else:
-            db.users.update_one({"chat_id":chat_id}, {"$set":{"birthday":q.split("=")[1]+"/"+q.split("=")[2]}})
+            db.users.update_one({"chat_id":chat_id}, {"$set":{"birthday":q.split("=")[1]+"-"+q.split("=")[2]}})
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["birthday_confirm"]
+                chat_id=chat_id, text=config["messages"]["birthday_confirm"].format(q.split("=")[1:].join("/"))
             )
         
 

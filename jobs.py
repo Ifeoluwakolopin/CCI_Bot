@@ -94,6 +94,11 @@ def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
     print("Waking app...")
 
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=23)
+def birthday_notifier():
+    pass
+
+
 
 if __name__ == '__main__':
     sched.start()
