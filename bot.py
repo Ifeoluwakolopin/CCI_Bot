@@ -141,6 +141,7 @@ def start(update, context):
             parse_mode="Markdown", disable_web_page_preview="True",
             reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
         )
+    location_prompt(chat_id)
 
 
 def latest_sermon(update, context):
