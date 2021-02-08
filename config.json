@@ -22,7 +22,7 @@
         "empty":"😅No sermons found with title '{}'\n\n You can search for a keyword in the title or the full title.\n\nUse the get sermon button to try again.",
         "done":"Done.👌",
         "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
-        "new_sermon":"🔔 Good news {} 🥳!\n\nNew Sermons are now available on our platforms😄.\n\nSelect any sermon to stream or download👇",
+        "new_sermon":"🔔 Yayy!!\n\nNew Sermons are now available on all our platforms😄.\n\nSelect any sermon to stream or download👇",
         "menu":"Here you go.",
         "map":"Meet and Pray(MAP)\n\nMAP is a platform where members residing around the same geographical location gather to pray and break bread.\n\n",
         "location":"📍Find MAP locations closest to you.\n\nUse the buttons to make selections.\n\nTap /cancel to cancel action.",
@@ -34,10 +34,12 @@
         "church":"{}📍\n[{}]({})",
         "find_church":"🔗 Worship with us at a CCI branch close to you.\n\nNeed Directions?\nHere are a few branches close to you.\n\n{}",
         "membership":"Want to attend Celebration Church International Membership class? ",
-        "lc":"Heyy there {}!\n\nWhere do you attend Celebration Church?",
-        "lc_confirm":"Your broadcasts will be personalized to {}",
-        "birthday_prompt":"When is your birthday?",
-        "birthday_confirm":"Yayy, thanks for answering!"
+        "lc":"Hi {} 😄\n\nPlease take a moment to tell me what branch of CCI you attend.🥺\nThis would help improve your experience with the bot.😁",
+        "lc_confirm":"Thank you for your feedback!\nYour response will help us give you more personalized updates.",
+        "birthday_prompt":"Hi {}\n\nAs a part of the CCI family, we would like to celebrate you on your special day. 🥳\n\nPlease take a second to tell us when your birthday comes up.",
+        "birthday_day":"What day of the month?",
+        "birthday_confirm":"Thank you for replying this prompt🤗.\nYour birthday has been set to {} (day/month)",
+        "birthday_message":"Happy birthday to you {} 🎉\n\nWe celebrate you on this special day!\n\nYou shine as light in this your new year!"
     }
     
 }
