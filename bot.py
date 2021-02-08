@@ -239,7 +239,7 @@ def stats(update, context):
 
     for loc in db.users.distinct("location"):
         loc_count = db.users.count_documents({"location":loc})
-        location_based_stats += loc + ": " + str(loc_count)
+        location_based_stats += loc + " users: " + str(loc_count)
         location_based_stats += "\n"
         
     context.bot.send_message(
