@@ -36,7 +36,7 @@
         "membership":"Want to attend Celebration Church International Membership class? ",
         "lc":"Hi {} 😄\n\nPlease take a moment to tell me what branch of CCI you attend.🥺\nThis would help improve your experience with the bot.😁",
         "lc_confirm":"Thank you for your feedback! ☺️\nYour response will help us give you better updates.🤩",
-        "birthday_prompt":"Hi {}\n\nAs a part of the CCI family, we would like to celebrate you on your special day. 🥳\n\nPlease take a second to tell us when your birthday comes up.",
+        "birthday_prompt":"Hi {}🥰\n\nAs a part of the CCI family, we would like to celebrate you on your special day. 🥳\n\nPlease take a second to tell us when your birthday comes up.",
         "birthday_day":"What day of the month?",
         "birthday_confirm":"Thank you for replying this prompt🤗.\nYour birthday has been set to {} (month/day)",
         "birthday_message":"Happy birthday to you {} 🎉\n\nWe celebrate you on this special day!\n\nYou shine as light in this your new year!"
