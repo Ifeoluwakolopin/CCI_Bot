@@ -10,13 +10,19 @@ from telegram.ext import Updater
 from telegram.ext import Filters
 from telegram.ext import CallbackQueryHandler
 from telegram.ext import MessageHandler, CommandHandler
-from sermons import cci_sermons, t30
+from sermons import t30
 from locations import MAP_LOCATIONS, CHURCHES
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+class NoRunningFilter(logging.Filter):
+    def filter(self, record):
+        return not record.msg.startswith('Running job')
+
+my_filter = NoRunningFilter()
+logger = logging.getLogger(__name__).addFilter(my_filter) 
 
 config = json.load(open("config.json"))
 

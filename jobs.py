@@ -1,10 +1,9 @@
-import time
 import pymongo
 import json
 import telegram
 import requests
-from datetime import date, datetime, timedelta
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
+from datetime import datetime
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from sermons import cci_sermons, t30
 from events import service_ticket
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -97,7 +96,7 @@ def ticket_task():
 def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
 
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=23)
+#@sched.scheduled_job('cron', day_of_week='mon-sun', hour=23)
 def birthday_notifier():
     pass
 
