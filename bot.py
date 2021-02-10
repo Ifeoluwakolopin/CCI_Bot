@@ -142,6 +142,7 @@ def start(update, context):
             reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
         )
     location_prompt(chat_id)
+    birthday_prompt(chat_id)
 
 
 def latest_sermon(update, context):
@@ -237,6 +238,7 @@ def stats(update, context):
     mute_users = db.users.count_documents({"mute":True})
     total_sermons = db.sermons.count_documents({})
     location_based_stats = ""
+    bdays = db.users.count_documents({"birthday":{"$exists":True}})
 
     for loc in db.users.distinct("location"):
         loc_count = db.users.count_documents({"location":loc})
@@ -245,7 +247,8 @@ def stats(update, context):
         
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["stats"].format(total_users, active_users, 
-        mute_users, total_sermons, location_based_stats), parse_mode="Markdown"
+        mute_users, total_sermons,
+        location_based_stats, bdays), parse_mode="Markdown"
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
