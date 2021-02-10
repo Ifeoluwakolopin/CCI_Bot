@@ -92,7 +92,7 @@ def ticket_task():
     u = db.users.count_documents({"mute":False, "active":True})
     print(f"TICKET: Notified {u} users")
 
-@sched.scheduled_job('interval', minutes=30)
+@sched.scheduled_job('interval', seconds=30)
 def wake():
     #requests.get('https://secret-sands-37903.herokuapp.com/')
     print("done")
