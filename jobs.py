@@ -71,7 +71,10 @@ def notify_tickets():
     """
     Send a notification to users and returns True on success
     """
-    ticket = service_ticket()
+    if len(service_ticket()) > 3:
+        ticket = service_ticket()[0:2]
+    else:
+        ticket = service_ticket()
     buttons =[[InlineKeyboardButton("Register for {} service".format(numbers[ticket.index(service)+1]), url=service["link"])] for service in ticket]
     for user in db.users.find({"mute":False}):
         try:
@@ -80,7 +83,8 @@ def notify_tickets():
             )
         except Exception as e:
             if str(e) == "Forbidden: bot was blocked by the user":
-                db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
+                #db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
+                pass
 
 
 @sched.scheduled_job('cron', day_of_week='wed', hour=12)
@@ -96,8 +100,6 @@ def wake():
 @sched.scheduled_job('cron', day_of_week='mon-sun', hour=23)
 def birthday_notifier():
     pass
-
-
 
 if __name__ == '__main__':
     sched.start()
