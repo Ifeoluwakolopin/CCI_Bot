@@ -92,10 +92,10 @@ def ticket_task():
     u = db.users.count_documents({"mute":False, "active":True})
     print(f"TICKET: Notified {u} users")
 
-@sched.scheduled_job('interval', seconds=30)
+@sched.scheduled_job('interval', minutes=29)
 def wake():
-    #requests.get('https://secret-sands-37903.herokuapp.com/')
-    print("done")
+    requests.get('https://secret-sands-37903.herokuapp.com/')
+    
 
 #@sched.scheduled_job('cron', day_of_week='mon-sun', hour=23)
 def birthday_notifier():
