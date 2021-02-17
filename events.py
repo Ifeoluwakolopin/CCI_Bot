@@ -1,8 +1,6 @@
 import requests, json
-from datetime import datetime as dt
 
 config = json.load(open("config.json"))
-
 
 def service_ticket():
     """
