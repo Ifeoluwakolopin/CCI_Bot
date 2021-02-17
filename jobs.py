@@ -2,7 +2,7 @@ import pymongo
 import json
 import telegram
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from sermons import cci_sermons, t30
 from events import service_ticket
@@ -97,9 +97,24 @@ def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
     
 
-#@sched.scheduled_job('cron', day_of_week='mon-sun', hour=23)
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=22, minute=58)
 def birthday_notifier():
-    pass
+    tommorow = datetime.today() + timedelta(days=1)
+    x = str(tommorow.month)+'-'+str(tommorow.day)
+    #birthdays = db.users.find({"birthday":x})
+    birthdays = db.users.find({"chat_id":792501227})
+    sent = 0
+    for user in birthdays:
+        try:
+            bot.send_photo(
+                chat_id=user["chat_id"], photo=open("birthday.jpg", "rb"),
+                caption=config["messages"]["birthday_message1"].format(user["first_name"])
+            )
+            sent += 1
+        except:
+            pass
+    print(f"BIRTHDAY: Sent {sent} birthday wishes")
 
+birthday_notifier()
 if __name__ == '__main__':
     sched.start()

@@ -39,7 +39,7 @@
         "birthday_prompt":"Hi {}🥰\n\nAs a part of the CCI family, we would like to celebrate you on your special day. 🥳\n\nPlease take a second to tell us when your birthday comes up.",
         "birthday_day":"What day of the month?",
         "birthday_confirm":"Thank you for replying this prompt🤗.\nYour birthday has been set to {} (month/day)",
-        "birthday_message":"Happy birthday to you {} 🎉\n\nWe celebrate you on this special day!\n\nYou shine as light in this your new year!"
+        "birthday_message1":"YAYYYY!!🥳\nIt's your special day {0}🎉\n\nAs you celebrate a new year, We pray that you abound in good health, joy and peace, and that your light shines brightly to all around you.🌟\nWe delight ourselves in the Lord for giving us the desires of our hearts in a friend such as you!🥰\nIt's your year of Impact!\n\nHappy Birthday {0}❤️❤️"
     }
     
 }
