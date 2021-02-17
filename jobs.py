@@ -108,13 +108,12 @@ def birthday_notifier():
         try:
             bot.send_photo(
                 chat_id=user["chat_id"], photo=open("birthday.jpg", "rb"),
-                caption=config["messages"]["birthday_message1"].format(user["first_name"])
+                caption=config["messages"]["birthday_message1"].format(x)
             )
             sent += 1
         except:
             pass
     print(f"BIRTHDAY: Sent {sent} birthday wishes")
 
-birthday_notifier()
 if __name__ == '__main__':
     sched.start()
