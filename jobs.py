@@ -97,12 +97,11 @@ def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
     
 
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=22, minute=58)
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=23, minute=00)
 def birthday_notifier():
     tommorow = datetime.today() + timedelta(days=1)
     x = str(tommorow.month)+'-'+str(tommorow.day)
-    #birthdays = db.users.find({"birthday":x})
-    birthdays = db.users.find({"chat_id":792501227})
+    birthdays = db.users.find({"birthday":x})
     sent = 0
     for user in birthdays:
         try:
