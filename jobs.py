@@ -107,7 +107,7 @@ def birthday_notifier():
         try:
             bot.send_photo(
                 chat_id=user["chat_id"], photo=open("birthday.jpg", "rb"),
-                caption=config["messages"]["birthday_message1"].format(x)
+                caption=config["messages"]["birthday_message1"].format(user["first_name"])
             )
             sent += 1
         except:
