@@ -75,7 +75,11 @@ def notify_tickets():
     else:
         ticket = service_ticket()
     buttons =[[InlineKeyboardButton("Register for {} service".format(numbers[ticket.index(service)+1]), url=service["link"])] for service in ticket]
-    for user in db.users.find({"mute":False}):
+    users = db.users.find({"$or":[
+                {"location":{"$in":["Ikeja", "Lekki", "Online", "None"]}},
+                {"location":{"$exists":False}}
+            ]})
+    for user in users:
         try:
             bot.send_photo(
                 chat_id=user["chat_id"], photo=ticket[0]["image"], caption=config["messages"]["tickets"].format(ticket[0]["name"]), reply_markup=InlineKeyboardMarkup(buttons)
