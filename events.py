@@ -15,7 +15,9 @@ def service_ticket():
     base_url = 'https://www.eventbriteapi.com/v3/organizations/180780002373/events/'
     r = requests.get(base_url, params=params)
     try:
-        return [{"name":event["name"]["text"], "image":event["logo"]["url"],
+        return [{"image":event["logo"]["url"],
            "link":event["url"]} for event in r.json()["events"]]
     except:
         return []
+
+print(service_ticket())

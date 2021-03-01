@@ -82,7 +82,7 @@ def notify_tickets():
     for user in users:
         try:
             bot.send_photo(
-                chat_id=user["chat_id"], photo=ticket[0]["image"], caption=config["messages"]["tickets"].format(ticket[0]["name"]), reply_markup=InlineKeyboardMarkup(buttons)
+                chat_id=user["chat_id"], photo=ticket[0]["image"], caption=config["messages"]["tickets"], reply_markup=InlineKeyboardMarkup(buttons)
             )
         except Exception as e:
             if str(e) == "Forbidden: bot was blocked by the user":
