@@ -91,7 +91,7 @@ def notify_tickets():
 
 @sched.scheduled_job('cron', day_of_week='wed', hour=12)
 def ticket_task():
-    #notify_tickets()
+    notify_tickets()
     u = db.users.count_documents({"mute":False, "active":True})
     print(f"TICKET: Notified {u} users")
 
