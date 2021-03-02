@@ -2,3 +2,4 @@ tests.py
 __pycache__
 .ipynb_checkpoints
 bot_tests.py
+tempfiles

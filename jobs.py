@@ -31,7 +31,7 @@ def send_devotional():
         except Exception as e:
             if str(e) == "Forbidden: bot was blocked by the user":
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
-        db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"last_command":None}})
+            pass
     u = db.users.count_documents({"mute":False, "active":True})
     db.devotionals.insert_one(d)
     print(f"DEVOTIONAL: Sent devotional to {u} users")
