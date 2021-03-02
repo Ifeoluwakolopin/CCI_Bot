@@ -245,6 +245,9 @@ def stats(update, context):
     total_sermons = db.sermons.count_documents({})
     location_based_stats = ""
     bdays = db.users.count_documents({"birthday":{"$exists":True}})
+    today = dt.today()
+    x = str(today.month)+'-'+str(today.day)
+    today_bday = db.users.count_documents({"birthday":x})
 
     for loc in db.users.distinct("location"):
         loc_count = db.users.count_documents({"location":loc})
@@ -254,7 +257,8 @@ def stats(update, context):
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["stats"].format(total_users, active_users, 
         mute_users, total_sermons,
-        location_based_stats, bdays), parse_mode="Markdown"
+        location_based_stats, bdays,
+        today_bday), parse_mode="Markdown"
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 

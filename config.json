@@ -18,7 +18,7 @@
         "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
         "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
         "t30_caption":"📍 {}\n\n{}\n\nRead on triumph30.org",
-        "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🧍🏽‍♀️🧍🏽‍♂\nActive users: {} 👥\nMuted users: {}\nTotal Sermons available: {}🔥\n\nUsers location filtering:\n{}\n\nBirthdays: {}",
+        "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🧍🏽‍♀️🧍🏽‍♂\nActive users: {} 👥\nMuted users: {}\nTotal Sermons available: {}🔥\n\nUsers location filtering:\n{}\nBirthdays: {}\n\n{} people have birthdays today🎉",
         "empty":"😅No sermons found with title '{}'\n\n You can search for a keyword in the title or the full title.\n\nUse the get sermon button to try again.",
         "done":"Done.👌",
         "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
