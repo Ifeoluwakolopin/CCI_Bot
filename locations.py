@@ -177,8 +177,8 @@ MAP_LOCATIONS = {
 CHURCHES = {
 
         "lagos mainland":{
-            "name":"JFK EVENT CENTRE\nPlot 15, Block C, NERDC Rd, Opposite Tisco Plaza, Alausa, Ikeja.",
-            "link":"https://goo.gl/maps/Jo455DQkk1M4eWGJ8"
+            "name":"D'PODIUM INTERNATIONAL EVENT CENTRE\n31B Aromire Avenue, Off Adeniyi Jones Ave, Ikeja, Lagos.",
+            "link":"https://g.page/DPodium?share"
         },
         "lagos island":{
             "name":"ROYAL OAKS CENTRE\nKm 14, Lekki Epe Expressway by Chisco Bus Stop, Enyo Petrol Station, Lekki.",

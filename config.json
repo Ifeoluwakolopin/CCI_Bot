@@ -36,11 +36,11 @@
         "membership":"Want to attend Celebration Church International Membership class? ",
         "lc":"Hi {} 😄\n\nPlease take a moment to tell me what branch of CCI you attend.🥺\nThis would help improve your experience with the bot.😁",
         "lc_confirm":"Thank you for your feedback! ☺️\nYour response will help us give you better updates.🤩",
-        "birthday_prompt":"Hi {}🥰\n\nAs a part of the CCI family, we would like to celebrate you on your special day. 🥳\n\nPlease take a second to tell us when your birthday comes up.",
+        "birthday_prompt":"Hi {}🥰\n\nWe noticed you have not responded to this message🥺\n\nAs a part of the CCI family, we would like to celebrate you on your special day. 🥳\n\nPlease take a second to tell us when your birthday comes up.",
         "birthday_day":"What day of the month?",
         "birthday_confirm":"Thank you for replying this prompt🤗.\nYour birthday has been set to {} (month/day)",
         "birthday_message1":"YAYYYY!!🥳\nIt's your special day {0}🎉\n\nAs you celebrate a new year, We pray that you abound in good health, joy and peace, and that your light shines brightly to all around you.🌟\nWe delight ourselves in the Lord for giving us the desires of our hearts in a friend such as you!🥰\nIt's your year of Impact!\n\nHappy Birthday {0}❤️❤️",
-        "temp_message":"🔗 Do you live in Lekki, Lagos Nigeria? Do you go to church regularly but don't feel that depth of  'connection' with God and his word?\n\nJoin Pastor Emmanuel Iren on Saturday, 6th March 2021 at [Royal Oaks Event Center](https://g.page/royaloaksng?share) for a season of revelation, consecration and celebration in God's word.\n\nCome expectant of the supernatural.💃"
+        "temp_message":"Hello {}🤗,\nWe have good news! CCI Ikeja is getting bigger and better.💃\nFrom this Sunday, we will be moving to a new location – [D’Podium International Event Centre](https://g.page/DPodium?share). We have more room for everyone !. Glory!🎊\n\nCan’t find your way there?\nJust type “location” on the bot or use the button provided.\nSee you on Sunday!"
     }
     
 }
