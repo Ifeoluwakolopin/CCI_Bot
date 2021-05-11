@@ -284,7 +284,7 @@ def mem_school(update, context):
     chat_id = update.effective_chat.id
     button = [[InlineKeyboardButton("Register", url="http://bit.ly/ccimemschool")]]
     context.bot.send_photo(
-        chat_id=chat_id, photo=open("membership.jpg", "rb"),
+        chat_id=chat_id, photo=open("img/membership.jpg", "rb"),
         caption=config["messages"]["membership"], reply_markup=InlineKeyboardMarkup(button)
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
@@ -449,7 +449,7 @@ def map_loc(update, context):
     """
     chat_id = update.effective_chat.id
     context.bot.send_photo(
-        chat_id=chat_id, photo=open("MAP.jpg", "rb"),
+        chat_id=chat_id, photo=open("img/MAP.jpg", "rb"),
         caption=config["messages"]["map"],
     )
     buttons = [[InlineKeyboardButton(i.capitalize(), callback_data="map="+i)] for i in list(MAP_LOCATIONS.keys())]
