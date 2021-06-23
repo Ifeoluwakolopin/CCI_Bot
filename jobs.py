@@ -89,7 +89,7 @@ def notify_tickets():
                 #db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
                 pass
 
-@sched.scheduled_job('cron', day_of_week='wed', hour=12)
+#@sched.scheduled_job('cron', day_of_week='wed', hour=12)
 def ticket_task():
     notify_tickets()
     u = db.users.count_documents({"mute":False, "active":True})
