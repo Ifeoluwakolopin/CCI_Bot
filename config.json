@@ -40,7 +40,8 @@
         "birthday_day":"What day of the month?",
         "birthday_confirm":"Thank you for replying this prompt🤗.\nYour birthday has been set to {} (month/day)",
         "birthday_message1":"YAYYYY!!🥳\nIt's your special day {0}🎉\n\nAs you celebrate a new year, We pray that you abound in good health, joy and peace, and that your light shines brightly to all around you.🌟\nWe delight ourselves in the Lord for giving us the desires of our hearts in a friend such as you!🥰\nIt's your year of Impact!\n\nHappy Birthday {0}❤️❤️",
-        "temp_message":"Hello {}🤗,\nWe have good news! CCI Ikeja is getting bigger and better.💃\nFrom this Sunday, we will be moving to a new location – [D’Podium International Event Centre](https://g.page/DPodium?share). We have more room for everyone !. Glory!🎊\n\nCan’t find your way there?\nJust type “location” on the bot or use the button provided.\nSee you on Sunday!"
+        "temp_message":"New podcast episode is here🥳🥳\n\nWhy does the Bible have so many translations? Doesn’t it imply that Christians have more than one Bible?\n\nFinding Salaam has yet released another podcast addressing this and related topics on the integrity of the Bible.\n\nKindly click any of the links to listen and ensure you share with your friends, family, everyone.",
+        "temp_message1":"Listen on:\n\n[Anchor](https://anchor.fm/finding-salaam/episodes/Why-Does-The-Bible-Have-So-Many-Different-Translations-eo6frk)\n\n[Apple podcasts](https://podcasts.apple.com/us/podcast/finding-salaam/id1546470492?uo=4)\n\n[Google podcasts](https://www.google.com/podcasts?feed=aHR0cHM6Ly9hbmNob3IuZm0vcy8xNDU5YTA3NC9wb2RjYXN0L3Jzcw==)\n\n[Spotify](https://open.spotify.com/show/57Ds8uQKV6tjJtTnUtPKIH)"
     }
     
 }
