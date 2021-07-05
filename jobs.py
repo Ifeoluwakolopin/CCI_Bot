@@ -17,24 +17,23 @@ bot = telegram.Bot(token=config["bot_token"])
 
 sched = BlockingScheduler()
 
-@sched.scheduled_job('cron', day_of_week='mon-sat', hour=5)
-def send_devotional():
-    d = t30()
-    button = [[InlineKeyboardButton("Read more", url=d["link"])]]
-    for user in db.users.find({"mute":False}):
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=23, minute=00)
+def birthday_notifier():
+    tommorow = datetime.today() + timedelta(days=1)
+    x = str(tommorow.month)+'-'+str(tommorow.day)
+    birthdays = db.users.find({"birthday":x})
+    sent = 0
+    for user in birthdays:
         try:
             bot.send_photo(
-                chat_id=user["chat_id"], photo=d["image"],
-                caption=config["messages"]["t30_caption"].format(d["title"], d["excerpt"].split("\n")[0]),
-                reply_markup=InlineKeyboardMarkup(button)
+                chat_id=user["chat_id"], photo=open("img/birthday.jpg", "rb"),
+                caption=config["messages"]["birthday_message1"].format(user["first_name"])
             )
-        except Exception as e:
-            if str(e) == "Forbidden: bot was blocked by the user":
-                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+            sent += 1
+        except:
             pass
-    u = db.users.count_documents({"mute":False, "active":True})
-    db.devotionals.insert_one(d)
-    print(f"DEVOTIONAL: Sent devotional to {u} users")
+    print(f"BIRTHDAY: Sent {sent} birthday wishes")
+
 
 def insert_sermon(sermon):
     """
@@ -85,9 +84,26 @@ def notify_tickets():
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
         except Exception as e:
+            pass
+
+@sched.scheduled_job('cron', day_of_week='mon-sat', hour=5)
+def send_devotional():
+    d = t30()
+    button = [[InlineKeyboardButton("Read more", url=d["link"])]]
+    for user in db.users.find({"mute":False}):
+        try:
+            bot.send_photo(
+                chat_id=user["chat_id"], photo=d["image"],
+                caption=config["messages"]["t30_caption"].format(d["title"], d["excerpt"].split("\n")[0]),
+                reply_markup=InlineKeyboardMarkup(button)
+            )
+        except Exception as e:
             if str(e) == "Forbidden: bot was blocked by the user":
-                #db.users.update_one({"chat_id", user["chat_id"]}, {"$set":{"active":False}})
-                pass
+                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
+            pass
+    u = db.users.count_documents({"mute":False, "active":True})
+    db.devotionals.insert_one(d)
+    print(f"DEVOTIONAL: Sent devotional to {u} users")
 
 #@sched.scheduled_job('cron', day_of_week='wed', hour=12)
 def ticket_task():

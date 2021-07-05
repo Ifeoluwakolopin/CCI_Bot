@@ -1,5 +1,3 @@
-import json
-
 MAP_LOCATIONS = {
     "lagos":{
         "island":[
