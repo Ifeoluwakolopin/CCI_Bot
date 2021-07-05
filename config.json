@@ -16,6 +16,7 @@
     "cancel":"You have succesfully cancelled action.",
     "church":"{}📍\n[{}]({})",
     "done":"Done.👌",
+    "empty":"I can't find any sermons with {}.\nPlease check if you spelt that correctly!",
     "find_church":"🔗 Worship with us at a CCI branch close to you.\n\nNeed Directions?\nHere are a few branches close to you.\n\n{}",
     "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
     "get_sermon":"Enter the title of the sermon you wish to get.\n\nClick /cancel to cancel operation.",
