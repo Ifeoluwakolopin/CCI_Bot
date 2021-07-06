@@ -347,7 +347,18 @@ def unmute(update, context):
         chat_id=chat_id, text=config["messages"]["unmute"]
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"mute":False}})
-   
+
+
+def newsletter(update, context):
+    chat_id = update.effective_chat.id
+    button = [[InlineKeyboardButton("Subscribe", url="https://ccing.us8.list-manage.com/subscribe?u=03f72aceeaf186b2d6c32d37e&id=52c44cb044")]]
+    context.bot.send_photo(
+        chat_id=chat_id, photo=open("img/newsletter.jpg", "rb"),
+        caption=config["messages"]["membership"], reply_markup=InlineKeyboardMarkup(button)
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
+
 def notify_new_sermon(chat_id, sermons):
     try:
         buttons = [[InlineKeyboardButton(i, callback_data="s="+i.split("–")[2])] for i in sermons]

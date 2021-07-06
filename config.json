@@ -33,6 +33,7 @@
     "membership":"Want to attend Celebration Church International Membership class? ",
     "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
     "new_sermon":"🔔 Yayy!!\n\nNew Sermons are now available on all our platforms😄.\n\nSelect any sermon to stream or download👇",
+    "newsletter":"test",
     "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🧍🏽‍♀️🧍🏽‍♂\nActive users: {} 👥\nMuted users: {}\nTotal Sermons available: {}🔥\n\nUsers location filtering:\n{}\nBirthdays: {}\n\nToday's birthdays: {}",
     "start":"Hi {}🤗\n\nI am your personal CCI assistant.\nI am here to aid you in experiencing progress and joy in the faith🥳💃\nI can help you with a lot of things!\nBelow are some of them\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Find a MAP location close to you! \n• Find a CCI branch close to you📍\n• Register for Membership Class📝\n• Get instant ticket notifications😱(Lagos branch Only)🔔\n and so much more...\n\nI'm so excited to do this with you\n\nTo get started\nAll you have to do is click on the icon with four dots or just type “help”\n\nAll sermons and devotionals gotten from\n[Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
     "t30_caption":"📍 {}\n\n{}\n\nRead on triumph30.org",
