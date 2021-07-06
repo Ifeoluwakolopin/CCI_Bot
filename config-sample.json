@@ -1,53 +1,8 @@
 {
-<<<<<<< HEAD:config-sample.json
-    "bot_token":"telegram-api-token",
-    "event_token":"eventbrite-api-token",
-    "db": {
-        "client":"mongodbclient-sample",
-        "name": "cci_bot"
-      },
-      "messages":{
-        "bc":"Enter {} you want to broadcast:\n\nUse /cancel to cancel operation.",
-        "bc_help":"How to use broadcast types\n\n👉 text - Send written text broadcast to all users\n👉 photo - Send a photo with/without caption as broadcast.\n👉 video - Send a video clip (must be less than 50mb) as broadcast with/without caption\n👉 animation - Send short animated gif as broadcast with/without caption.\n\nUse /cancel to cancel operation.",
-        "birthday_prompt":"Hi {}🥰\n\nWe noticed you have not responded to this message🥺\n\nAs a part of the CCI family, we would like to celebrate you on your special day. 🥳\n\nPlease take a second to tell us when your birthday comes up.",
-        "birthday_day":"What day of the month?",
-        "birthday_confirm":"Thank you for replying this prompt🤗.\nYour birthday has been set to {} (month/day)",
-        "birthday_message1":"YAYYYY!!🥳\nIt's your special day {0}🎉\n\nAs you celebrate a new year, We pray that you abound in good health, joy and peace, and that your light shines brightly to all around you.🌟\nWe delight ourselves in the Lord for giving us the desires of our hearts in a friend such as you!🥰\nIt's your year of Impact!\n\nHappy Birthday {0}❤️❤️",
-        "broadcast":"Choose broadcast type📣📣\nYou can check out how to use broadcast by clicking the usage button below.\n\nUse /cancel to cancel operation.",
-        "cancel":"You have succesfully cancelled action.",
-        "church":"{}📍\n[{}]({})",
-        "done":"Done.👌",
-        "empty":"I can't find any sermons with {}.\nPlease check if you spelt that correctly😄",
-        "find_church":"🔗 Worship with us at a CCI branch close to you.\n\nNeed Directions?\nHere are a few branches close to you.\n\n{}",
-        "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
-        "get_sermon":"Enter the title of the sermon you wish to get.\n\nClick /cancel to cancel operation.",
-        "help":"Here's how the buttons below work\n\n👉 latest sermon - This gives you the most recent sermon available on the [website](http://ccing.org/sermons/)\n\n👉 get sermon - This helps you get a specific sermon by it's title. You can search using the exact title or a keyword.\nSearching for a keyword (e.g Grace) would give you all sermon containing the keyword in their titles.\n\n👉 devotional - Get today's devotional\n\n👉 map - This helps you find the nearest MAP centre to your location.\n\n👉 location - Gives you the address of the nearest CCI branch to you.\n\n👉 membership - Register for CCI membership class.\n\nOther commands\n• /mute - Mute notifications\n• /unmute - Unmute notifications",
-        "lc":"Hi {} 😄\n\nPlease take a moment to tell me what branch of CCI you attend.🥺\nThis would help improve your experience with the bot.😁",
-        "lc_confirm":"Thank you for your feedback! ☺️\nYour response will help us give you better updates.🤩",
-        "location":"📍Find MAP locations closest to you.\n\nUse the buttons to make selections.\n\nTap /cancel to cancel action.",
-        "location2":"Where in {} do you want to find a MAP centre?",
-        "location3":"To join a MAP center in {0}.{1}",
-        "location4":"\n\nContact {} on {}",
-        "map":"Meet and Pray(MAP)\n\nMAP is a platform where members residing around the same geographical location gather to pray and break bread.\n\n",
-        "map_feedback":"Can't find a MAP centre close to you😔?\n\nSend us a mail: celebrationnigeria@gmail.com",
-        "menu":"Here you go.",
-        "membership":"Want to attend Celebration Church International Membership class? ",
-        "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
-        "new_sermon":"🔔 Yayy!!\n\nNew Sermons are now available on all our platforms😄.\n\nSelect any sermon to stream or download👇",
-        "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🧍🏽‍♀️🧍🏽‍♂\nActive users: {} 👥\nMuted users: {}\nTotal Sermons available: {}🔥\n\nUsers location filtering:\n{}\nBirthdays: {}\n\nToday's birthdays: {}",
-        "start":"Hi {}🤗\n\nI am your personal CCI assistant.\nI am here to aid you in experiencing progress and joy in the faith🥳💃\nI can help you with a lot of things!\nBelow are some of them\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Find a MAP location close to you! \n• Find a CCI branch close to you📍\n• Register for Membership Class📝\n• Get instant ticket notifications😱(Lagos branch Only)🔔\n and so much more...\n\nI'm so excited to do this with you\n\nTo get started\nAll you have to do is click on the icon with four dots or just type “help”\n\nAll sermons and devotionals gotten from\n[Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
-        "t30_caption":"📍 {}\n\n{}\n\nRead on triumph30.org",
-        "temp_message":"New podcast episode is here🥳🥳\n\nWhy does the Bible have so many translations? Doesn’t it imply that Christians have more than one Bible?\n\nFinding Salaam has yet released another podcast addressing this and related topics on the integrity of the Bible.\n\nKindly click any of the links to listen and ensure you share with your friends, family, everyone.",
-        "temp_message1":"Listen on:\n\n[Anchor](https://anchor.fm/finding-salaam/episodes/Why-Does-The-Bible-Have-So-Many-Different-Translations-eo6frk)\n\n[Apple podcasts](https://podcasts.apple.com/us/podcast/finding-salaam/id1546470492?uo=4)\n\n[Google podcasts](https://www.google.com/podcasts?feed=aHR0cHM6Ly9hbmNob3IuZm0vcy8xNDU5YTA3NC9wb2RjYXN0L3Jzcw==)\n\n[Spotify](https://open.spotify.com/show/57Ds8uQKV6tjJtTnUtPKIH)",
-        "tickets":"BOOK A SEAT FOR SERVICE\n(Mainland Campus)\n\nThe registration link is live!\n\nWe've made room for everyone🎉🎉",
-        "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
-        "unmute":"Yay🎉\n\nYou have unmuted CCI Bot."
-    }
-=======
-  "bot_token":"1251287692:AAFZ2XDqrnNad00Okr8v2YLIYQGu_-awPw0",
-  "event_token":"6SSXB4XLEKVCVA34NSMF",
+  "bot_token":"telegram-api-token",
+  "event_token":"eventbrite-api-token",
   "db": {
-      "client":"mongodb+srv://are:Lordflame1@cluster0.acnn4.mongodb.net/cci_bot?retryWrites=true&w=majority",
+      "client":"mongodbclient-sample",
       "name": "cci_bot"
     },
   "messages":{
@@ -88,5 +43,4 @@
     "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
     "unmute":"Yay🎉\n\nYou have unmuted CCI Bot."
   }
->>>>>>> master:config.json
 }
