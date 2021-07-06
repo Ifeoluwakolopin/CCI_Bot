@@ -286,95 +286,7 @@ def location(update, context):
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
-def mem_school(update, context):
-    chat_id = update.effective_chat.id
-    button = [[InlineKeyboardButton("Register", url="http://bit.ly/ccimemschool")]]
-    context.bot.send_photo(
-        chat_id=chat_id, photo=open("img/membership.jpg", "rb"),
-        caption=config["messages"]["membership"], reply_markup=InlineKeyboardMarkup(button)
-    )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-
-
-bc_btns = [[
-    KeyboardButton("text"),
-    KeyboardButton("video"),
-    KeyboardButton("photo")],
-    [
-        KeyboardButton("animation"),
-        KeyboardButton("usage")
-    ]
-]
-
-def broadcast(update, context):
-    """
-    This function allows for an admin personnel send broadcast
-    to all users
-    """
-    chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["broadcast"],
-            reply_markup = ReplyKeyboardMarkup(bc_btns, resize_keyboard=True)
-        )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-
-def bc_help(update, context):
-    """
-    This function sends instruction on how to use broadcasts
-    """
-    chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["bc_help"]
-        )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-
-def bc_text(update, context):
-    """
-    This function sends text as broadcast
-    """
-    chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["bc"].format("message")
-        )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_text"}})
-
-def bc_photo(update, context):
-    """
-    This function sends photo as broadcast
-    """
-    chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["bc"].format("photo")
-        )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_photo"}})
-
-def bc_video(update, context):
-    """
-    This function sends video as broadcast.
-    """
-    chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["bc"].format("video")
-        )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_video"}})
-
-def bc_animation(update, context):
-    """
-    This function sends animation as broadcast
-    """
-    chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["bc"].format("animation")
-        )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_animation"}})
-
-def done(update, context):
+def map_loc(update, context):
     """
     This handles requests for map locations.
     """
@@ -436,22 +348,17 @@ def unmute(update, context):
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"mute":False}})
 
-def map_loc(update, context):
-    """
-    This handles requests for map locations.
-    """
+
+def newsletter(update, context):
     chat_id = update.effective_chat.id
+    button = [[InlineKeyboardButton("Subscribe", url="https://ccing.us8.list-manage.com/subscribe?u=03f72aceeaf186b2d6c32d37e&id=52c44cb044")]]
     context.bot.send_photo(
-        chat_id=chat_id, photo=open("img/MAP.jpg", "rb"),
-        caption=config["messages"]["map"],
+        chat_id=chat_id, photo=open("img/newsletter.jpg", "rb"),
+        caption=config["messages"]["membership"], reply_markup=InlineKeyboardMarkup(button)
     )
-    buttons = [[InlineKeyboardButton(i.capitalize(), callback_data="map="+i)] for i in list(MAP_LOCATIONS.keys())]
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["location"],
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"map"}})
-    
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
+
 def notify_new_sermon(chat_id, sermons):
     try:
         buttons = [[InlineKeyboardButton(i, callback_data="s="+i.split("–")[2])] for i in sermons]

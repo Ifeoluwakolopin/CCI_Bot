@@ -116,22 +116,6 @@ def wake():
     requests.get('https://secret-sands-37903.herokuapp.com/')
     
 
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=23, minute=00)
-def birthday_notifier():
-    tommorow = datetime.today() + timedelta(days=1)
-    x = str(tommorow.month)+'-'+str(tommorow.day)
-    birthdays = db.users.find({"birthday":x})
-    sent = 0
-    for user in birthdays:
-        try:
-            bot.send_photo(
-                chat_id=user["chat_id"], photo=open("img/birthday.jpg", "rb"),
-                caption=config["messages"]["birthday_message1"].format(user["first_name"])
-            )
-            sent += 1
-        except:
-            pass
-    print(f"BIRTHDAY: Sent {sent} birthday wishes")
 
 if __name__ == '__main__':
     sched.start()
