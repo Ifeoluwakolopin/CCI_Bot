@@ -1,8 +1,8 @@
 {
-  "bot_token":"1251287692:AAFZ2XDqrnNad00Okr8v2YLIYQGu_-awPw0",
-  "event_token":"6SSXB4XLEKVCVA34NSMF",
+  "bot_token":"telegram-api-token",
+  "event_token":"eventbrite-api-token",
   "db": {
-      "client":"mongodb+srv://are:Lordflame1@cluster0.acnn4.mongodb.net/cci_bot?retryWrites=true&w=majority",
+      "client":"mongodbclient-sample",
       "name": "cci_bot"
     },
   "messages":{
