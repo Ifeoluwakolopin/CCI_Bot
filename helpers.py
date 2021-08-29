@@ -2,7 +2,7 @@ import json
 import pymongo
 import telegram
 
-config = json.load(open("config.json"))
+config = json.load(open("config.json", encoding="utf-8"))
 
 bot = telegram.Bot(config["bot_token"])
 

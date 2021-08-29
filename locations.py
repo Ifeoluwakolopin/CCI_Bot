@@ -193,5 +193,13 @@ CHURCHES = {
         "ibadan":{
             "name":"TAFO ARENA EVENT CENTRE\nWAEC Road Junction, Polytechnic Road Oyo.",
             "link":"https://goo.gl/maps/335ejVk4wH34a8Sj7"
+        },
+        "uk":{
+            "name":"PHOENIX ACADEMY\nBloemfontein Rd, London, W12 7DB.",
+            "link":"https://goo.gl/maps/mvLLLUJskKX1B8dD6"
+        },
+        "canada":{
+            "name":"",
+            "link":""
         }
 }

@@ -19,7 +19,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-config = json.load(open("config.json"))
+config = json.load(open("config.json", encoding="utf-8"))
 
 bot = telegram.Bot(config["bot_token"])
 
@@ -554,6 +554,7 @@ def location_prompt(chat_id):
         InlineKeyboardButton("PortHarcourt", callback_data="loc=PH")],
         [InlineKeyboardButton("Canada", callback_data="loc=Canada"),
         InlineKeyboardButton("Abuja", callback_data="loc=Abuja")],
+        [InlineKeyboardButton("United Kingdom(UK)", callback_data="loc=UK")],
         [InlineKeyboardButton("Online Member", callback_data="loc=Online"),
         InlineKeyboardButton("None", callback_data="loc=None")]]
     user = db.users.find_one({"chat_id":chat_id})
