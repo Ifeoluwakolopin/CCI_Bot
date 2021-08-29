@@ -199,7 +199,7 @@ CHURCHES = {
             "link":"https://goo.gl/maps/mvLLLUJskKX1B8dD6"
         },
         "canada":{
-            "name":"",
-            "link":""
+            "name":"NATIONAL EVENT VENUE & BANQUET HALL\n1000 Finch Ave W North York, ON M3J 2V5",
+            "link":"https://goo.gl/maps/YcqtrzxbXwoJ97Jk8"
         }
 }
