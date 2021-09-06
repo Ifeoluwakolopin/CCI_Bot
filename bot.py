@@ -1,8 +1,3 @@
-import os
-import json
-import logging
-import pymongo
-import telegram
 from datetime import date
 from datetime import datetime as dt
 from helpers import *
@@ -12,49 +7,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton,
 from telegram.ext import CallbackQueryHandler, CommandHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
-from telegram.ext import Updater
-
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-config = json.load(open("config.json", encoding="utf-8"))
-
-bot = telegram.Bot(config["bot_token"])
-
-PORT = int(os.environ.get('PORT', 5000))
-
-updater = Updater(config["bot_token"], use_context=True)
-dp = updater.dispatcher
-
-# Database
-client = pymongo.MongoClient(config["db"]["client"])
-db = client[config["db"]["name"]]
-
-buttons = [
-    KeyboardButton("latest sermon"),
-    KeyboardButton("get sermon"),
-]
-
-buttons1 = [
-    KeyboardButton("location"),
-    KeyboardButton("membership"),
-]
-
-buttons2 = [ 
-    KeyboardButton("devotional"),
-    KeyboardButton("help"),
-    KeyboardButton("map")
-]
-
-buttons3 = [
-    KeyboardButton("statistics"),
-    KeyboardButton("broadcast"),
-]
-
-normal_keyboard = [buttons,buttons1, buttons2]
-admin_keyboard = [buttons, buttons1, buttons2, buttons3]
+from .keyboards import normal_keyboard, admin_keyboard
 
 def start(update, context):
     """
@@ -83,7 +36,6 @@ def start(update, context):
         )
     location_prompt(chat_id)
     birthday_prompt(chat_id)
-
 
 # Broadcast Functions
 def bc_animation(update, context):
@@ -164,6 +116,23 @@ def broadcast(update, context):
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
+def campuses(update, context):
+    """ 
+    This gives a list of church campuses.
+    """
+    chat_id = update.effective_chat.id
+    ch = ""
+    for church in list(CHURCHES.keys()):
+        ch += config["messages"]["church"].format(
+        church.capitalize(), CHURCHES[church]["name"], CHURCHES[church]["link"]
+        )
+        ch += "\n\n"
+
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["find_church"].format(ch),
+        parse_mode="Markdown", disable_web_page_preview="True"
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def cancel(update, context):
     """
@@ -268,23 +237,6 @@ def latest_sermon(update, context):
         )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
-def location(update, context):
-    """ 
-    This gives a list of church locations.
-    """
-    chat_id = update.effective_chat.id
-    ch = ""
-    for church in list(CHURCHES.keys()):
-        ch += config["messages"]["church"].format(
-        church.capitalize(), CHURCHES[church]["name"], CHURCHES[church]["link"]
-        )
-        ch += "\n\n"
-
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["find_church"].format(ch),
-        parse_mode="Markdown", disable_web_page_preview="True"
-    )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def map_loc(update, context):
     """
@@ -436,10 +388,6 @@ def handle_commands(update, context):
         stats(update, context)
     elif title == "broadcast":
         broadcast(update, context)
-    elif title == "location":
-        location(update, context)
-    elif title == "membership":
-        mem_school(update, context)
     elif title == "usage":
         bc_help(update, context)
     elif title == "text":
@@ -669,6 +617,9 @@ def main():
     dp.add_handler(CommandHandler("unmute", unmute))
     dp.add_handler(CommandHandler("cancel", cancel))
     dp.add_handler(CommandHandler("menu", menu))
+    dp.add_handler(CommandHandler("newsletter", newsletter))
+    dp.add_handler(CommandHandler("campuses", campuses))
+    dp.add_handler(CommandHandler("membership", mem_school))
     dp.add_handler(msg_handler)
     dp.add_handler(cb_handler)
 
