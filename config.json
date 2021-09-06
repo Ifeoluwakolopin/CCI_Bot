@@ -41,6 +41,10 @@
     "temp_message1":"Listen on:\n\n[Anchor](https://anchor.fm/finding-salaam/episodes/Why-Does-The-Bible-Have-So-Many-Different-Translations-eo6frk)\n\n[Apple podcasts](https://podcasts.apple.com/us/podcast/finding-salaam/id1546470492?uo=4)\n\n[Google podcasts](https://www.google.com/podcasts?feed=aHR0cHM6Ly9hbmNob3IuZm0vcy8xNDU5YTA3NC9wb2RjYXN0L3Jzcw==)\n\n[Spotify](https://open.spotify.com/show/57Ds8uQKV6tjJtTnUtPKIH)",
     "tickets":"BOOK A SEAT FOR SERVICE\n(Mainland Campus)\n\nThe registration link is live!\n\nWe've made room for everyone🎉🎉",
     "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
-    "unmute":"Yay🎉\n\nYou have unmuted CCI Bot."
+    "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
+    "reboot_camp":{
+      "about":"",
+      "help":""
+    }
   }
 }
