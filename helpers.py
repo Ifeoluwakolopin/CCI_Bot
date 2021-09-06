@@ -1,10 +1,22 @@
+import os
 import json
+import logging
 import pymongo
 import telegram
+from telegram.ext import Updater
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 config = json.load(open("config.json", encoding="utf-8"))
 
 bot = telegram.Bot(config["bot_token"])
+
+PORT = int(os.environ.get('PORT', 5000))
+
+updater = Updater(config["bot_token"], use_context=True)
+dp = updater.dispatcher
 
 # Database
 client = pymongo.MongoClient(config["db"]["client"])
