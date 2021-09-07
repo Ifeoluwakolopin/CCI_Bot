@@ -7,7 +7,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton,
 from telegram.ext import CallbackQueryHandler, CommandHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
-from .keyboards import normal_keyboard, admin_keyboard
+from keyboards import normal_keyboard, admin_keyboard
 
 def start(update, context):
     """
