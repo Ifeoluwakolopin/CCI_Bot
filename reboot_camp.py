@@ -1,6 +1,6 @@
 from helpers import config, db
 from telegram import ReplyKeyboardMarkup
-from .keyboards import normal_keyboard, admin_keyboard
+from keyboards import normal_keyboard, admin_keyboard
 
 
 def reboot_about(update, context):
