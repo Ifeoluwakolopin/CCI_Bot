@@ -8,6 +8,7 @@ from telegram.ext import CallbackQueryHandler, CommandHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
 from keyboards import normal_keyboard, admin_keyboard
+from reboot_camp import *
 
 def start(update, context):
     """
@@ -306,7 +307,7 @@ def newsletter(update, context):
     button = [[InlineKeyboardButton("Subscribe", url="https://ccing.us8.list-manage.com/subscribe?u=03f72aceeaf186b2d6c32d37e&id=52c44cb044")]]
     context.bot.send_photo(
         chat_id=chat_id, photo=open("img/newsletter.jpg", "rb"),
-        caption=config["messages"]["membership"], reply_markup=InlineKeyboardMarkup(button)
+        caption=config["messages"]["newsletter"], reply_markup=InlineKeyboardMarkup(button)
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
@@ -402,6 +403,8 @@ def handle_commands(update, context):
         map_loc(update, context)
     elif title == "cancel":
         cancel(update, context)
+    elif title == "reboot camp":
+        reboot_about(update, context)
     else:
         random(update, context)
 
