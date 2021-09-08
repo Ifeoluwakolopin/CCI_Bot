@@ -10,11 +10,14 @@ buttons1 = [
     KeyboardButton("map"),
     KeyboardButton("help"),
 ]
+buttons2 = [
+    KeyboardButton("Reboot Camp")
+]
 
 buttons3 = [
     KeyboardButton("statistics"),
     KeyboardButton("broadcast"),
 ]
 
-normal_keyboard = [buttons, buttons1]
-admin_keyboard = [buttons, buttons1, buttons3]
+normal_keyboard = [buttons, buttons1, buttons2]
+admin_keyboard = [buttons, buttons1, buttons2, buttons3]

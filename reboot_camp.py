@@ -3,7 +3,7 @@ from telegram import ReplyKeyboardMarkup
 from .keyboards import normal_keyboard, admin_keyboard
 
 
-def reboot(update, context):
+def reboot_about(update, context):
     chat_id = update.effective_chat.id
     if db.users.find_one({"chat_id":chat_id, "admin":True}):
         context.bot.send_message(
