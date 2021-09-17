@@ -179,8 +179,8 @@ CHURCHES = {
             "link":"https://g.page/DPodium?share"
         },
         "lagos island":{
-            "name":"ROYAL OAKS CENTRE\nKm 14, Lekki Epe Expressway by Chisco Bus Stop, Enyo Petrol Station, Lekki.",
-            "link":"https://g.page/royaloaksng?share"
+            "name":"QUEENS PARK EVENT CENTER\nVI(Hall 2). Water Corporation Drive/Trinity Avenue, off Ligali Ayorinde St, Victoria Island, Lagos, Nigeria",
+            "link":"https://goo.gl/maps/cLUpifeyxXRvRreV6"
         },
         "abuja":{
             "name":"EDEN PARKS AND GARDEN\nPlot 1126, Augustus Aikhomu Street, Opposite Chida Hotel, Utako, Abuja.",
