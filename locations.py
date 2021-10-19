@@ -179,8 +179,8 @@ CHURCHES = {
             "link":"https://g.page/DPodium?share"
         },
         "lagos island":{
-            "name":"ROYAL OAKS CENTRE\nKm 14, Lekki Epe Expressway by Chisco Bus Stop, Enyo Petrol Station, Lekki.",
-            "link":"https://g.page/royaloaksng?share"
+            "name":"QUEENS PARK EVENT CENTER\nVI(Hall 2). Water Corporation Drive/Trinity Avenue, off Ligali Ayorinde St, Victoria Island, Lagos, Nigeria",
+            "link":"https://goo.gl/maps/cLUpifeyxXRvRreV6"
         },
         "abuja":{
             "name":"EDEN PARKS AND GARDEN\nPlot 1126, Augustus Aikhomu Street, Opposite Chida Hotel, Utako, Abuja.",
@@ -193,5 +193,13 @@ CHURCHES = {
         "ibadan":{
             "name":"TAFO ARENA EVENT CENTRE\nWAEC Road Junction, Polytechnic Road Oyo.",
             "link":"https://goo.gl/maps/335ejVk4wH34a8Sj7"
+        },
+        "uk":{
+            "name":"PHOENIX ACADEMY\nBloemfontein Rd, London, W12 7DB.",
+            "link":"https://goo.gl/maps/mvLLLUJskKX1B8dD6"
+        },
+        "canada":{
+            "name":"NATIONAL EVENT VENUE & BANQUET HALL\n1000 Finch Ave W North York, ON M3J 2V5",
+            "link":"https://goo.gl/maps/YcqtrzxbXwoJ97Jk8"
         }
 }
