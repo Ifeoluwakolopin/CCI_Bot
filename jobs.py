@@ -1,19 +1,11 @@
-import pymongo
-import json
-import telegram
 import requests
 from datetime import datetime, timedelta
+from helpers import bot, db, config
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from sermons import cci_sermons, t30
 from events import service_ticket
 from apscheduler.schedulers.blocking import BlockingScheduler
 from bot import notify_new_sermon
-
-config = json.load(open("config.json"))
-
-client = pymongo.MongoClient(config["db"]["client"])
-db = client[config["db"]["name"]]
-bot = telegram.Bot(token=config["bot_token"])
 
 sched = BlockingScheduler()
 

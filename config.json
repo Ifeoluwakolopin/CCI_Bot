@@ -20,7 +20,7 @@
     "find_church":"🔗 Worship with us at a CCI branch close to you.\n\nNeed Directions?\nHere are a few branches close to you.\n\n{}",
     "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
     "get_sermon":"Enter the title of the sermon you wish to get.\n\nClick /cancel to cancel operation.",
-    "help":"Here's how the buttons below work\n\n👉 latest sermon - This gives you the most recent sermon available on the [website](http://ccing.org/sermons/)\n\n👉 get sermon - This helps you get a specific sermon by it's title. You can search using the exact title or a keyword.\nSearching for a keyword (e.g Grace) would give you all sermon containing the keyword in their titles.\n\n👉 devotional - Get today's devotional\n\n👉 map - This helps you find the nearest MAP centre to your location.\n\n👉 location - Gives you the address of the nearest CCI branch to you.\n\n👉 membership - Register for CCI membership class.\n\nOther commands\n• /mute - Mute notifications\n• /unmute - Unmute notifications",
+    "help":"You can now use BUTTONS or the COMMAND MENU to pass commands to the bot.\nHere's how the buttons below work\n\n👉 latest sermon - This gives you the most recent sermon available on the [website](http://ccing.org/sermons/)\n\n👉 get sermon - This helps you get a specific sermon by it's title. You can search using the exact title or a keyword.\nSearching for a keyword (e.g Grace) would give you all sermon containing the keyword in their titles.\n\n👉 devotional - Get today's devotional\n\n👉 map - This helps you find the nearest MAP centre to your location.\n\nYou can other perform other commands using the COMMAND MENU.\nThese commands include:\n• /cancel - Cancel any existing action✖️\n• /menu - Get the default keyboard⌨️\n• /membership - Register for membership school🏫\n• /newsletter - Subscribe to the CCI Newsletter🗞\n• /mute - Mute notifications from CCI Bot😔\n• /unmute - Unmute bot notifications🤩",
     "lc":"Hi {} 😄\n\nPlease take a moment to tell me what branch of CCI you attend.🥺\nThis would help improve your experience with the bot.😁",
     "lc_confirm":"Thank you for your feedback! ☺️\nYour response will help us give you better updates.🤩",
     "location":"📍Find MAP locations closest to you.\n\nUse the buttons to make selections.\n\nTap /cancel to cancel action.",
@@ -33,7 +33,7 @@
     "membership":"Want to attend Celebration Church International Membership class? ",
     "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
     "new_sermon":"🔔 Yayy!!\n\nNew Sermons are now available on all our platforms😄.\n\nSelect any sermon to stream or download👇",
-    "newsletter":"test",
+    "newsletter":"Subscribe to weekly amazing and edifing content from Celebration Church International.🔔",
     "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🧍🏽‍♀️🧍🏽‍♂\nActive users: {} 👥\nMuted users: {}\nTotal Sermons available: {}🔥\n\nUsers location filtering:\n{}\nBirthdays: {}\n\nToday's birthdays: {}",
     "start":"Hi {}🤗\n\nI am your personal CCI assistant.\nI am here to aid you in experiencing progress and joy in the faith🥳💃\nI can help you with a lot of things!\nBelow are some of them\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Find a MAP location close to you! \n• Find a CCI branch close to you📍\n• Register for Membership Class📝\n• Get instant ticket notifications😱(Lagos branch Only)🔔\n and so much more...\n\nI'm so excited to do this with you\n\nTo get started\nAll you have to do is click on the icon with four dots or just type “help”\n\nAll sermons and devotionals gotten from\n[Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
     "t30_caption":"📍 {}\n\n{}\n\nRead on triumph30.org",
@@ -41,6 +41,10 @@
     "temp_message1":"Listen on:\n\n[Anchor](https://anchor.fm/finding-salaam/episodes/Why-Does-The-Bible-Have-So-Many-Different-Translations-eo6frk)\n\n[Apple podcasts](https://podcasts.apple.com/us/podcast/finding-salaam/id1546470492?uo=4)\n\n[Google podcasts](https://www.google.com/podcasts?feed=aHR0cHM6Ly9hbmNob3IuZm0vcy8xNDU5YTA3NC9wb2RjYXN0L3Jzcw==)\n\n[Spotify](https://open.spotify.com/show/57Ds8uQKV6tjJtTnUtPKIH)",
     "tickets":"BOOK A SEAT FOR SERVICE\n(Mainland Campus)\n\nThe registration link is live!\n\nWe've made room for everyone🎉🎉",
     "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
-    "unmute":"Yay🎉\n\nYou have unmuted CCI Bot."
+    "unmute":"Yay🎉\n\nYou have unmuted CCI Bot.",
+    "reboot_camp":{
+      "about":"🥳 REBOOT CAMP 2021 IS ALMOST HERE! 🥳\n\nStay tuned for more #rebootcamp2021 news.\nI'm your one-stop shop for up-to-date information.",
+      "help":""
+    }
   }
 }
