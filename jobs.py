@@ -78,7 +78,7 @@ def notify_tickets():
         except Exception as e:
             pass
 
-@sched.scheduled_job('cron', day_of_week='mon-sat', hour=5)
+#@sched.scheduled_job('cron', day_of_week='mon-sat', hour=5)
 def send_devotional():
     d = t30()
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
