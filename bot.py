@@ -1,3 +1,4 @@
+import jobs
 from datetime import date
 from datetime import datetime as dt
 from helpers import *
@@ -635,3 +636,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    jobs.sched.start()
+    
