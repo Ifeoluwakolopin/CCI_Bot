@@ -629,7 +629,7 @@ def main():
     updater.start_webhook(
         listen="0.0.0.0", port=int(PORT), url_path=config["bot_token"]
     )
-    updater.bot.setWebhook('https://secret-sands-37903.herokuapp.com/'+config["bot_token"])
+    updater.bot.setWebhook('https://cci-bot.herokuapp.com/'+config["bot_token"])
     updater.idle()
 
 
