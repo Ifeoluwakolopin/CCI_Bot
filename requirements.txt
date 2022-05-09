@@ -12,6 +12,6 @@ requests==2.24.0
 six==1.15.0
 soupsieve==2.0.1
 tornado==6.0.4
-urllib3==1.25.10
+urllib3==1.26.5
 dnspython==2.0.0
 APScheduler==3.6.3
