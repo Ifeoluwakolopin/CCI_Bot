@@ -103,6 +103,6 @@ def ticket_task():
     u = db.users.count_documents({"mute":False, "active":True})
     print(f"TICKET: Notified {u} users")
 
-@sched.scheduled_job('interval', minutes=29.5)
+@sched.scheduled_job('interval', minutes=29)
 def wake():
     requests.get('https://cci-bot.herokuapp.com/')
