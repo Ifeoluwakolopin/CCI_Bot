@@ -2,19 +2,28 @@ import requests
 from datetime import date as dt
 from bs4 import BeautifulSoup
 
-def cci_sermons():
+def cci_sermons()->list:
+    """
+    This function scrapes the CCI websites for new sermons
+    and returns the latest sermons uploaded on the database
+    
+    Keyword arguments:
+    None -- does not take in any arguments 
+    Return: list: returns a list of sermons with each sermon
+    as a dictionary.
+    """
 
     headers = {
     'user-agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36'
     }
 
-    base_url = 'http://ccing.org/sermons/'
+    base_url = 'https://media.ccing.org/'
     r = requests.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, 'html.parser')
     sermons_section = soup.find_all('article')
     sermons = []
 
-    for sermon in sermons_section[0:4]:
+    for sermon in sermons_section:
         try:
             image = sermon.find('img').get('src')
             title = sermon.find('h3', {'class':'cmsmasters_sermon_title entry-title'}).find('a').text
@@ -36,8 +45,17 @@ def cci_sermons():
                 "video":None})
     return sermons
 
-def t30():
-
+# DEPRECATED - Website no longer functional
+# devotionals have been moved to app.
+def t30() -> dict:
+    """
+    This function scrapes the triumph30 website for daily devotionals
+    and returns a dictionary containing the latest devotional
+    
+    Keyword arguments:
+    None -- does not take in any arguments 
+    Return: dict: returns a dictionary containing the latest devotional
+    """
     headers = {
     'user-agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36'
     }
