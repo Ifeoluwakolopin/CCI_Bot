@@ -614,8 +614,7 @@ def cb_handle(update, context):
     elif q_head[0] == "get-sermon":
         if  q_head[1]=="yes":
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["get_sermon_1"],
-                reply_markup=InlineKeyboardMarkup(btns)
+                chat_id=chat_id, text=config["messages"]["get_sermon_1"]
             )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_sermon"}})
         else:
