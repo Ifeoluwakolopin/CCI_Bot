@@ -38,13 +38,15 @@ def birthday_notifier():
     logger.info("BIRTHDAY: Sent {sent} birthday wishes")
 
 
-def insert_sermon(sermon):
+def insert_sermon(sermon:dict):
     """
-    This takes in
+    This takes in a sermon and checks inserts the sermon into the 
+    database if it does not already exist.
     
     Keyword arguments:
-    argument -- description
-    Return: return_description
+    sermon -- dict: contains attributes that define a sermon
+
+    Return: returns True or None if sermon exists in the database
     """
     
     if db.sermons.find_one({"title":sermon["title"]}) is not None:
@@ -56,6 +58,15 @@ def insert_sermon(sermon):
 
 @sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
 def new_sermons():
+    """
+    This functions updates the latest sermon and notifies users about the new sermon
+    
+    Keyword arguments:
+    kwargs -- None
+
+    Return: None
+    """
+    
     sermons = cci_sermons()
     titles = []
     for sermon in sermons:
@@ -75,8 +86,15 @@ numbers = {1:"first", 2:"second", 3:"third"}
 
 def notify_tickets():
     """
-    Send a notification to users and returns True on success
+    This function sends a notification to every active user about an upcoming
+    event
+    
+    Keyword arguments:
+    argument -- None
+
+    Return: None
     """
+    
     d = (datetime.today()+timedelta(days=4)).date()
     date=str(d)
     ticket = service_ticket(date, date)
@@ -96,6 +114,15 @@ def notify_tickets():
 
 #@sched.scheduled_job('cron', day_of_week='mon-sat', hour=5)
 def send_devotional():
+    """
+    This sends the current devotional of the day to all active
+    users.
+    
+    Keyword arguments:
+    argument -- None
+
+    Return: None
+    """
     d = t30()
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
     for user in db.users.find({"mute":False}):
@@ -106,6 +133,7 @@ def send_devotional():
                 reply_markup=InlineKeyboardMarkup(button)
             )
         except Exception as e:
+            # sets the user as inactive if telegram throws an exception.
             if str(e) == "Forbidden: bot was blocked by the user":
                 db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
             pass
@@ -115,10 +143,26 @@ def send_devotional():
 
 #@sched.scheduled_job('cron', day_of_week='wed', hour=12)
 def ticket_task():
+    """
+    This runs the ticket notifier function and logs results.
+    
+    Keyword arguments:
+    argument -- None
+
+    Return: None
+    """
     notify_tickets()
     u = db.users.count_documents({"mute":False, "active":True})
     logger.info(f"TICKET: Notified {u} users")
 
 @sched.scheduled_job('interval', minutes=29)
 def wake():
+    """
+    This sends a request to the bot server to allow it maintain activity
+    
+    Keyword arguments:
+    argument -- None
+
+    Return: None
+    """
     requests.get('https://cci-bot.herokuapp.com/')

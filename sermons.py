@@ -8,7 +8,8 @@ def cci_sermons()->list:
     and returns the latest sermons uploaded on the database
     
     Keyword arguments:
-    None -- does not take in any arguments 
+    None -- does not take in any arguments
+    
     Return: list: returns a list of sermons with each sermon
     as a dictionary.
     """
@@ -54,6 +55,7 @@ def t30() -> dict:
     
     Keyword arguments:
     None -- does not take in any arguments 
+
     Return: dict: returns a dictionary containing the latest devotional
     """
     headers = {

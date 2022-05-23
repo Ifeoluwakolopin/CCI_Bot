@@ -6,7 +6,7 @@ import telegram
 from telegram.ext import Updater
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+                    level=logging.INFO, filename="status.log")
 logger = logging.getLogger(__name__)
 
 config = json.load(open("config.json", encoding="utf-8"))
@@ -22,9 +22,14 @@ dp = updater.dispatcher
 client = pymongo.MongoClient(config["db"]["client"])
 db = client[config["db"]["name"]]
 
-def search_db(title):
+def search_db_title(title)-> list:
     """
-    This function queries the db for a particular sermon
+    This takes in a string and searches a mongodb collection
+    if the title is in the database.
+    
+    Keyword arguments:
+    title -- string containing words to be searched.
+    Return: list of words containing title
     """
     sermons = db.sermons.find({})
     result = []
@@ -36,7 +41,14 @@ def search_db(title):
 
 def text_send(chat_id, message):
     """
-    This function sends a message to a user
+    This takes in a user's id and a message string. It sends the
+    associated user the message via the Telegram Bot API
+    
+    Keyword arguments:
+    chat_id -- identifies a specific user
+    message -- str: input message to be sent
+
+    Return: None or True
     """
     try:
         bot.send_message(
@@ -48,7 +60,15 @@ def text_send(chat_id, message):
 
 def photo_send(chat_id, photo, caption=""):
     """
-    This function sends a photo to user with caption
+    This takes in an ID, photo and caption. It sends the associated
+    user the photo with the given caption via the Telegram Bot API
+    
+    Keyword arguments:
+    chat_id -- identifies a specific user
+    photo -- str: link or path to a picture
+    caption -- str: text to associate with the picture
+
+    Return: None or True
     """
     try:
         bot.send_photo(
@@ -60,7 +80,15 @@ def photo_send(chat_id, photo, caption=""):
 
 def animation_send(chat_id, animation, caption=""):
     """
-    This function sends an animation to a user with a caption
+    This takes in an ID, animation and caption. It sends the associated
+    user the animation with the given caption via the Telegram Bot API
+    
+    Keyword arguments:
+    chat_id -- identifies a specific user
+    animation -- str: link or path to the animation
+    caption -- str: text to associate with the animation
+
+    Return: None or True
     """
     try:
         bot.send_animation(
@@ -72,7 +100,15 @@ def animation_send(chat_id, animation, caption=""):
 
 def video_send(chat_id, video, caption=""):
     """
-    This function sends a video to a user with a caption
+    This takes in an ID, video and caption. It sends the associated
+    user the photo with the given caption via the Telegram Bot API
+    
+    Keyword arguments:
+    chat_id -- identifies a specific user
+    video -- str: link or path to the video
+    caption -- str: text to associate with the video
+
+    Return: None or True
     """
     try:
         bot.send_video(
