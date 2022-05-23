@@ -176,10 +176,13 @@ def get_sermon(update, context):
     This gets a particular sermon user wants
     """
     chat_id = update.effective_chat.id
+    buttons = [
+       [InlineKeyboardButton("Yes, find by title", callback_data="get-sermon=yes")],
+       [InlineKeyboardButton("No, looking for a topic/date", callback_data="get-sermon=no")]
+    ]
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["get_sermon"]
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_sermon"}})
 
 def get_devotional(update, context):
     """
@@ -608,6 +611,23 @@ def cb_handle(update, context):
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["birthday_confirm"].format(q.split("=")[1]+"/"+q.split("=")[2])
             )
+    elif q_head[0] == "get-sermon":
+        if  q_head[1]=="yes":
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["get_sermon_1"],
+                reply_markup=InlineKeyboardMarkup(btns)
+            )
+            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_sermon"}})
+        else:
+            btns = [
+                
+            ]
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["get_sermon_2"],
+                reply_markup=InlineKeyboardMarkup(btns)
+            )
+
+
         
 msg_handler = MessageHandler(Filters.all & (~Filters.command), message_handle)
 cb_handler = CallbackQueryHandler(cb_handle)
