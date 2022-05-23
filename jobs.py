@@ -1,6 +1,6 @@
 import requests
 from datetime import datetime, timedelta
-from helpers import bot, db, config
+from helpers import *
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from sermons import cci_sermons, t30
 from events import service_ticket
@@ -11,8 +11,19 @@ sched = BlockingScheduler()
 
 @sched.scheduled_job('cron', day_of_week='mon-sun', hour=23, minute=00)
 def birthday_notifier():
+    """
+    This functions sends out daily notifications to users
+    on their birthdays
+    
+    Keyword arguments:
+    None - None
+
+    Return: None
+    """
+    # Calculates the current date
     tommorow = datetime.today() + timedelta(days=1)
     x = str(tommorow.month)+'-'+str(tommorow.day)
+    # Finds users in the database whose birthdays match the current date
     birthdays = db.users.find({"birthday":x})
     sent = 0
     for user in birthdays:
@@ -24,18 +35,23 @@ def birthday_notifier():
             sent += 1
         except:
             pass
-    print(f"BIRTHDAY: Sent {sent} birthday wishes")
+    logger.info("BIRTHDAY: Sent {sent} birthday wishes")
 
 
 def insert_sermon(sermon):
     """
-    Insert new sermons into db
+    This takes in
+    
+    Keyword arguments:
+    argument -- description
+    Return: return_description
     """
+    
     if db.sermons.find_one({"title":sermon["title"]}) is not None:
         return None
     else:
         db.sermons.insert_one(sermon)
-        print("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
+        logger.info("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
         return True
 
 @sched.scheduled_job('cron', day_of_week='mon-sun', hour=6)
@@ -50,7 +66,7 @@ def new_sermons():
         lsermon["latest_sermon"] = True
         db.temporary.delete_one({"latest_sermon":True})
         db.temporary.insert_one(lsermon)
-        print("Updated latest Sermon to {}".format(lsermon["title"]))
+        logger.info("Updated latest Sermon to {}".format(lsermon["title"]))
         t = [i["title"] for i in titles]
         for user in db.users.find({}):
             notify_new_sermon(user["chat_id"], t)
@@ -95,13 +111,13 @@ def send_devotional():
             pass
     u = db.users.count_documents({"mute":False, "active":True})
     db.devotionals.insert_one(d)
-    print(f"DEVOTIONAL: Sent devotional to {u} users")
+    logger.info(f"DEVOTIONAL: Sent devotional to {u} users")
 
 #@sched.scheduled_job('cron', day_of_week='wed', hour=12)
 def ticket_task():
     notify_tickets()
     u = db.users.count_documents({"mute":False, "active":True})
-    print(f"TICKET: Notified {u} users")
+    logger.info(f"TICKET: Notified {u} users")
 
 @sched.scheduled_job('interval', minutes=29)
 def wake():
