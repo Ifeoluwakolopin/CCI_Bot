@@ -418,7 +418,7 @@ def message_handle(update, context):
         handle_commands(update, context)
     elif last_command == "get_sermon":
         title = update.message.text.strip()
-        sermons = search_db(title)
+        sermons = search_db_title(title)
         if len(sermons) == 0:
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["empty"].format(title)
@@ -569,7 +569,7 @@ def cb_handle(update, context):
             )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif q.split("=")[0] == "s":
-        sermon = search_db(q[2:])[0]
+        sermon = search_db_title(q[2:])[0]
         if sermon["video"] is not None:
             buttons = [[InlineKeyboardButton("Download Sermon", url=sermon["download"])],
                     [InlineKeyboardButton("Watch Video", url=sermon["video"])]]
