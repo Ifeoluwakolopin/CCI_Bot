@@ -3,6 +3,7 @@ import json
 import logging
 import pymongo
 import telegram
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -117,3 +118,63 @@ def video_send(chat_id, video, caption=""):
         return True
     except:
         return None
+
+def location_prompt(chat_id) -> None:
+    """
+    This functions takes in a chat id, and sends a message
+    to request for the user's physical church location.
+    
+    Keyword arguments:
+    chat_id -- identifies a specific user
+    Return: None
+    """
+    
+    buttons = [
+        [InlineKeyboardButton("Lagos - Ikeja", callback_data="loc=Ikeja"),
+        InlineKeyboardButton("Lagos - Lekki", callback_data="loc=Lekki")],
+        [InlineKeyboardButton("Ibadan", callback_data="loc=Ibadan"),
+        InlineKeyboardButton("PortHarcourt", callback_data="loc=PH")],
+        [InlineKeyboardButton("Canada", callback_data="loc=Canada"),
+        InlineKeyboardButton("Abuja", callback_data="loc=Abuja")],
+        [InlineKeyboardButton("United Kingdom(UK)", callback_data="loc=UK")],
+        [InlineKeyboardButton("Online Member", callback_data="loc=Online"),
+        InlineKeyboardButton("None", callback_data="loc=None")]]
+    user = db.users.find_one({"chat_id":chat_id})
+    try:
+        bot.send_message(
+            chat_id=chat_id, text=config["messages"]["lc"].format(user["first_name"]),
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    except:
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"active":False}})
+
+def birthday_prompt(chat_id):
+    """
+    This functions takes in a chat id, and gets the birthdate
+    of a particular user
+    
+    Keyword arguments:
+    chat_id -- identifies a specific user
+    Return: None
+    """
+    buttons = [
+        [InlineKeyboardButton("January", callback_data="bd=1"),
+        InlineKeyboardButton("February", callback_data="bd=2"),
+        InlineKeyboardButton("March", callback_data="bd=3")],
+        [InlineKeyboardButton("April", callback_data="bd=4"),
+        InlineKeyboardButton("May", callback_data="bd=5"),
+        InlineKeyboardButton("June", callback_data="bd=6")],
+        [InlineKeyboardButton("July", callback_data="bd=7"),
+        InlineKeyboardButton("August", callback_data="bd=8"),
+        InlineKeyboardButton("September", callback_data="bd=9")],
+        [InlineKeyboardButton("October", callback_data="bd=10"),
+        InlineKeyboardButton("November", callback_data="bd=11"),
+        InlineKeyboardButton("December", callback_data="bd=12")]]
+    user = db.users.find_one({"chat_id":chat_id})
+    try:
+        bot.send_message(
+            chat_id=chat_id, text=config["messages"]["birthday_prompt"].format(user["first_name"]),
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    except:
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"active":False}})

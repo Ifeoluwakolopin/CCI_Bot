@@ -2,10 +2,9 @@ import requests
 from datetime import datetime, timedelta
 from helpers import *
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-from sermons import cci_sermons, t30
-from events import service_ticket
 from apscheduler.schedulers.blocking import BlockingScheduler
-from bot import notify_new_sermon
+from commands import notify_new_sermon
+from scrapers import WebScrapers
 
 sched = BlockingScheduler()
 
@@ -38,7 +37,7 @@ def birthday_notifier():
     logger.info("BIRTHDAY: Sent {sent} birthday wishes")
 
 
-def insert_sermon(sermon:dict):
+def _insert_sermon(sermon:dict):
     """
     This takes in a sermon and checks inserts the sermon into the 
     database if it does not already exist.
@@ -67,10 +66,10 @@ def new_sermons():
     Return: None
     """
     
-    sermons = cci_sermons()
+    sermons = WebScrapers.cci_sermons()
     titles = []
     for sermon in sermons:
-        if insert_sermon(sermon) is True:
+        if _insert_sermon(sermon) is True:
             titles.append(sermon)
     if len(titles) > 0:
         lsermon = titles[0]
@@ -97,7 +96,7 @@ def notify_tickets():
     
     d = (datetime.today()+timedelta(days=4)).date()
     date=str(d)
-    ticket = service_ticket(date, date)
+    ticket = WebScrapers.service_ticket(date, date)
     buttons =[[InlineKeyboardButton("Register for {} service".format(numbers[ticket.index(service)+1]), url=service["link"])] for service in ticket[0:2]]
     users = db.users.find({"$or":[
                 {"location":{"$in":["Ikeja", "Lekki", "Online", "None"]}},
@@ -123,7 +122,7 @@ def send_devotional():
 
     Return: None
     """
-    d = t30()
+    d = WebScrapers.t30()
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
     for user in db.users.find({"mute":False}):
         try:
