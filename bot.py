@@ -146,34 +146,32 @@ def cb_handle(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     q_head = q.split("=")
-    if q.split("=")[0] == "map":
+    if q_head[0] == "map":
         if q[4:] in list(MAP_LOCATIONS.keys()):
             buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(MAP_LOCATIONS[q[4:]].keys())]
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["location2"].format(q[4:].capitalize()),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
-        elif len(q.split("=")) == 3:
-            x = q.split("=")
-            towns = set([i["location"] for i in MAP_LOCATIONS[x[1]][x[2]]])
+        elif len(q_head) == 3:
+            towns = set([i["location"] for i in MAP_LOCATIONS[q_head[1]][q_head[2]]])
             buttons = [[InlineKeyboardButton(i.capitalize(), callback_data=q+"="+i)] for i in list(towns)]
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["location2"].format(x[2].capitalize()),
+                chat_id=chat_id, text=config["messages"]["location2"].format(q_head[2].capitalize()),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
         elif len(q.split("=")) == 4:
-            x = q.split("=")
             locations = ""
-            for loc in MAP_LOCATIONS[x[1]][x[2]]:
-                if loc["location"] == x[3]:
+            for loc in MAP_LOCATIONS[q_head[1]][q_head[2]]:
+                if loc["location"] == q_head[3]:
                     locations += config["messages"]["location4"].format(
                         loc["name"], loc["contact"]
                     )
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["location3"].format(x[3].capitalize(), locations)
+                chat_id=chat_id, text=config["messages"]["location3"].format(q_head[3].capitalize(), locations)
             )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-    elif q.split("=")[0] == "s":
+    elif q_head[0] == "s":
         sermon = search_db_title(q[2:])[0]
         if sermon["video"] is not None:
             buttons = [[InlineKeyboardButton("Download Sermon", url=sermon["download"])],
@@ -185,13 +183,13 @@ def cb_handle(update, context):
             context.bot.send_photo(
                 chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
            )
-    elif q.split("=")[0] == "loc":
+    elif q_head[0] == "loc":
         db.users.update_one({"chat_id":chat_id}, {"$set":{"location":q[4:]}})
         bot.send_message(
             chat_id=chat_id, text=config["messages"]["lc_confirm"].format(q[4:])
         )
-    elif q.split("=")[0] == "bd":
-        if len(q.split("=")) == 2:
+    elif q_head[0] == "bd":
+        if len(q_head) == 2:
             btns = [[InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(1,8)],
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(8,15)],
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(15,22)],
@@ -255,4 +253,3 @@ def main():
 if __name__ == '__main__':
     main()
     jobs.sched.start()
-    
