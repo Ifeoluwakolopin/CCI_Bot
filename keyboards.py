@@ -19,5 +19,15 @@ buttons3 = [
     KeyboardButton("broadcast"),
 ]
 
+bc_btns = [[
+    KeyboardButton("text"),
+    KeyboardButton("video"),
+    KeyboardButton("photo")],
+    [
+        KeyboardButton("animation"),
+        KeyboardButton("usage")
+    ]
+]
+
 normal_keyboard = [buttons, buttons1]
 admin_keyboard = [buttons, buttons1, buttons3]
