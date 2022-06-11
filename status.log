@@ -37,3 +37,71 @@ Traceback (most recent call last):
     raise Conflict(message)
 telegram.error.Conflict: Conflict: can't use getUpdates method while webhook is active; use deleteWebhook to delete the webhook first
 2022-06-11 14:00:35,961 - telegram.ext.updater - WARNING - Exiting immediately!
+2022-06-11 14:20:49,120 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-06-11 14:20:49,121 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-06-11 14:20:49,121 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-06-11 14:20:57,097 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/dispatcher.py", line 340, in process_update
+    handler.handle_update(update, self, check, context)
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/handler.py", line 119, in handle_update
+    return self.callback(update, context)
+  File "bot_tests.py", line 61, in handle_message_response
+    last_command = user["last_command"]
+TypeError: 'NoneType' object is not subscriptable
+2022-06-11 14:21:00,140 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/dispatcher.py", line 340, in process_update
+    handler.handle_update(update, self, check, context)
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/handler.py", line 119, in handle_update
+    return self.callback(update, context)
+  File "bot_tests.py", line 61, in handle_message_response
+    last_command = user["last_command"]
+TypeError: 'NoneType' object is not subscriptable
+2022-06-11 14:21:01,933 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/dispatcher.py", line 340, in process_update
+    handler.handle_update(update, self, check, context)
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/handler.py", line 119, in handle_update
+    return self.callback(update, context)
+  File "bot_tests.py", line 61, in handle_message_response
+    last_command = user["last_command"]
+TypeError: 'NoneType' object is not subscriptable
+2022-06-11 14:22:37,019 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/dispatcher.py", line 340, in process_update
+    handler.handle_update(update, self, check, context)
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/handler.py", line 119, in handle_update
+    return self.callback(update, context)
+  File "bot_tests.py", line 61, in handle_message_response
+    last_command = user["last_command"]
+TypeError: 'NoneType' object is not subscriptable
+2022-06-11 14:22:37,668 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/dispatcher.py", line 340, in process_update
+    handler.handle_update(update, self, check, context)
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/handler.py", line 119, in handle_update
+    return self.callback(update, context)
+  File "bot_tests.py", line 61, in handle_message_response
+    last_command = user["last_command"]
+TypeError: 'NoneType' object is not subscriptable
+2022-06-11 14:22:38,216 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/dispatcher.py", line 340, in process_update
+    handler.handle_update(update, self, check, context)
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/handler.py", line 119, in handle_update
+    return self.callback(update, context)
+  File "bot_tests.py", line 61, in handle_message_response
+    last_command = user["last_command"]
+TypeError: 'NoneType' object is not subscriptable
+2022-06-11 14:22:38,578 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/dispatcher.py", line 340, in process_update
+    handler.handle_update(update, self, check, context)
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/handler.py", line 119, in handle_update
+    return self.callback(update, context)
+  File "bot_tests.py", line 61, in handle_message_response
+    last_command = user["last_command"]
+TypeError: 'NoneType' object is not subscriptable
+2022-06-11 14:22:55,423 - telegram.ext.updater - INFO - Received signal 2 (SIGINT), stopping...
+2022-06-11 14:22:55,764 - telegram.ext.updater - WARNING - Exiting immediately!

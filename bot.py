@@ -1,3 +1,4 @@
+import os
 import jobs
 from commands import *
 from helpers import *
@@ -6,6 +7,9 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
+from dotenv import dotenv_values, load_dotenv
+load_dotenv()
+
 
 def handle_message_commands(update, context):
     """
