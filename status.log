@@ -1,0 +1,39 @@
+2022-06-11 13:59:04,636 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-06-11 13:59:04,637 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-06-11 13:59:04,638 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-06-11 14:00:31,488 - telegram.ext.updater - ERROR - Error while getting Updates: Conflict: terminated by setWebhook request
+2022-06-11 14:00:31,605 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/updater.py", line 379, in _network_loop_retry
+    if not action_cb():
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/updater.py", line 337, in polling_action_cb
+    updates = self.bot.get_updates(self.last_update_id,
+  File "<decorator-gen-31>", line 2, in get_updates
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/bot.py", line 67, in decorator
+    result = func(*args, **kwargs)
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/bot.py", line 2138, in get_updates
+    result = self._request.post(url, data, timeout=float(read_latency) + float(timeout))
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/utils/request.py", line 330, in post
+    result = self._request_wrapper('POST', url,
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/utils/request.py", line 248, in _request_wrapper
+    raise Conflict(message)
+telegram.error.Conflict: Conflict: terminated by setWebhook request
+2022-06-11 14:00:35,624 - telegram.ext.updater - INFO - Received signal 2 (SIGINT), stopping...
+2022-06-11 14:00:35,810 - telegram.ext.updater - ERROR - Error while getting Updates: Conflict: can't use getUpdates method while webhook is active; use deleteWebhook to delete the webhook first
+2022-06-11 14:00:35,811 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/updater.py", line 379, in _network_loop_retry
+    if not action_cb():
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/ext/updater.py", line 337, in polling_action_cb
+    updates = self.bot.get_updates(self.last_update_id,
+  File "<decorator-gen-31>", line 2, in get_updates
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/bot.py", line 67, in decorator
+    result = func(*args, **kwargs)
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/bot.py", line 2138, in get_updates
+    result = self._request.post(url, data, timeout=float(read_latency) + float(timeout))
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/utils/request.py", line 330, in post
+    result = self._request_wrapper('POST', url,
+  File "/Users/are/Documents/Python/envs/bot_env/lib/python3.8/site-packages/telegram/utils/request.py", line 248, in _request_wrapper
+    raise Conflict(message)
+telegram.error.Conflict: Conflict: can't use getUpdates method while webhook is active; use deleteWebhook to delete the webhook first
+2022-06-11 14:00:35,961 - telegram.ext.updater - WARNING - Exiting immediately!

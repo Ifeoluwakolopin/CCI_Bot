@@ -244,9 +244,9 @@ def main():
     dp.add_handler(cb_handler)
 
     updater.start_webhook(
-        listen="0.0.0.0", port=int(PORT), url_path=config["bot_token"]
+        listen="0.0.0.0", port=int(PORT), url_path=os.getenv("BOT_TOKEN")
     )
-    updater.bot.setWebhook('https://cci-bot.herokuapp.com/'+config["bot_token"])
+    updater.bot.setWebhook('https://cci-bot.herokuapp.com/'+os.getenv("BOT_TOKEN"))
     updater.idle()
 
 
