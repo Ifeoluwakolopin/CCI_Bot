@@ -3,8 +3,9 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from datetime import date as dt
-
-config = json.load(open("config.json"))
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 class WebScrapers:
 
@@ -16,7 +17,7 @@ class WebScrapers:
         for the provided time.
         """
         params = {
-            'token':config["event_token"],
+            'token': os.getenv('EVENT_TOKEN'),
             'start_date.range_start':start,
             'start_date.range_end':end
         }

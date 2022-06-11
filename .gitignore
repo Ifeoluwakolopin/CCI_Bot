@@ -2,3 +2,5 @@ __pycache__
 bot_tests.py
 tempfiles
 temp_code_runner.py
+*.env
+*.gitignore
