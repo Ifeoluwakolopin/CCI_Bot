@@ -165,3 +165,5 @@ def wake():
     Return: None
     """
     requests.get('https://cci-bot.herokuapp.com/')
+
+sched.start()

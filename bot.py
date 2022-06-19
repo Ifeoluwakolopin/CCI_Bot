@@ -256,4 +256,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    jobs.sched.start()
+    #jobs.sched.start()
