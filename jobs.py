@@ -166,4 +166,5 @@ def wake():
     """
     requests.get('https://cci-bot.herokuapp.com/')
 
-sched.start()
+if __name__ =="__main__":
+    sched.start()

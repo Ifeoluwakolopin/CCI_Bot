@@ -1,5 +1,4 @@
 import os
-import jobs
 from commands import *
 from helpers import *
 from locations import MAP_LOCATIONS
