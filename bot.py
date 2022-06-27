@@ -1,5 +1,4 @@
 import os
-from chat.handlers import counseling_request_message
 from commands import *
 from helpers import *
 from locations import MAP_LOCATIONS
@@ -7,7 +6,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
-from dotenv import load_dotenv
+from dotenv import dotenv_values,load_dotenv
 load_dotenv()
 
 
