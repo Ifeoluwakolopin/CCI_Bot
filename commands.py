@@ -2,8 +2,8 @@ from datetime import date
 from datetime import datetime as dt
 from helpers import *
 from scrapers import WebScrapers
-from keyboards import normal_keyboard, admin_keyboard, bc_btns
-from locations import MAP_LOCATIONS, CHURCHES
+from keyboards import normal_keyboard, admin_keyboard, bc_buttons
+from locations import MAP_LOCATIONS, CHURCH_LOCATIONS
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 
 def start(update, context):
@@ -90,6 +90,15 @@ def bc_video(update, context):
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_video"}})
 
+
+def blog_posts(update, context):
+    chat_id = update.effective_chat.id
+    button = [[InlineKeyboardButton("Read blog posts", url="https://ccing.org/blogs/")]]
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["blog_posts"], reply_markup=InlineKeyboardMarkup(button)
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
 def broadcast(update, context):
     """
     This function allows for an admin personnel send broadcast
@@ -99,7 +108,7 @@ def broadcast(update, context):
     if db.users.find_one({'chat_id':chat_id, 'admin':True}):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["broadcast"],
-            reply_markup = ReplyKeyboardMarkup(bc_btns, resize_keyboard=True)
+            reply_markup = ReplyKeyboardMarkup(bc_buttons, resize_keyboard=True)
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
@@ -109,9 +118,9 @@ def campuses(update, context):
     """
     chat_id = update.effective_chat.id
     ch = ""
-    for church in list(CHURCHES.keys()):
+    for church in list(CHURCH_LOCATIONS.keys()):
         ch += config["messages"]["church"].format(
-        church.capitalize(), CHURCHES[church]["name"], CHURCHES[church]["link"]
+        church.capitalize(), CHURCH_LOCATIONS[church]["name"], CHURCH_LOCATIONS[church]["link"]
         )
         ch += "\n\n"
 
@@ -263,7 +272,7 @@ def menu(update, context):
 
 def membership_school(update, context):
     chat_id = update.effective_chat.id
-    button = [[InlineKeyboardButton("Register", url="http://bit.ly/ccimemschool")]]
+    button = [[InlineKeyboardButton("Register", url="https://ccing.org/membership-class/")]]
     context.bot.send_photo(
         chat_id=chat_id, photo=open("img/membership.jpg", "rb"),
         caption=config["messages"]["membership"], reply_markup=InlineKeyboardMarkup(button)
@@ -289,17 +298,6 @@ def unmute(update, context):
         chat_id=chat_id, text=config["messages"]["unmute"]
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"mute":False}})
-
-
-def newsletter(update, context):
-    chat_id = update.effective_chat.id
-    button = [[InlineKeyboardButton("Subscribe", url="https://ccing.us8.list-manage.com/subscribe?u=03f72aceeaf186b2d6c32d37e&id=52c44cb044")]]
-    context.bot.send_photo(
-        chat_id=chat_id, photo=open("img/newsletter.jpg", "rb"),
-        caption=config["messages"]["newsletter"], reply_markup=InlineKeyboardMarkup(button)
-    )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-
 
 def notify_new_sermon(chat_id, sermons):
     try:

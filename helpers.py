@@ -135,6 +135,8 @@ def location_prompt(chat_id) -> None:
     buttons = [
         [InlineKeyboardButton("Lagos - Ikeja", callback_data="loc=Ikeja"),
         InlineKeyboardButton("Lagos - Lekki", callback_data="loc=Lekki")],
+        [InlineKeyboardButton("Lagos - Yaba", callback_data="loc=Yaba"),
+        InlineKeyboardButton("Ile-Ife", callback_data="loc=Ile-ife")],
         [InlineKeyboardButton("Ibadan", callback_data="loc=Ibadan"),
         InlineKeyboardButton("PortHarcourt", callback_data="loc=PH")],
         [InlineKeyboardButton("Canada", callback_data="loc=Canada"),
@@ -146,7 +148,7 @@ def location_prompt(chat_id) -> None:
     try:
         bot.send_message(
             chat_id=chat_id, text=config["messages"]["lc"].format(user["first_name"]),
-            reply_markup=InlineKeyboardMarkup(buttons)
+            reply_markup=InlineKeyboardMarkup(buttons), resize_keyboard=True
         )
     except:
         db.users.update_one({"chat_id":chat_id}, {"$set":{"active":False}})

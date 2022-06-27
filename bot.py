@@ -1,4 +1,5 @@
 import os
+from chat.handlers import counseling_request_message
 from commands import *
 from helpers import *
 from locations import MAP_LOCATIONS
@@ -6,7 +7,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
-from dotenv import dotenv_values, load_dotenv
+from dotenv import load_dotenv
 load_dotenv()
 
 
@@ -52,6 +53,8 @@ def handle_message_commands(update, context):
         cancel(update, context)
     elif title == "reboot camp":
         reboot_about(update, context)
+    elif title == "counseling":
+        counseling_request_message(update, context)
     else:
         random(update, context)
 
@@ -240,7 +243,7 @@ def main():
     dp.add_handler(CommandHandler("unmute", unmute))
     dp.add_handler(CommandHandler("cancel", cancel))
     dp.add_handler(CommandHandler("menu", menu))
-    dp.add_handler(CommandHandler("newsletter", newsletter))
+    dp.add_handler(CommandHandler("blog", blog_posts))
     dp.add_handler(CommandHandler("campuses", campuses))
     dp.add_handler(CommandHandler("membership", membership_school))
     dp.add_handler(msg_handler)

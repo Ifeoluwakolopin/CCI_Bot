@@ -6,13 +6,20 @@
     "birthday_day":"What day of the month?",
     "birthday_confirm":"Thank you for replying this prompt🤗.\nYour birthday has been set to {} (month/day)",
     "birthday_message1":"YAYYYY!!🥳\nIt's your special day {0}🎉\n\nAs you celebrate a new year, We pray that you abound in good health, joy and peace, and that your light shines brightly to all around you.🌟\nWe delight ourselves in the Lord for giving us the desires of our hearts in a friend such as you!🥰\nIt's your year of Impact!\n\nHappy Birthday {0}❤️❤️",
+    "blog_posts":"Read blog posts from CCI",
     "broadcast":"Choose broadcast type📣📣\nYou can check out how to use broadcast by clicking the usage button below.\n\nUse /cancel to cancel operation.",
-    "cancel":"You have succesfully cancelled action.",
+    "cancel":"You have successfully cancelled action.",
     "church":"{}📍\n[{}]({})",
+    "counseling_start": "Welcome to CCI Counseling Unit assistant!\n\nReady to receive Godly counsel?\nPlease select or type in a topic you would like to receive counseling on.\n\nUse /cancel to cancel operation.",
+    "counseling_topic_reply":"{}",
+    "counselor_request": "Not what you're looking for?\n Would you like to chat with one of our Pastors?",
+    "counselor_request_confirmation": "Would you like to send a question or short description of what you would like to discuss?.",
+    "counselor_request_yes": "Please enter your name, email, and phone number.\nYour details should be in the format:\nName:\nemail\nPhone number \n\nUse /cancel to cancel operation.",
+    "counselor_request_no": "Okay, let's try again.\n\nUse /cancel to cancel operation.",
     "done":"Done.👌",
     "empty":"I can't find any sermons with {}.\nPlease check if you spelt that correctly😄",
     "find_church":"🔗 Worship with us at a CCI branch close to you.\n\nNeed Directions?\nHere are a few branches close to you.\n\n{}",
-    "finished_broadcast":"Succesfully sent broadcast to {} users.\n\nTotal users: {}",
+    "finished_broadcast":"Successfully sent broadcast to {} users.\n\nTotal users: {}",
     "get_sermon":"Do you know the title of the sermon you're looking for or do you want to search for a certain from a certain date/based on some topics?",
     "get_sermon_1":"Type in the title of the sermon you're looking for...",
     "get_sermon_2":"",
@@ -29,7 +36,6 @@
     "membership":"Want to attend Celebration Church International Membership class? ",
     "mute":"You have muted notifications from CCI Bot 😞\n\nYou won't receive broadcasts from the bot henceforth.\n\nUse /unmute to unmute notifications.",
     "new_sermon":"🔔 Yayy!!\n\nNew Sermons are now available on all our platforms😄.\n\nSelect any sermon to stream or download👇",
-    "newsletter":"test",
     "stats":"**CCI Bot** ⚙️\n\nTotal users: {}🧍🏽‍♀️🧍🏽‍♂\nActive users: {} 👥\nMuted users: {}\nTotal Sermons available: {}🔥\n\nUsers location filtering:\n{}\nBirthdays: {}\n\nToday's birthdays: {}",
     "start":"Hi {}🤗\n\nI am your personal CCI assistant.\nI am here to aid you in experiencing progress and joy in the faith🥳💃\nI can help you with a lot of things!\nBelow are some of them\n\n• Daily Devotionals 📰\n• Latest Sermons 🎶\n• Find a MAP location close to you! \n• Find a CCI branch close to you📍\n• Register for Membership Class📝\n• Get instant ticket notifications😱(Lagos branch Only)🔔\n and so much more...\n\nI'm so excited to do this with you\n\nTo get started\nAll you have to do is click on the icon with four dots or just type “help”\n\nAll sermons and devotionals gotten from\n[Triumph30](triumph30.org) and [Celebration Church International](ccing.org)",
     "t30_caption":"📍 {}\n\n{}\n\nRead on triumph30.org",
@@ -37,6 +43,15 @@
     "temp_message1":"Listen on:\n\n[Anchor](https://anchor.fm/finding-salaam/episodes/Why-Does-The-Bible-Have-So-Many-Different-Translations-eo6frk)\n\n[Apple podcasts](https://podcasts.apple.com/us/podcast/finding-salaam/id1546470492?uo=4)\n\n[Google podcasts](https://www.google.com/podcasts?feed=aHR0cHM6Ly9hbmNob3IuZm0vcy8xNDU5YTA3NC9wb2RjYXN0L3Jzcw==)\n\n[Spotify](https://open.spotify.com/show/57Ds8uQKV6tjJtTnUtPKIH)",
     "tickets":"BOOK A SEAT FOR SERVICE\n(Mainland Campus)\n\nThe registration link is live!\n\nWe've made room for everyone🎉🎉",
     "unknown":"I don't understand your message😇.\n\nType 'help' to see a list of commands or use the keyboard below👇.",
-    "unmute":"Yay🎉\n\nYou have unmuted CCI Bot."
+    "unmute":"Yay🎉\n\nYou have un-muted CCI Bot.",
+    "reboot_camp":{
+      "about":"🥳 REBOOT CAMP 2021 IS ALMOST HERE! 🥳\n\nStay tuned for more #rebootcamp2021 news.\nI'm your one-stop shop for up-to-date information.",
+      "help":""
+    }
+  },
+  "counseling_topics":{
+    "love":"test love...",
+    "joy":"test Joy...",
+    "default": "Can't find any content related to {}.😔, Check if your topic is listed below or try typing it again."
   }
 }

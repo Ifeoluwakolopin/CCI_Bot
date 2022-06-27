@@ -4,71 +4,112 @@ MAP_LOCATIONS = {
             {
             "location":"lekki",
             "contact":"09085199354",
-            "name":"Seunfunmi Okuntola"
+            "name":"Seunfunmi"
+            },
+            {
+            "location":"lekki",
+            "contact":"07010942534",
+            "name":"Oseme"
+            },
+            {
+            "location":"lekki",
+            "contact":"07083747729",
+            "name":"Dan"
+            },
+            {
+            "location":"lekki",
+            "contact":"08169613371",
+            "name":"Lokachi"
             }
         ],
         "mainland":[
             {
-                "location":"Ikeja/Maryland",
-                "contact":"08186104998",
-                "name":"Tola Daini"
-            },
-            {
-                "location":"Isolo/Ajao Estate",
-                "contact":"08099448709",
-                "name":"Seun Odegbami"
-            },
-            {
-                "location":"Surulere",
-                "contact":"08082958491\n08092400769",
-                "name":"Pascal Ekeh"
+                "location":"Agege",
+                "contact":"08188653535",
+                "name":"Osasogie"
             },
             {
                 "location":"Berger/Omole Phase 1",
                 "contact":"08158376282",
-                "name":"Onome Agesse"
+                "name":"Onome"
+            },
+            {
+                "location":"Egbeda",
+                "contact":"07032696212",
+                "name":"Oyinda"
+            },
+            {
+                "location":"Egbeda",
+                "contact":"07060661749",
+                "name":"Lemuel"
+            },
+            {
+                "location":"Ejigbo",
+                "contact":"08161672820",
+                "name":"Ijeoma"
             },
             {
                 "location":"Gbagada",
                 "contact":"08037442973",
-                "name":"Demilade Olafisoye"
+                "name":"Demilade"
             },
             {
-                "location":"Egbeda/Igando",
-                "contact":"08138388007",
-                "name":"Witness Usoro"
+                "location":"Ikeja/Maryland",
+                "contact":"08186104998",
+                "name":"Tola"
+            },
+            {
+                "location":"Ikorodu",
+                "contact":"08180073407\n09039465898",
+                "name":"Micheal"
+            },
+            {
+                "location":"Ikotun",
+                "contact":"08022938375",
+                "name":"Shadrach"
+            },
+            {
+                "location":"Isolo/Ajao Estate",
+                "contact":"08099448709",
+                "name":"Seun"
+            },
+            {
+                "location":"Magodo/Ketu",
+                "contact":"07055220285",
+                "name":"Seyitanfe"
+            },
+            {
+                "location":"Magodo/Ketu",
+                "contact":"09062796681",
+                "name":"Love"
             },
             {
                 "location":"Ogudu",
-                "contact":"08166117441\n08148300299",
-                "name":"Zion Rotimi"
+                "contact":"08166117441",
+                "name":"Zion"
+
+            },
+            {
+                "location":"Ogudu",
+                "contact":"08148300299",
+                "name":"Enoch"
 
             },
             {
                 "location":"Ogba",
                 "contact":"08189024964",
-                "name":"Funom Yakubu"
+                "name":"Funom"
             },
             {
-                "location":"Agege",
-                "contact":"08162973646",
-                "name":"Bukola Alatishe"
+                "location":"Surulere",
+                "contact":"08082958491",
+                "name":"Pascal"
             },
             {
                 "location":"Yaba",
                 "contact":"07067998749",
-                "name":"Chide Isaac"
+                "name":"Chide"
             },
-            {
-                "location":"Ikotun",
-                "contact":"09032141975",
-                "name":"Dolapo Richards"
-            },
-            {
-                "location":"Magodo/Ketu",
-                "contact":"08115557080",
-                "name":"Muyiwa Ogunmade"
-            }
         ]
     },
     "abuja":{
@@ -172,15 +213,19 @@ MAP_LOCATIONS = {
     }
 }
 
-CHURCHES = {
+CHURCH_LOCATIONS = {
 
-        "lagos mainland":{
+        "lagos ikeja":{
             "name":"D'PODIUM INTERNATIONAL EVENT CENTRE\n31B Aromire Avenue, Off Adeniyi Jones Ave, Ikeja, Lagos.",
             "link":"https://g.page/DPodium?share"
         },
         "lagos island":{
             "name":"QUEENS PARK EVENT CENTER\nVI(Hall 2). Water Corporation Drive/Trinity Avenue, off Ligali Ayorinde St, Victoria Island, Lagos, Nigeria",
             "link":"https://goo.gl/maps/cLUpifeyxXRvRreV6"
+        },
+        "lagos yaba":{
+            "name":"BANILUX EVENT PLACE\n2/8 Chapel Street, Yaba, Lagos",
+            "link":"https://goo.gl/maps/ehWM1FbCcHB3oKkX9"
         },
         "abuja":{
             "name":"EDEN PARKS AND GARDEN\nPlot 1126, Augustus Aikhomu Street, Opposite Chida Hotel, Utako, Abuja.",
@@ -193,6 +238,10 @@ CHURCHES = {
         "ibadan":{
             "name":"TAFO ARENA EVENT CENTRE\nWAEC Road Junction, Polytechnic Road Oyo.",
             "link":"https://goo.gl/maps/335ejVk4wH34a8Sj7"
+        },
+        "ife":{
+            "name":"IYERU EVENT HALL & SUITES\nParakin, Ile-Ife",
+            "link":"https://goo.gl/maps/4vF3nuxEj3MjV86n8"
         },
         "uk":{
             "name":"PHOENIX ACADEMY\nBloemfontein Rd, London, W12 7DB.",

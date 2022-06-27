@@ -4,3 +4,5 @@ tempfiles
 temp_code_runner.py
 *.env
 *.gitignore
+.vscode
+*.log
