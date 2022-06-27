@@ -1,6 +1,6 @@
-from telegram import KeyboardButton
+from telegram import KeyboardButton, InlineKeyboardButton
 
-buttons = [
+sermon_buttons = [
     KeyboardButton("latest sermon"),
     KeyboardButton("get sermon"),
 ]
@@ -19,15 +19,27 @@ buttons3 = [
     KeyboardButton("broadcast"),
 ]
 
-bc_btns = [[
-    KeyboardButton("text"),
-    KeyboardButton("video"),
-    KeyboardButton("photo")],
+bc_buttons = [
+    [
+        KeyboardButton("text"),
+        KeyboardButton("video"),
+        KeyboardButton("photo")
+    ],
     [
         KeyboardButton("animation"),
         KeyboardButton("usage")
     ]
 ]
 
-normal_keyboard = [buttons, buttons1]
-admin_keyboard = [buttons, buttons1, buttons3]
+counseling_buttons =[
+    KeyboardButton("counseling"),
+]
+
+categories_keyboard = [
+    [KeyboardButton("Love"), KeyboardButton("Joy")],
+    [KeyboardButton("Hope"), KeyboardButton("Grief")],
+    [KeyboardButton("Wisdom"), KeyboardButton("Marriage")],
+]
+
+normal_keyboard = [sermon_buttons, buttons1]
+admin_keyboard = [sermon_buttons, buttons1, buttons3, counseling_buttons]
