@@ -1,15 +1,22 @@
 from datetime import datetime
+from commands import unknown
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from keyboards import *
 from helpers import *
 
+config = json.load(open("config.json", encoding="utf-8"))
+
 # (1) Provides reply for initial 'get counsel' command.
 def get_counsel(update, context):
     chat_id = update.effective_chat.id
+    ## to be implemented
+    ## Change ReplyKeyboardMarkup to InlineKeyboardMarkup with categories
+    ## This should also be implemented in callback handler.
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["counseling_start"],
         reply_markup=ReplyKeyboardMarkup(categories_keyboard),
-        resize_keyboard=True)
+        resize_keyboard=True
+    )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_counsel"}})
 
 # (2) Handles getting the user the right topics for their request
@@ -18,6 +25,8 @@ def handle_get_counsel(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id":chat_id})
     topic = update.message.text.strip().lower()
+    ## to be implemented
+    ## add InlineKeyboard buttons with suggested topics.
     if topic in config["counseling_topics"]:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counseling_topic_reply"].format(
@@ -29,6 +38,8 @@ def handle_get_counsel(update, context):
                 config["counseling_topics"]["default"].format(topic)),
             reply_markup=ReplyKeyboardMarkup(categories_keyboard, resize_keyboard=True)
         )
+    # adds topic to database
+    add_topic_to_db(topic)
     # Prompts user to speak to a Pastor.
     counselor_request(update, context)
 
@@ -59,31 +70,28 @@ def handle_counselor_request(update, context):
     user = db.users.find_one({"chat_id":chat_id})
     counselor_request = update.message.text.strip().lower()
 
+    if user["admin"]:
+        btn = admin_keyboard
+    else:
+        btn = normal_keyboard
+
     if counselor_request == "yes":
-        if db.user.find_one({"chat_id":chat_id, "admin":True}):
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["counselor_request_yes"],
-                reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
-                )
-        else:
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["counselor_request_yes"],
-                reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
-                )
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["counselor_request_yes"],
+            reply_markup=ReplyKeyboardMarkup(btn, resize_keyboard=True)
+            )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
     elif counselor_request == "no":
-        ## to be implemented
-        ## IF user does not want speak to a pastor, allow them to suggest a topic, of produce a new set of topics.
+        # to be implemented
+        # add buttons containing new set of topics
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_request_no"],
-            reply_markup=ReplyKeyboardMarkup([
-                [KeyboardButton("Yes"), KeyboardButton("No")]],
+            reply_markup=ReplyKeyboardMarkup(categories_keyboard,
                 resize_keyboard=True)
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_counsel"}})
     else:
-         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-
+        unknown(update, context)
 
 # (5) Handles user positive reply to prompt to speak to a pastor.
 def handle_counselor_request_yes(update, context):
@@ -121,7 +129,7 @@ def handle_counselor_request_yes(update, context):
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
 
-    
+
 def add_request_to_queue(counseling_request:dict):
     db.counseling_requests.insert_one({
         "created":counseling_request["created"],

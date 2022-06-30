@@ -56,7 +56,7 @@ def handle_message_commands(update, context):
     elif title == "counseling":
         get_counsel(update, context)
     else:
-        random(update, context)
+        unknown(update, context)
 
 def handle_message_response(update, context):
     """
@@ -152,6 +152,16 @@ def handle_message_response(update, context):
         handle_counselor_request(update, context)
     elif last_command == "counselor_request_yes":
         handle_counselor_request_yes(update, context)
+    elif last_command.startswith("cr_yes"):
+        message_id = int(last_command.split("=")[-1])
+        text = update.message.text
+        db.counseling_requests.update_one(
+            {"request_message_id": message_id}, {"$set":{"active":True, "note": text}}
+        )
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["cr_done"]
+        )
+        done(update, context)
 
 
 def cb_handle(update, context):
@@ -248,19 +258,17 @@ def cb_handle(update, context):
                     ]]
                 )
             )
-            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"cr_yes"}})
         else:
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["counselor_request_invalid_info"]
             )
-            print(q_head[2])
             db.counseling_requests.delete_one({"request_message_id":int(q_head[2])})
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
     elif q_head[0] == "cr-yes":
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cr_yes_confirm"]
         )
-        ## to be implemented
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"cr_yes="+q_head[1]}})
     elif q_head[0] == "cr-no":
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cr_done"]

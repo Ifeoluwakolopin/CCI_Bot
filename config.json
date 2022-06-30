@@ -17,12 +17,12 @@
     "counselor_request_invalid_info":"It seems you have not entered your information in the right format.\n\nPlease try again.\n\nEnsure that your name, email and phone number are on different lines as shown be in the example below:\n\nName: John Doe\nEmail: johndoe@cci.mail\nPhone: +2343434343434\n\nUse /cancel to cancel operation.",
     "counselor_request_confirmation": "Would you like to send a question or short description of what you would like to discuss?.",
     "counselor_request_yes": "Please enter your name, email, and phone number.\nPlease ensure that your name, email and phone number are on different lines as shown be in the example below:\n John Doe\n johndoe@cci.mail\n +2343434343434\n\nUse /cancel to cancel operation.",
-    "counselor_request_no": "Okay, let's try again.\nIf you can't find the topic you're searching for, try suggesting a new topic.\n\nMore information will be added based on your suggestion.",
+    "counselor_request_no": "Okay, let's try again.\n\nSelect or type in a topic you're looking for\n\nIf you can't find the topic you're searching for, try suggesting a new topic.\nMore information will be added based on your suggestion.\nYou can also send us an email at counseling@ccing.org.\nUse /cancel to cancel operation.",
     "cr_yes":"Awesome! Your request is ready to be sent.\nWould you like to add a note/description of what you would like to talk about?",
-    "cr_yes_confirm":"Please enter your notes/description of what you would like to talk about.",
+    "cr_yes_confirm":"Please enter a short description of what you would like to talk about.",
     "cr_done":"Your counseling request has been successfully sent.\n\nOne of our pastors will get to you shortly.\n\nThank you for your patience.",
-    "done":"Done.👌",
-    "empty":"I can't find any sermons with {}.\nPlease check if you spelt that correctly😄",
+    "done":"❤️",
+    "empty":"I can't find any sermons with {}.\nPlease check if you spelt that correctly😄.\n\nUse /cancel to cancel action.",
     "find_church":"🔗 Worship with us at a CCI branch close to you.\n\nNeed Directions?\nHere are a few branches close to you.\n\n{}",
     "finished_broadcast":"Successfully sent broadcast to {} users.\n\nTotal users: {}",
     "get_sermon":"Do you know the title of the sermon you're looking for or do you want to search for a certain from a certain date/based on some topics?",
@@ -57,6 +57,6 @@
   "counseling_topics":{
     "love":"test love...",
     "joy":"test Joy...",
-    "default": "Can't find any content related to {}.😔, Check if your topic is listed below or try typing it again."
+    "default": "Can't find any content related to {}.😔, Check if what you're looking for is listed below or try typing it again."
   }
 }

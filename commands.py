@@ -313,21 +313,20 @@ def notify_new_sermon(chat_id, sermons):
     except:
         db.users.update_one({"chat_id":chat_id}, {"$set":{"active":False}})
    
-def random(update, context):
+def unknown(update, context):
     """
     This handles unrecognized commands.
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({"chat_id":chat_id, "admin":True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["unknown"],
-            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
-        )
+    user = db.users.find_one({"chat_id":chat_id})
+    if user["admin"]:
+        btn = admin_keyboard
     else:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["unknown"],
-            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
-        )
+        btn = normal_keyboard
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["unknown"],
+        reply_markup=ReplyKeyboardMarkup(btn, resize_keyboard=True)
+    )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def reboot_about(update, context):
