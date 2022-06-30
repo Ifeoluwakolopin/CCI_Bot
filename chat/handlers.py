@@ -1,3 +1,4 @@
+from datetime import datetime
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from keyboards import *
 from helpers import *
@@ -59,9 +60,16 @@ def handle_counselor_request(update, context):
     counselor_request = update.message.text.strip().lower()
 
     if counselor_request == "yes":
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counselor_request_yes"],
-            )
+        if db.user.find_one({"chat_id":chat_id, "admin":True}):
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["counselor_request_yes"],
+                reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
+                )
+        else:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["counselor_request_yes"],
+                reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
+                )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
     elif counselor_request == "no":
         ## to be implemented
@@ -80,50 +88,50 @@ def handle_counselor_request(update, context):
 # (5) Handles user positive reply to prompt to speak to a pastor.
 def handle_counselor_request_yes(update, context):
     chat_id = update.effective_chat.id
+    message = update.message
     try:
 
-        contact_info = update.message.text.split("\n")
+        contact_info = message.text.split("\n")
         name = contact_info[0].strip()
         email = contact_info[1].strip()
         phone = contact_info[2].strip()
-        message_id = update.message.message_id
+        message_id = message.message_id
+        
+        # temporarily add request to db queue
+        add_request_to_queue({
+            "created":datetime.now(),
+            "chat_id":chat_id,
+            "name":name,
+            "email":email,
+            "phone":phone,
+            "request_message_id":message_id,
+            "note":None
+        })
 
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_request_contact_info_confirm"].format(name, email, phone),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Yes", callback_data="cr=yes="+str(message_id))],
-                [InlineKeyboardButton("No", callback_data="cr=no="+str(message_id))]
+                [InlineKeyboardButton("Yes, this is correct", callback_data="cr=yes="+str(message_id))],
+                [InlineKeyboardButton("No, I want to make a change", callback_data="cr=no="+str(message_id))]
                 ], resize_keyboard=True)
             )
-    except Exception as e:
+    except:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_request_invalid_info"]
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
 
-
-def handle_counselor_request_confirmation(update, context):
-    chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id":chat_id})
-    counselor_request = update.message.text.strip().lower()
-    if "yes this info is correct" in counselor_request:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counselor_request_yes"]
-        )
-    elif counselor_request == "no":
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counselor_request_no"]
-        )
     
 def add_request_to_queue(counseling_request:dict):
-    db.counseling_requests.update_one({
+    db.counseling_requests.insert_one({
         "created":counseling_request["created"],
         "name":counseling_request["name"],
         "email": counseling_request["email"],
         "phone":counseling_request["phone"],
         "chat_id":counseling_request["chat_id"],
-        "request_id":counseling_request["request_id"],
-        "active":True
+        "request_message_id":counseling_request["request_message_id"],
+        "active":False,
+        "note":counseling_request["note"]
     })
 
 def get_active_requests():
