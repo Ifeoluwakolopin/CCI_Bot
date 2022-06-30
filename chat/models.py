@@ -4,20 +4,24 @@ from datetime import datetime
 
 class Message:
 
-    def __init__(self, sender:str, reciever:str, text:str, status=None, time_sent=datetime.now()) -> None:
+    def __init__(self, message_id:int, sender:str, receiver:str, text:str, status=None, time_sent=datetime.now(), reply_to=False) -> None:
+        self.message_id = message_id
         self.sender = sender
-        self.reciever = reciever
+        self.receiver = receiver
         self.text = text
         self.status = status
         self.time_sent = time_sent
+        self.reply_to = reply_to
 
     def _get_message_json(self):
         return json.dumps({
+            'message_id':self.message_id,
             'sender': self.sender,
-            'reciever': self.reciever,
+            'receiver': self.receiver,
             'message': self.text,
             'status': self.status,
-            'time_sent': str(self.time_sent)
+            'time_sent': str(self.time_sent),
+            'reply_to':self.reply_to
         }, indent=2)
 
     def update_message_status(self, update="sent"):
@@ -27,8 +31,8 @@ class Message:
     def get_sender(self):
         return self.sender
 
-    def get_reciever(self):
-        return self.get_reciever
+    def get_receiver(self):
+        return self.get_receiver
     
     def get_message(self):
         return self.text

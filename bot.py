@@ -1,6 +1,7 @@
 import os
 from commands import *
 from helpers import *
+from chat.handlers import *
 from locations import MAP_LOCATIONS
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
@@ -53,7 +54,7 @@ def handle_message_commands(update, context):
     elif title == "reboot camp":
         reboot_about(update, context)
     elif title == "counseling":
-        counseling_request_message(update, context)
+        get_counsel(update, context)
     else:
         random(update, context)
 
@@ -145,6 +146,12 @@ def handle_message_response(update, context):
             parse_mode="Markdown"
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    elif last_command == "get_counsel":
+        handle_get_counsel(update, context)
+    elif last_command == "counselor_request":
+        handle_counselor_request(update, context)
+    elif last_command == "counselor_request_yes":
+        handle_counselor_request_yes(update, context)
 
 
 def cb_handle(update, context):
