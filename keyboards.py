@@ -43,4 +43,4 @@ categories_keyboard = [
 
 normal_keyboard = [sermon_buttons, buttons1]
 admin_keyboard = [sermon_buttons, buttons1, buttons3]
-admin_keyboard = [sermon_buttons, buttons1, buttons3, counseling_buttons]
+#admin_keyboard = [sermon_buttons, buttons1, buttons3, counseling_buttons]
