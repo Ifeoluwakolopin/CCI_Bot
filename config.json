@@ -1,5 +1,7 @@
 {
   "messages":{
+    "active_request":"Name: {}\n\nEmail: {}\n\nPhone: {}\n\n Message: {}",
+    "active_requests":"Here is a list of active requests for counseling. Click on the button to start a conversation with any of them.\n\nPlease bear in mind that you should only start one conversation at a time, and once you have started a conversation, other pastors can no longer start the same conversation.",
     "bc":"Enter {} you want to broadcast:\n\nUse /cancel to cancel operation.",
     "bc_help":"How to use broadcast types\n\n👉 text - Send written text broadcast to all users\n👉 photo - Send a photo with/without caption as broadcast.\n👉 video - Send a video clip (must be less than 50mb) as broadcast with/without caption\n👉 animation - Send short animated gif as broadcast with/without caption.\n\nUse /cancel to cancel operation.",
     "birthday_prompt":"Hi {}🥰\n\nWe noticed you have not responded to this message🥺\n\nAs a part of the CCI family, we would like to celebrate you on your special day. 🥳\n\nPlease take a second to tell us when your birthday comes up.",
@@ -16,9 +18,9 @@
     "counselor_request_contact_info_confirm":"Please confirm that the information you provided is correct.\n\nName: {0}\nEmail: {1}\nPhone Number: {2}",
     "counselor_request_invalid_info":"It seems you have not entered your information in the right format.\n\nPlease try again.\n\nEnsure that your name, email and phone number are on different lines as shown be in the example below:\n\nName: John Doe\nEmail: johndoe@cci.mail\nPhone: +2343434343434\n\nUse /cancel to cancel operation.",
     "counselor_request_confirmation": "Would you like to send a question or short description of what you would like to discuss?.",
-    "counselor_request_yes": "Please enter your name, email, and phone number.\nPlease ensure that your name, email and phone number are on different lines as shown be in the example below:\nName: John Doe\nEmail: johndoe@cci.mail\nPhone: +2343434343434\n\nUse /cancel to cancel operation.",
+    "counselor_request_yes": "Please enter your name, email, and phone number.\n\nEnsure that your name, email and phone number are on different lines as shown be in the example below:\n\nName: John Doe\nEmail: johndoe@cci.mail\nPhone: +2343434343434\n\nUse /cancel to cancel operation.",
     "counselor_request_no": "Okay, let's try again.\n\nSelect or type in a topic you're looking for\n\nIf you can't find the topic you're searching for, try suggesting a new topic.\nMore information will be added based on your suggestion.\nYou can also send us an email at counseling@ccing.org.\nUse /cancel to cancel operation.",
-    "cr_yes":"Awesome! Your request is ready to be sent.\nWould you like to add a note/description of what you would like to talk about?",
+    "cr_yes":"Awesome! Your request is ready to be sent.\nWould you like to add a note/description of what you would like to talk about?\n\nPlease tap 'Yes' or 'No' below to continue.",
     "cr_yes_confirm":"Please enter a short description of what you would like to talk about.",
     "cr_done":"Your counseling request has been successfully sent.\n\nOne of our pastors will get to you shortly.\n\nThank you for your patience.",
     "done":"❤️",
