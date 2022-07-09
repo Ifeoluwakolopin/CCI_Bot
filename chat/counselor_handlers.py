@@ -1,6 +1,9 @@
+from datetime import datetime
+from chat.models import Message
 from keyboards import *
 from helpers import *
 
+## HELPER FUNCTIONS
 # (1) 
 def get_active_requests():
     requests = db.counseling_requests.find({"active":True, "status":"pending"}).sort("created", 1)
@@ -77,13 +80,60 @@ def handle_initial_conversation_cb(update, context):
             chat_id=req["chat_id"], text=config["messages"]["conversation_start_user"].format(pastor["first_name"])
         )
         ## set pastor_id as counselor_id for request
-        db.counseling_requests.update_one({"request_id":req["request_id"]}, {"$set":{"counselor_chat_id":chat_id}})
-
+        db.counseling_requests.update_one({"request_message_id":req["request_message_id"]}, {"$set":{"counselor_chat_id":chat_id}})
         ## set user status as in-conversation with pastor
-
+        db.users.update_one({"chat_id":req["chat_id"]}, {"$set":{"status":"in-conversation-with="+str(chat_id)+"=pastor"}})
         ## set pastor status as in-conversation with user
-
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"status":"in-conversation-with="+str(req["chat_id"])+"=user"}})
+        ## start conversation
+        start_conversation(req)
     else:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["conversation_already_started"]
         )
+
+def conversation_handler(update, context):
+    chat_id = update.effective_chat.id
+    user = db.users.find_one({"chat_id":chat_id})
+    send_to = user["status"].split("=")
+    msg = update.message
+
+    ## Send message to the other user.
+
+    message = {
+        "message":msg.text,
+        "created":datetime.now(),
+        "from":chat_id,
+        "to":send_to,
+    }
+    ## Update conversation object in database.
+    if send_to[2] == "pastor":
+        update_conversation(message, send_to[1], chat_id)
+    else:
+        update_conversation(message, chat_id, send_to[1])
+
+    
+
+
+def start_conversation(counseling_request):
+    db.conversations.insert_one({
+        "counselor_id":counseling_request["counselor_chat_id"],
+        "user_id":counseling_request["chat_id"],
+        "messages":[],
+        "created":datetime.now(),
+        "from":counseling_request,
+        "last_updated":datetime.now()
+    })
+
+def update_conversation(msg, counselor_id, user_id):
+    db.conversations.update_one({
+        "counselor_id":counselor_id,
+        "user_id":user_id
+    }, {
+        "$push":{
+            "messages":msg
+        }, 
+        "$set":{
+            "last_updated":datetime.now()
+        }
+    })
