@@ -31,7 +31,7 @@
     "finished_broadcast":"Successfully sent broadcast to {} users.",
     "get_sermon":"Do you know the title of the sermon you're looking for or do you want to search for a certain from a certain date/based on some topics?",
     "get_sermon_1":"Type in the title of the sermon you're looking for...",
-    "get_sermon_2":"",
+    "get_sermon_2":"Sorry this feature is not yet available but you can search for a particular title.\n\nThank you!",
     "help":"You can now use BUTTONS or the COMMAND MENU to pass commands to the bot.\nHere's how the buttons below work\n\n👉 latest sermon - This gives you the most recent sermon available on the [website](http://ccing.org/sermons/)\n\n👉 get sermon - This helps you get a specific sermon by it's title. You can search using the exact title or a keyword.\nSearching for a keyword (e.g Grace) would give you all sermon containing the keyword in their titles.\n\n👉 devotional - Get today's devotional\n\n👉 map - This helps you find the nearest MAP centre to your location.\n\nYou can other perform other commands using the COMMAND MENU.\nThese commands include:\n• /cancel - Cancel any existing action✖️\n• /menu - Get the default keyboard⌨️\n• /membership - Register for membership school🏫\n• /newsletter - Subscribe to the CCI Newsletter🗞\n• /mute - Mute notifications from CCI Bot😔\n• /unmute - Unmute bot notifications🤩",
     "lc":"Hi {} 😄\n\nPlease take a moment to tell me what branch of CCI you attend.🥺\nThis would help improve your experience with the bot.😁",
     "lc_confirm":"Thank you for your feedback! ☺️\nYour response will help us give you better updates.🤩",
