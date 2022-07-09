@@ -2,7 +2,7 @@ from datetime import date
 from datetime import datetime as dt
 from helpers import *
 from scrapers import WebScrapers
-from keyboards import normal_keyboard, admin_keyboard, bc_buttons
+from keyboards import *
 from locations import MAP_LOCATIONS, CHURCH_LOCATIONS
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 
@@ -40,55 +40,60 @@ def bc_animation(update, context):
     This function sends animation as broadcast
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+    user = db.users.find_one({'chat_id':chat_id, 'admin':True})
+    if user:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["bc"].format("animation")
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_animation"}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":user["last_command"]+"+bc_animation"}})
 
 def bc_help(update, context):
     """
     This function sends instruction on how to use broadcasts
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+    user = db.users.find_one({'chat_id':chat_id, 'admin':True})
+    if user:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["bc_help"]
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":user["last_command"]+"+bc_help"}})
 
 def bc_photo(update, context):
     """
     This function sends photo as broadcast
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+    user = db.users.find_one({'chat_id':chat_id, 'admin':True})
+    if user:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["bc"].format("photo")
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_photo"}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":user["last_command"]+"+bc_photo"}})
 
 def bc_text(update, context):
     """
     This function sends text as broadcast
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+    user = db.users.find_one({'chat_id':chat_id, 'admin':True})
+    if user:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["bc"].format("message")
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_text"}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":user["last_command"]+"+bc_text"}})
 
 def bc_video(update, context):
     """
     This function sends video as broadcast.
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+    user = db.users.find_one({'chat_id':chat_id, 'admin':True})
+    if user:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["bc"].format("video")
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_video"}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":user["last_command"]+"+bc_video"}})
 
 
 def blog_posts(update, context):
@@ -108,9 +113,14 @@ def broadcast(update, context):
     if db.users.find_one({'chat_id':chat_id, 'admin':True}):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["broadcast"],
-            reply_markup = ReplyKeyboardMarkup(bc_buttons, resize_keyboard=True)
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("Send to all users", callback_data="bc=all")]
+                ,[InlineKeyboardButton("Send to specific users", callback_data="bc=specific")]],
+            )
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    else:
+        unknown(update, context)
 
 def campuses(update, context):
     """ 
@@ -155,17 +165,14 @@ def done(update, context):
     """
     chat_id = update.effective_chat.id
     if db.users.find_one({"chat_id":chat_id, "admin":True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["done"],
-            parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
-        )
+        keyboard = admin_keyboard
     else:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["done"],
-            parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
-        )
+        keyboard = normal_keyboard
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["done"],
+        parse_mode="Markdown", disable_web_page_preview="True",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def get_sermon(update, context):
