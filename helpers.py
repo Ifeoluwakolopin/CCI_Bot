@@ -11,7 +11,7 @@ load_dotenv()
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO, filename="status.log")
+                    level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 config = json.load(open("config.json", encoding="utf-8"))
