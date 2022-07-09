@@ -97,24 +97,27 @@ def handle_message_response(update, context):
                 bc_animation(update, context)
         else:
             q = last_command.split("+")
+
             if q[0] == "bc_to_all":
                 users = db.users.find({})
             else:
                 locations = q[1:-1]
                 users = db.users.find({"location": {"$in": locations}})
 
-            if type == "bc_text":
+            bc_type = q[-1]
+
+            if bc_type == "bc_text":
                 message = update.message.text
                 BroadcastHandlers.text(users, message)
-            elif type == "bc_photo":
+            elif bc_type == "bc_photo":
                 photo = update.message.photo[-1].file_id
                 caption = update.message.caption or ""
                 BroadcastHandlers.photo(users, photo, caption)
-            elif type == "bc_video":
+            elif bc_type == "bc_video":
                 video = update.message.video.file_id
                 caption = update.message.caption or ""
                 BroadcastHandlers.video(users, video, caption)
-            elif type == "bc_animation":
+            elif bc_type == "bc_animation":
                 animation = update.message.animation.file_id
                 caption = update.message.caption or ""
                 BroadcastHandlers.animation(users, animation, caption)
