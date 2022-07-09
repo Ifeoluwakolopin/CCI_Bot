@@ -37,16 +37,6 @@ def handle_message_commands(update, context):
         stats(update, context)
     elif title == "broadcast":
         broadcast(update, context)
-    elif title == "usage":
-        bc_help(update, context)
-    elif title == "text":
-        bc_text(update, context)
-    elif title == "video":
-        bc_video(update, context)
-    elif title == "photo":
-        bc_photo(update, context)
-    elif title == "animation":
-        bc_animation(update, context)
     elif title == "map":
         map_loc(update, context)
     elif title == "cancel":
@@ -89,57 +79,56 @@ def handle_message_response(update, context):
                         chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
                     )
         menu(update, context)
-    elif last_command == "bc_text":
-        message = update.message.text
-        for user in db.users.find({}):
-            x = text_send(user["chat_id"], message.format(user["first_name"]))
-            if x is None:
-                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
-        users = db.users.count_documents({})
-        total_delivered = db.users.count_documents({"active": True})
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
-        )
-        done(update, context)
-    elif last_command == "bc_photo":
-        photo = update.message.photo[-1].file_id
-        caption = update.message.caption
-        for user in db.users.find({}):
-            x = photo_send(user["chat_id"], photo=photo, caption=caption.format(user["first_name"]))
-            if x is None:
-                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
-        users = db.users.count_documents({})
-        total_delivered = db.users.count_documents({"active": True})
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
-        )
-        done(update, context)
-    elif last_command == "bc_video":
-        video = update.message.video.file_id
-        caption = update.message.caption
-        for user in db.users.find({}):
-            x = video_send(user["chat_id"], video=video, caption=caption.format(user["first_name"]))
-            if x is None:
-                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
-        users = db.users.count_documents({})
-        total_delivered = db.users.count_documents({"active": True})
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
-        )
-        done(update, context)
-    elif last_command == "bc_animation":
-        animation = update.message.animation.file_id
-        caption = update.message.caption
-        for user in db.users.find({}):
-            x = animation_send(user["chat_id"], animation=animation, caption=caption)
-            if x is None:
-                db.users.update_one({"chat_id":user["chat_id"]}, {"$set":{"active":False}})
-        users = db.users.count_documents({})
-        total_delivered = db.users.count_documents({"active": True})
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(total_delivered, users)
-        )
-        done(update, context)
+    elif last_command.startswith("bc_to"):
+
+        msg = update.message.text
+
+        if msg is not None and msg.lower() in ["how to broadcast", "text", "video", "photo", "animation"]:
+            title = msg.lower()
+            if title == "how to broadcast":
+                bc_help(update, context)
+            elif title == "text":
+                bc_text(update, context)
+            elif title == "video":
+                bc_video(update, context)
+            elif title == "photo":
+                bc_photo(update, context)
+            elif title == "animation":
+                bc_animation(update, context)
+        else:
+            q = last_command.split("+")
+            if q[0] == "bc_to_all":
+                users = db.users.find({})
+            else:
+                locations = q[1:-1]
+                users = db.users.find({"location": {"$in": locations}})
+
+            if type == "bc_text":
+                message = update.message.text
+                BroadcastHandlers.text(users, message)
+            elif type == "bc_photo":
+                photo = update.message.photo[-1].file_id
+                caption = update.message.caption or ""
+                BroadcastHandlers.photo(users, photo, caption)
+            elif type == "bc_video":
+                video = update.message.video.file_id
+                caption = update.message.caption or ""
+                BroadcastHandlers.video(users, video, caption)
+            elif type == "bc_animation":
+                animation = update.message.animation.file_id
+                caption = update.message.caption or ""
+                BroadcastHandlers.animation(users, animation, caption)
+
+            if q[0] == "bc_to_all":
+                sent_to = db.users.count_documents({"active": True})
+            else:
+                locations = q[1:-1]
+                sent_to = db.users.count_documents({"location": {"$in": locations}, "active":True})
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["finished_broadcast"].format(sent_to)
+            )
+            done(update, context)
+        
     elif last_command == "map":
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["map_feedback"],
@@ -193,17 +182,49 @@ def cb_handle(update, context):
                 chat_id=chat_id, text=config["messages"]["location3"].format(q_head[3].capitalize(), locations)
             )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    elif q_head[0] == "bc":
+        if q_head[1] == "all":
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["broadcast_type"],
+                reply_markup=ReplyKeyboardMarkup(bc_buttons, resize_keyboard=True)
+            )
+            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_to_all"}})
+        else:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["broadcast_location"],
+                reply_markup=InlineKeyboardMarkup(bc_location_buttons, resize_keyboard=True)
+            )
+            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    elif q_head[0] == "bc-to":
+        admin_user = db.users.find_one({"chat_id":chat_id})
+        if q_head[1] == "done":
+            locs = admin_user["last_command"].split("+")[1:]
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["broadcast_location_done"].format(
+                    ", ".join(locs)),
+                reply_markup=ReplyKeyboardMarkup(bc_buttons, resize_keyboard=True)
+                )
+        else:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["broadcast_location_added"].format(q_head[1])
+            )
+            if admin_user["last_command"] is not None:
+                db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":admin_user["last_command"]+"+"+q_head[1]}})
+            else:
+                db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_to+"+q_head[1]}})
     elif q_head[0] == "s":
         sermon = search_db_title(q[2:])[0]
         if sermon["video"] is not None:
-            buttons = [[InlineKeyboardButton("Download Sermon", url=sermon["download"])],
-                    [InlineKeyboardButton("Watch Video", url=sermon["video"])]]
-            context.bot.send_photo(
-                chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(buttons)                )
+            button = [
+                [InlineKeyboardButton("Download Sermon", url=sermon["download"])],
+                [InlineKeyboardButton("Watch Video", url=sermon["video"])]
+            ]
         else:
-            button = [[InlineKeyboardButton("Download Sermon", url=sermon["link"])]]
-            context.bot.send_photo(
-                chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
+            button = [
+                [InlineKeyboardButton("Download Sermon", url=sermon["link"])]
+            ]
+        context.bot.send_photo(
+            chat_id=chat_id, photo=sermon["image"], caption=sermon["title"], reply_markup=InlineKeyboardMarkup(button)
            )
     elif q_head[0] == "loc":
         db.users.update_one({"chat_id":chat_id}, {"$set":{"location":q[4:]}})
