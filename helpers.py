@@ -81,6 +81,20 @@ def birthday_prompt(chat_id):
     except:
         db.users.update_one({"chat_id":chat_id}, {"$set":{"active":False}})
 
+def validate_user_keyboard(chat_id) -> list:
+    """
+    This takes in a user id and returns the right keyboard for the user.
+    
+    Keyword arguments:
+    chat_id -- user's telegram chat_id
+    Return: returns correct keyboard for user
+    """
+    user = db.users.find_one({"chat_id":chat_id})
+    if user["admin"] == True:
+        return admin_keyboard
+    else:
+        return normal_keyboard
+
 class MessageHelper:
 
     @staticmethod

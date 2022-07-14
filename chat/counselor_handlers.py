@@ -91,6 +91,7 @@ def handle_initial_conversation_cb(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["conversation_already_started"]
         )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def conversation_handler(update, context):
     chat_id = update.effective_chat.id
