@@ -156,6 +156,8 @@ def handle_message_response(update, context):
         )
         done(update, context)
         notify_pastors(update, context)
+    elif last_command.startswith("in-conversation-with"):
+        conversation_handler(update, context)
 
 
 def cb_handle(update, context):
@@ -302,6 +304,8 @@ def cb_handle(update, context):
         db.counseling_requests.update_one({"request_message_id":int(q_head[1])}, {"$set":{"active":True}})
         done(update, context)
         notify_pastors(update, context)
+    elif q_head[0] == "conv":
+        handle_initial_conversation_cb(update, context)
 
 
         

@@ -82,9 +82,9 @@ def handle_initial_conversation_cb(update, context):
         ## set pastor_id as counselor_id for request
         db.counseling_requests.update_one({"request_message_id":req["request_message_id"]}, {"$set":{"counselor_chat_id":chat_id}})
         ## set user status as in-conversation with pastor
-        db.users.update_one({"chat_id":req["chat_id"]}, {"$set":{"status":"in-conversation-with="+str(chat_id)+"=pastor"}})
+        db.users.update_one({"chat_id":req["chat_id"]}, {"$set":{"last_command":"in-conversation-with="+str(chat_id)+"=pastor"}})
         ## set pastor status as in-conversation with user
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"status":"in-conversation-with="+str(req["chat_id"])+"=user"}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"in-conversation-with="+str(req["chat_id"])+"=user"}})
         ## start conversation
         start_conversation(req)
     else:
@@ -93,13 +93,48 @@ def handle_initial_conversation_cb(update, context):
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
+
+def send_message_handler(msg, to):
+    ## Send message to the other user.
+    if msg.text:
+        bot.send_message(
+            chat_id=to, 
+            text=msg.text,
+            reply_to_message_id=msg.message_id
+        )
+    elif msg.photo:
+        bot.send_photo(
+            chat_id=to, photo=msg.photo[-1].file_id, 
+            caption=msg.caption or " ",
+            reply_to_message_id=msg.message_id
+        )
+    elif msg.voice:
+        bot.send_voice(
+            chat_id=to, voice=msg.voice.file_id, 
+            caption=msg.caption or " ",
+            reply_to_message_id=msg.message_id
+        )
+    elif msg.video:
+        bot.send_video(
+            chat_id=to, video=msg.video.file_id, 
+            caption=msg.caption or " ",
+            reply_to_message_id=msg.message_id
+        )
+    elif msg.animation:
+        bot.send_animation(
+            chat_id=to, animation=msg.animation.file_id, 
+            caption=msg.caption or " ",
+            reply_to_message_id=msg.message_id
+        )
+
+
 def conversation_handler(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id":chat_id})
-    send_to = user["status"].split("=")
+    send_to = user["last_command"].split("=")[1]
     msg = update.message
 
-    ## Send message to the other user.
+    send_message_handler(msg, int(send_to))
 
     message = {
         "message":msg.text,
@@ -138,3 +173,6 @@ def update_conversation(msg, counselor_id, user_id):
             "last_updated":datetime.now()
         }
     })
+
+def create_calendly_link():
+    pass
