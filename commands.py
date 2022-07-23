@@ -1,5 +1,6 @@
 from datetime import date
 from datetime import datetime as dt
+from chat.counselor_handlers import end_conversation_cb_handler, end_conversation_prompt
 from helpers import *
 from scrapers import WebScrapers
 from keyboards import *
@@ -148,13 +149,18 @@ def cancel(update, context):
     This function helps you cancel any existing action
     """
     chat_id = update.effective_chat.id
-    keyboard = validate_user_keyboard(chat_id)
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["cancel"],
-        parse_mode="Markdown", disable_web_page_preview="True",
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    user = db.users.find_one({'chat_id':chat_id})
+
+    if user["last_command"].startswith("in-conversation-with"):
+        end_conversation_prompt(update, context)
+    else:
+        keyboard = validate_user_keyboard(chat_id)
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["cancel"],
+            parse_mode="Markdown", disable_web_page_preview="True",
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def done(update, context):
     """

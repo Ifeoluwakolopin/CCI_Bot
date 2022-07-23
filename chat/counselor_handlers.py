@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from telegram import ReplyKeyboardMarkup
 from chat.models import Message
 from keyboards import *
 from helpers import *
@@ -82,9 +84,9 @@ def handle_initial_conversation_cb(update, context):
         ## set pastor_id as counselor_id for request
         db.counseling_requests.update_one({"request_message_id":req["request_message_id"]}, {"$set":{"counselor_chat_id":chat_id}})
         ## set user status as in-conversation with pastor
-        db.users.update_one({"chat_id":req["chat_id"]}, {"$set":{"last_command":"in-conversation-with="+str(chat_id)+"=pastor"}})
+        db.users.update_one({"chat_id":req["chat_id"]}, {"$set":{"last_command":"in-conversation-with="+str(chat_id)+"=pastor="+str(req["request_message_id"])}})
         ## set pastor status as in-conversation with user
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"in-conversation-with="+str(req["chat_id"])+"=user"}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"in-conversation-with="+str(req["chat_id"])+"=user="+str(req["request_message_id"])}})
         ## start conversation
         start_conversation(req)
     else:
@@ -99,48 +101,43 @@ def send_message_handler(msg, to):
     if msg.text:
         bot.send_message(
             chat_id=to, 
-            text=msg.text,
-            reply_to_message_id=msg.message_id
+            text=msg.text
         )
     elif msg.photo:
         bot.send_photo(
             chat_id=to, photo=msg.photo[-1].file_id, 
             caption=msg.caption or " ",
-            reply_to_message_id=msg.message_id
         )
     elif msg.voice:
         bot.send_voice(
             chat_id=to, voice=msg.voice.file_id, 
             caption=msg.caption or " ",
-            reply_to_message_id=msg.message_id
         )
     elif msg.video:
         bot.send_video(
             chat_id=to, video=msg.video.file_id, 
             caption=msg.caption or " ",
-            reply_to_message_id=msg.message_id
         )
     elif msg.animation:
         bot.send_animation(
             chat_id=to, animation=msg.animation.file_id, 
             caption=msg.caption or " ",
-            reply_to_message_id=msg.message_id
         )
 
 
 def conversation_handler(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id":chat_id})
-    send_to = user["last_command"].split("=")[1]
+    send_to = user["last_command"].split("=")
     msg = update.message
 
-    send_message_handler(msg, int(send_to))
+    send_message_handler(msg, int(send_to[1]))
 
     message = {
         "message":msg.text,
         "created":datetime.now(),
         "from":chat_id,
-        "to":send_to,
+        "to":send_to[1],
     }
     ## Update conversation object in database.
     if send_to[2] == "pastor":
@@ -148,7 +145,52 @@ def conversation_handler(update, context):
     else:
         update_conversation(message, chat_id, send_to[1])
 
+
+def end_conversation_prompt(update, context):
+    chat_id = update.effective_chat.id
+    user = db.users.find_one({"chat_id":chat_id})
+    send_to = user["last_command"].split("=")
+
+    role = send_to[2]
     
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["conversation_end_prompt"].format(role),
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("Yes", callback_data="end_conv=yes="+str(chat_id)+"="+str(send_to[1])+"="+role),
+            InlineKeyboardButton("No", callback_data="end_conv=no="+str(chat_id)+"="+str(send_to[1])+"="+role)
+        ]
+
+        ], resize_keyboard=True)
+    )
+
+def end_conversation_cb_handler(update, context):
+    chat_id = update.effective_chat.id
+    q = update.callback_query.data
+    q_head = q.split("=")
+    user = db.users.find_one({"chat_id":chat_id})
+
+    if user["role"]=="pastor":
+        keyboard1, keyboard2 = pastor_keyboard, normal_keyboard
+    else:
+        keyboard1, keyboard2 = normal_keyboard, pastor_keyboard
+    if q_head[1] == "yes":
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["conversation_end_confirm"],
+            reply_markup=ReplyKeyboardMarkup(keyboard1, resize_keyboard=True)
+        )
+        context.bot.send_message(
+            chat_id=int(q_head[3]), text=config["messages"]["conversation_end_notify"].format(
+                q_head[4]
+            ), reply_markup=ReplyKeyboardMarkup(keyboard2, resize_keyboard=True)
+        )
+        set_request_status(int(user["last_command"].split("=")[-1]), "completed")
+        db.users.update_many({"chat_id": {"$in": [chat_id, int(q_head[3])]}},
+            {"$set":{"last_command":None}},
+        )
+    else:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["conversation_end_cancel"]
+        )
 
 
 def start_conversation(counseling_request):
@@ -161,6 +203,7 @@ def start_conversation(counseling_request):
         "last_updated":datetime.now()
     })
 
+## TODO: fix update conversation.
 def update_conversation(msg, counselor_id, user_id):
     db.conversations.update_one({
         "counselor_id":counselor_id,
@@ -174,5 +217,11 @@ def update_conversation(msg, counselor_id, user_id):
         }
     })
 
+# TODO: Add appropriate buttons for counselors
+# TODO: Add appropriate buttons for ending conversation for both user and pastor
+# TODO: Allow user to rate conversation.
+
+
+# TODO: create a function to get calendly link and send
 def create_calendly_link():
     pass

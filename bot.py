@@ -306,6 +306,8 @@ def cb_handle(update, context):
         notify_pastors(update, context)
     elif q_head[0] == "conv":
         handle_initial_conversation_cb(update, context)
+    elif q_head[0] == "end_conv":
+        end_conversation_cb_handler(update, context)
 
 
         
