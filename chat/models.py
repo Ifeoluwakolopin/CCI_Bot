@@ -32,7 +32,7 @@ class Message:
         return self.sender
 
     def get_receiver(self):
-        return self.get_receiver
+        return self.receiver
     
     def get_message(self):
         return self.text

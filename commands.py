@@ -1,5 +1,6 @@
 from datetime import date
 from datetime import datetime as dt
+from chat.counselor_handlers import end_conversation_cb_handler, end_conversation_prompt
 from helpers import *
 from scrapers import WebScrapers
 from keyboards import *
@@ -16,21 +17,24 @@ def start(update, context):
     # add user to database
     if not db.users.find_one({"chat_id":chat_id}):
         db.users.insert_one({
-            "chat_id":chat_id, "date":dt.now(), "admin":False, "mute":False, "first_name":first_name, "last_name":last_name})
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None, "active":True}})
-    # send message
-    if db.users.find_one({"chat_id":chat_id, "admin":True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
-            parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
+            "chat_id":chat_id, "date":dt.now(),
+            "admin":False,
+            "mute":False,
+            "first_name":first_name,
+            "last_name":last_name,
+            "last_command":None,
+            "active":True}
         )
     else:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
-            parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
-        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None, "active":True}})
+    # checks if user is admin and return the appropriate keyboard
+    keyboard = validate_user_keyboard(chat_id)
+    # send welcome message
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["start"].format(update["message"]["chat"]["first_name"]),
+        parse_mode="Markdown", disable_web_page_preview="True",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )
     location_prompt(chat_id)
     birthday_prompt(chat_id)
 
@@ -145,29 +149,25 @@ def cancel(update, context):
     This function helps you cancel any existing action
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({"chat_id":chat_id, "admin":True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["cancel"],
-            parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
-        )
+    user = db.users.find_one({'chat_id':chat_id})
+
+    if user["last_command"].startswith("in-conversation-with"):
+        end_conversation_prompt(update, context)
     else:
+        keyboard = validate_user_keyboard(chat_id)
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cancel"],
             parse_mode="Markdown", disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def done(update, context):
     """
     This function helps you finish an existing action.
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({"chat_id":chat_id, "admin":True}):
-        keyboard = admin_keyboard
-    else:
-        keyboard = normal_keyboard
+    keyboard = validate_user_keyboard(chat_id)
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["done"],
         parse_mode="Markdown", disable_web_page_preview="True",

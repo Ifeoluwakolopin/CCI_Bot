@@ -101,8 +101,8 @@ def handle_counselor_request_yes(update, context):
 
         contact_info = message.text.split("\n")
         name = contact_info[0].strip()
-        email = contact_info[1].strip()
-        phone = contact_info[2].strip()
+        email = contact_info[1].strip() # regex email validation
+        phone = contact_info[2].strip() # regex validate phone number
         message_id = message.message_id
         
         # temporarily add request to db queue
@@ -139,12 +139,7 @@ def add_request_to_queue(counseling_request:dict):
         "chat_id":counseling_request["chat_id"],
         "request_message_id":counseling_request["request_message_id"],
         "active":False,
-        "note":counseling_request["note"]
+        "note":counseling_request["note"],
+        "status":"pending",
+        "counselor_chat_id": None
     })
-
-def get_active_requests():
-    requests = db.counseling_requests.find({"active":True}).sort({"created":1})
-    return requests
-
-def set_request_inactive(request_id:str):
-    db.counseling_requests.update_one({"request_id":request_id}, {"$set":{"active":False}})
