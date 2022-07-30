@@ -33,6 +33,11 @@ bc_buttons = [
     ]
 ]
 
+pastor_keyboard = [[
+    KeyboardButton("Show Counseling Requests"),
+    KeyboardButton("Refer to Pastor"),
+]]
+
 counseling_buttons =[
     KeyboardButton("counseling"),
 ]

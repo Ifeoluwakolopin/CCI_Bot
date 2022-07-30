@@ -141,5 +141,5 @@ def add_request_to_queue(counseling_request:dict):
         "active":False,
         "note":counseling_request["note"],
         "status":"pending",
-        "counsellor_chat_id": None
+        "counselor_chat_id": None
     })
