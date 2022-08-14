@@ -280,10 +280,7 @@ def cb_handle(update, context):
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["cr_yes"],
                 reply_markup=InlineKeyboardMarkup(
-                    [[
-                        InlineKeyboardButton("Yes", callback_data="cr-yes="+q_head[2]),
-                        InlineKeyboardButton("No", callback_data="cr-no="+q_head[2])
-                    ]]
+                    [[InlineKeyboardButton("Add Note", callback_data="cr-yes="+q_head[2])]], resize_keyboard=True
                 )
             )
         else:
@@ -297,13 +294,6 @@ def cb_handle(update, context):
             chat_id=chat_id, text=config["messages"]["cr_yes_confirm"]
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"cr_yes="+q_head[1]}})
-    elif q_head[0] == "cr-no":
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["cr_done"]
-        )
-        db.counseling_requests.update_one({"request_message_id":int(q_head[1])}, {"$set":{"active":True}})
-        done(update, context)
-        notify_pastors(update, context)
     elif q_head[0] == "conv":
         handle_initial_conversation_cb(update, context)
     elif q_head[0] == "end_conv":
