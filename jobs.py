@@ -83,6 +83,14 @@ def new_sermons():
 
 numbers = {1:"first", 2:"second", 3:"third"}
 
+@sched.scheduled_job('cron', day_of_week='sat', hour=6)
+def check_feedback():
+    feedback = db.feedback.find({"status":"pending"})
+    if feedback:
+        bot.send_message(
+            chat_id=792501227, text=config["messages"]["feedback_notifier"]
+        )
+
 def notify_tickets():
     """
     This function sends a notification to every active user about an upcoming

@@ -184,6 +184,29 @@ def done(update, context):
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
+def feedback(update, context):
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["feedback"],
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Technical Issue", callback_data="feedback=technical")],
+            [InlineKeyboardButton("Suggestion", callback_data="feedback=suggestion")],
+            [InlineKeyboardButton("Other", callback_data="feedback=other")]
+        ],resize_keyboard=True
+        )
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
+def feedback_cb_handler(update, context):
+    chat_id = update.effective_chat.id
+    q = update.callback_query.data
+    q_head = q.split("=")
+
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["feedback_handler"],
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"feedback="+q_head[1]}})
+
 def get_sermon(update, context):
     """ 
     This gets a particular sermon user wants

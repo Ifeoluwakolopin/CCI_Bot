@@ -40,6 +40,9 @@
     "cr_done":"Your counseling request has been successfully sent.\n\nOne of our pastors will get to you shortly.\n\nThank you for your patience.",
     "done":"❤️",
     "empty":"I can't find any sermons with {}.\nPlease check if you spelt that correctly😄.\n\nUse /cancel to cancel action.",
+    "feedback":"If you would like to give feedback concerning any technical issue with the bot, suggestions, or improvements you would like to see on the CCI bot, please select one of the options below.\n\nUse /cancel to cancel action.",
+    "feedback_handler":"Please type in your feedback below. Feel free to be as descriptive as possible, we really appreciate your feedback🤩.\n\nUse /cancel to cancel action.",
+    "feedback_done":"Thank you for your feedback!\n\nWe will get back to you as soon as possible❤️",
     "find_church":"🔗 Worship with us at a CCI branch close to you.\n\nNeed Directions?\nHere are a few branches close to you.\n\n{}",
     "finished_broadcast":"Successfully sent broadcast to {} users.",
     "get_sermon":"Do you know the title of the sermon you're looking for or do you want to search for a certain from a certain date/based on some topics?",
@@ -71,10 +74,5 @@
       "about":"🥳 REBOOT CAMP 2021 IS ALMOST HERE! 🥳\n\nStay tuned for more #rebootcamp2021 news.\nI'm your one-stop shop for up-to-date information.",
       "help":""
     }
-  },
-  "counseling_topics":{
-    "love":"test love...",
-    "joy":"test Joy...",
-    "default": "Can't find any content related to {}.😔, Check if what you're looking for is listed below or try typing it again."
   }
 }

@@ -160,6 +160,20 @@ def handle_message_response(update, context):
         notify_pastors(update, context)
     elif last_command.startswith("in-conversation-with"):
         conversation_handler(update, context)
+    elif last_command.startswith("feedback"):
+        type = last_command.split("=")[-1]
+        message = update.message.text
+
+        db.feedback.insert_one({
+            "type": type,
+            "message": message,
+            "status": "pending",
+            "user":chat_id
+        })
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["feedback_done"]
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 
 def cb_handle(update, context):
@@ -302,6 +316,8 @@ def cb_handle(update, context):
         end_conversation_cb_handler(update, context)
     elif q_head[0] == "faq":
         handle_get_faq_callback(update, context)
+    elif q_head[0] == "feedback":
+        feedback_cb_handler(update, context)
 
 
         
@@ -316,6 +332,7 @@ def main():
     dp.add_handler(CommandHandler("menu", menu))
     dp.add_handler(CommandHandler("blog", blog_posts))
     dp.add_handler(CommandHandler("campuses", campuses))
+    dp.add_handler(CommandHandler("feedback", feedback))
     dp.add_handler(CommandHandler("membership", membership_school))
     dp.add_handler(msg_handler)
     dp.add_handler(cb_handler)
