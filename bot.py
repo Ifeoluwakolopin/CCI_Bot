@@ -46,6 +46,8 @@ def handle_message_commands(update, context):
         reboot_about(update, context)
     elif title == "counseling":
         get_counsel(update, context)
+    elif title == "show active counseling requests":
+        show_active_requests(update, context)
     else:
         unknown(update, context)
 

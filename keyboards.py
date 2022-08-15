@@ -33,10 +33,9 @@ bc_buttons = [
     ]
 ]
 
-pastor_keyboard = [[
-    KeyboardButton("Show Counseling Requests"),
-    KeyboardButton("Refer to Pastor"),
-]]
+counselor_keyboard = [
+    KeyboardButton("Show Active Counseling Requests")
+]
 
 counseling_buttons =[
     KeyboardButton("counseling"),
@@ -92,6 +91,7 @@ month_buttons = [
         InlineKeyboardButton("December", callback_data="bd=12")]
     ]
 
-normal_keyboard = [sermon_buttons, buttons1]
-admin_keyboard = [sermon_buttons, buttons1, buttons3]
+normal_keyboard = [sermon_buttons, buttons1, counseling_buttons]
+admin_keyboard = [sermon_buttons, buttons1, buttons3, counseling_buttons]
+pastor_keyboard = [sermon_buttons, buttons1, counselor_keyboard]
 #admin_keyboard = [sermon_buttons, buttons1, buttons3, counseling_buttons]

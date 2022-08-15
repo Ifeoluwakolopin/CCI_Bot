@@ -1,6 +1,6 @@
 from datetime import date
 from datetime import datetime as dt
-from chat.counselor_handlers import end_conversation_cb_handler, end_conversation_prompt
+from chat.counselor_handlers import end_conversation_prompt
 from helpers import *
 from scrapers import WebScrapers
 from keyboards import *
@@ -220,17 +220,11 @@ def helps(update, context):
     This sends a list of available commands for the bot
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({"chat_id":chat_id, "admin":True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["help"], parse_mode="Markdown",
-            disable_web_page_preview="True",
-            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
-        )
-    else:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["help"], parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
-        )
+    keyboard = validate_user_keyboard(chat_id)
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["help"], parse_mode="Markdown",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def latest_sermon(update, context):
@@ -274,16 +268,11 @@ def menu(update, context):
     This restores the default keyboard.
     """
     chat_id = update.effective_chat.id
-    if db.users.find_one({"chat_id":chat_id, "admin":True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["menu"],
-            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
-        )
-    else:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["menu"],
-            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
-        )
+    keyboard = validate_user_keyboard(chat_id)
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["menu"],
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def membership_school(update, context):
@@ -317,7 +306,7 @@ def unmute(update, context):
 
 def notify_new_sermon(chat_id, sermons):
     try:
-        buttons = [[InlineKeyboardButton(i, callback_data="s="+i.split("–")[2])] for i in sermons]
+        buttons = [[InlineKeyboardButton(i, callback_data="s="+i.split("-")[2])] for i in sermons]
     except:
         buttons = [[InlineKeyboardButton(i, callback_data="s="+i)] for i in sermons]
     user = db.users.find_one({"chat_id":chat_id})
@@ -335,28 +324,20 @@ def unknown(update, context):
     """
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id":chat_id})
-    if user["admin"]:
-        btn = admin_keyboard
-    else:
-        btn = normal_keyboard
+    keyboard = validate_user_keyboard(chat_id)
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["unknown"],
-        reply_markup=ReplyKeyboardMarkup(btn, resize_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def reboot_about(update, context):
     chat_id = update.effective_chat.id
-    if db.users.find_one({"chat_id":chat_id, "admin":True}):
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["reboot_camp"]["about"],
-            reply_markup=ReplyKeyboardMarkup(admin_keyboard, resize_keyboard=True)
-        )
-    else:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["reboot_camp"]["about"],
-            reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True)
-        )
+    keyboard = validate_user_keyboard(chat_id)
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["reboot_camp"]["about"],
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 def stats(update, context):
@@ -364,25 +345,30 @@ def stats(update, context):
     This function gives you statistics about the bot
     """
     chat_id = update.effective_chat.id
-    total_users = db.users.count_documents({})
-    active_users = db.users.count_documents({"active":True})
-    mute_users = db.users.count_documents({"mute":True})
-    total_sermons = db.sermons.count_documents({})
-    location_based_stats = ""
-    bdays = db.users.count_documents({"birthday":{"$exists":True}})
-    today = dt.today()
-    x = str(today.month)+'-'+str(today.day)
-    today_bday = db.users.count_documents({"birthday":x})
 
-    for loc in db.users.distinct("location"):
-        loc_count = db.users.count_documents({"location":loc})
-        location_based_stats += loc + " users: " + str(loc_count)
-        location_based_stats += "\n"
+    if db.users.find_one({'chat_id':chat_id, 'admin':True}):
+
+        total_users = db.users.count_documents({})
+        active_users = db.users.count_documents({"active":True})
+        mute_users = db.users.count_documents({"mute":True})
+        total_sermons = db.sermons.count_documents({})
+        location_based_stats = ""
+        birthdays = db.users.count_documents({"birthday":{"$exists":True}})
+        today = dt.today()
+        x = str(today.month)+'-'+str(today.day)
+        todays_birthdays = db.users.count_documents({"birthday":x})
+
+        for loc in db.users.distinct("location"):
+            loc_count = db.users.count_documents({"location":loc})
+            location_based_stats += loc + " users: " + str(loc_count)
+            location_based_stats += "\n"
         
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["stats"].format(total_users, active_users, 
-        mute_users, total_sermons,
-        location_based_stats, bdays,
-        today_bday), parse_mode="Markdown"
-    )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["stats"].format(total_users, active_users, 
+                mute_users, total_sermons,
+                location_based_stats, birthdays,
+                todays_birthdays), parse_mode="Markdown"
+            )
+            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    else:
+        unknown(update, context)

@@ -25,24 +25,44 @@ def get_top_five_requests():
 # function to displays all active requests to pastors : button
 def show_active_requests(update, context):
     chat_id = update.effective_chat.id
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["active_requests"]
-    )
-    top_five_requests = get_top_five_requests()
-    for request in top_five_requests:
-        if request["note"]:
-            msg = request["note"]
+    user = db.users.find_one({'chat_id':chat_id, 'role':'pastor'})
+    if user:
+        top_five_requests = get_top_five_requests()
+        if top_five_requests.count() == 0:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["active_requests_none"]
+            )
         else:
-            msg = " "
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["active_request"].format(
-                request["name"], request["email"], request["phone"], msg
-            ), reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Start Conversation", 
-                callback_data="conv="+str(request["request_message_id"]))]], resize_keyboard=True
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["active_requests"]
+            )
+            for request in top_five_requests:
+                if request["note"]:
+                    msg = request["note"]
+                else:
+                    msg = " "
+                context.bot.send_message(
+                    chat_id=chat_id, 
+                    text=config["messages"]["active_request"].format(
+                        request["name"], 
+                        request["email"], 
+                        request["phone"], 
+                        msg
+                    ), reply_markup=InlineKeyboardMarkup(
+                        [
+                            [InlineKeyboardButton("Start Conversation", callback_data="conv="+str(request["request_message_id"]))]
+                        ], 
+                        resize_keyboard=True
+                    )
                 )
+    else:
+        keyboard = validate_user_keyboard(chat_id)
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["unknown"],
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+
     
 def notify_pastors(update, context):
     pastors = db.users.find({"role":"pastor"})
@@ -139,6 +159,7 @@ def conversation_handler(update, context):
         "from":chat_id,
         "to":int(send_to[1]),
     }
+
     ## Update conversation object in database.
     if send_to[2] == "pastor":
         update_conversation(message, send_to[1], chat_id)
@@ -158,9 +179,7 @@ def end_conversation_prompt(update, context):
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton("Yes", callback_data="end_conv=yes="+str(chat_id)+"="+str(send_to[1])+"="+role),
             InlineKeyboardButton("No", callback_data="end_conv=no="+str(chat_id)+"="+str(send_to[1])+"="+role)
-        ]
-
-        ], resize_keyboard=True)
+        ]], resize_keyboard=True)
     )
 
 def end_conversation_cb_handler(update, context):
@@ -173,6 +192,8 @@ def end_conversation_cb_handler(update, context):
         keyboard1, keyboard2 = pastor_keyboard, normal_keyboard
     else:
         keyboard1, keyboard2 = normal_keyboard, pastor_keyboard
+
+
     if q_head[1] == "yes":
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["conversation_end_confirm"],
