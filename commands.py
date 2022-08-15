@@ -23,8 +23,9 @@ def start(update, context):
             "first_name":first_name,
             "last_name":last_name,
             "last_command":None,
-            "active":True}
-        )
+            "active":True,
+            "role":"user"
+        })
     else:
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None, "active":True}})
     # checks if user is admin and return the appropriate keyboard

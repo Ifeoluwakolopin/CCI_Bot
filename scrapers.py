@@ -58,7 +58,11 @@ class WebScrapers:
                 title = sermon.find('h3', {'class':'cmsmasters_sermon_title entry-title'}).find('a').text
                 link = sermon.find('h3', {'class':'cmsmasters_sermon_title entry-title'}).find('a').get('href')
                 download = sermon.find('a', {'class':'cmsmasters_sermon_media_item cmsmasters_theme_icon_sermon_download'}).get('href')
-                video = sermon.find('a', {'class':'cmsmasters_sermon_media_item cmsmasters_theme_icon_sermon_video'}).get('href')  
+                video = sermon.find('a', {'class':'cmsmasters_sermon_media_item cmsmasters_theme_icon_sermon_video'}).get('href') 
+
+                if video.startswith("//"):
+                    video = "https:" + video
+                    
                 sermons.append({
                     "title":title,
                     "download":download,
