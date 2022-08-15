@@ -25,6 +25,9 @@ def handle_get_counsel(update, context):
     topic_from_db = db.counseling_topics.find_one({"topic":topic})
 
     if topic_from_db:
+        ## TODO: limit this to 5 questions and add a button to see more.
+        ## TODO: Populate the database
+        ## TODO: Integrate the calendar as the final step. (Google calender).
         faqs = topic_from_db["faqs"]
         buttons = [[InlineKeyboardButton(faq["id"], callback_data="faq="+topic+"="+str(faq["id"]))] for faq in faqs]
         questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs])
@@ -52,7 +55,7 @@ def handle_get_faq_callback(update, context):
     q = update.callback_query.data
     q_head = q.split("=")
     response = db.counseling_topics.find_one({"topic":q_head[1]})
-    answer = response["faqs"][int(q_head[2])-1]["a"]
+    answer = response["faqs"][int(q_head[2])-1]["a"].strip()
 
     context.bot.send_message(
         chat_id=chat_id, text=answer, reply_markup=ReplyKeyboardMarkup([
