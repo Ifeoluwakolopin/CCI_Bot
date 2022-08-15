@@ -43,9 +43,9 @@ counseling_buttons =[
 ]
 
 categories_keyboard = [
-    [KeyboardButton("Love"), KeyboardButton("Joy")],
-    [KeyboardButton("Hope"), KeyboardButton("Grief")],
-    [KeyboardButton("Wisdom"), KeyboardButton("Marriage")],
+    [KeyboardButton("Spiritual Growth"), KeyboardButton("Relationships")],
+    [KeyboardButton("Career"), KeyboardButton("Mental Wellbeing")],
+    [KeyboardButton("Habits and Addictions"), KeyboardButton("Marriage and Family")]
 ]
 
 location_buttons = [

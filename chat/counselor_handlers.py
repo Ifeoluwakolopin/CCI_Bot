@@ -137,7 +137,7 @@ def conversation_handler(update, context):
         "message":msg.text,
         "created":datetime.now(),
         "from":chat_id,
-        "to":send_to[1],
+        "to":int(send_to[1]),
     }
     ## Update conversation object in database.
     if send_to[2] == "pastor":
@@ -200,14 +200,16 @@ def start_conversation(counseling_request):
         "messages":[],
         "created":datetime.now(),
         "from":counseling_request,
-        "last_updated":datetime.now()
+        "last_updated":datetime.now(),
+        "active":True,
     })
 
-## TODO: fix update conversation.
+## TODO: Check how this works without upsert.
 def update_conversation(msg, counselor_id, user_id):
     db.conversations.update_one({
         "counselor_id":counselor_id,
-        "user_id":user_id
+        "user_id":user_id,
+        "active":True
     }, {
         "$push":{
             "messages":msg
@@ -215,7 +217,7 @@ def update_conversation(msg, counselor_id, user_id):
         "$set":{
             "last_updated":datetime.now()
         }
-    })
+    }, upsert=True)
 
 # TODO: Add appropriate buttons for counselors
 # TODO: Add appropriate buttons for ending conversation for both user and pastor
