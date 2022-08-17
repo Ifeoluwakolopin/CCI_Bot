@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from commands import unknown
 from telegram import KeyboardButton, ReplyKeyboardMarkup
@@ -9,43 +10,66 @@ config = json.load(open("config.json", encoding="utf-8"))
 # (1) Provides reply for initial 'get counsel' command.
 def get_counsel(update, context):
     chat_id = update.effective_chat.id
-    ## to be implemented
-    ## Change ReplyKeyboardMarkup to InlineKeyboardMarkup with categories
-    ## This should also be implemented in callback handler.
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["counseling_start"],
-        reply_markup=ReplyKeyboardMarkup(categories_keyboard),
-        resize_keyboard=True
+        reply_markup=ReplyKeyboardMarkup(categories_keyboard, resize_keyboard=True)
     )
     db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_counsel"}})
 
 # (2) Handles getting the user the right topics for their request
-# Also provides suggestion to speak to a pastor.
+# Also provides suggestion to speak to a pastor or add a new question.
 def handle_get_counsel(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id":chat_id})
     topic = update.message.text.strip().lower()
-    ## to be implemented
-    ## add InlineKeyboard buttons with suggested topics.
-    if topic in config["counseling_topics"]:
+    topic_from_db = db.counseling_topics.find_one({"topic":topic})
+
+    if topic_from_db:
+        ## TODO: limit this to 5 questions and add a button to see more.
+        ## TODO: Populate the database
+        ## TODO: Integrate the calendar as the final step. (Google calender).
+        faqs = topic_from_db["faqs"]
+        buttons = [[InlineKeyboardButton(faq["id"], callback_data="faq="+topic+"="+str(faq["id"]))] for faq in faqs]
+        questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs])
+
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counseling_topic_reply"].format(
-                config["counseling_topics"][topic])
+                topic.capitalize(),
+                questions
+                ),
+            reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True)
         )
     else:
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counseling_topic_reply"].format(
-                config["counseling_topics"]["default"].format(topic)),
+            chat_id=chat_id, text=config["messages"]["counseling_topic_not_found"],
             reply_markup=ReplyKeyboardMarkup(categories_keyboard, resize_keyboard=True)
         )
     # adds topic to database
     add_topic_to_db(topic)
     # Prompts user to speak to a Pastor.
-    counselor_request(update, context)
+    time.sleep(5)
+    ask_question_or_request_counselor(update, context)
+
+def handle_get_faq_callback(update, context):
+    chat_id = update.effective_chat.id
+    q = update.callback_query.data
+    q_head = q.split("=")
+    response = db.counseling_topics.find_one({"topic":q_head[1]})
+    answer = response["faqs"][int(q_head[2])-1]["a"].strip()
+
+    context.bot.send_message(
+        chat_id=chat_id, text=answer, reply_markup=ReplyKeyboardMarkup([
+            [KeyboardButton("Ask a new question")], 
+            [KeyboardButton("Speak to a Pastor")]
+            ], resize_keyboard=True
+        )
+    )
+
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"question_or_counselor_request"}})
 
 def add_topic_to_db(topic:str):
     if not db.counseling_topics.find_one({"topic":topic}):
-        db.counseling_topics.insert_one({"topic":topic, "count":1})
+        db.counseling_topics.insert_one({"topic":topic, "faqs":[], "count":1})
     else:
         db.counseling_topics.update_one({"topic":topic}, {"$inc":{"count":1}})
     
@@ -54,46 +78,43 @@ def get_topics_from_db():
     return [topic["topic"] for topic in topics]
 
 # (3) Provides prompt for user to request to speak to a pastor.
-def counselor_request(update, context):
+def ask_question_or_request_counselor(update, context):
     chat_id = update.effective_chat.id
     context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["counselor_request"],
+        chat_id=chat_id, text=config["messages"]["add_question_or_request_counselor"],
         reply_markup=ReplyKeyboardMarkup([
-            [KeyboardButton("Yes"), KeyboardButton("No")]],
-            resize_keyboard=True)
+            [KeyboardButton("Ask a question")], 
+            [KeyboardButton("Speak to a Pastor")]
+            ], resize_keyboard=True)
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request"}})
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"question_or_counselor_request"}})
 
 # (4) Handles user reply to prompt to speak to a pastor.
-def handle_counselor_request(update, context):
+def handle_ask_question_or_request_counselor(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id":chat_id})
-    counselor_request = update.message.text.strip().lower()
+    user_request = update.message.text.strip().lower()
 
     if user["admin"]:
         btn = admin_keyboard
     else:
         btn = normal_keyboard
 
-    if counselor_request == "yes":
+    if user_request == "speak to a pastor":
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_request_yes"],
             reply_markup=ReplyKeyboardMarkup(btn, resize_keyboard=True)
             )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
-    elif counselor_request == "no":
-        # to be implemented
-        # add buttons containing new set of topics
+    elif user_request == "ask a new question":
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counselor_request_no"],
-            reply_markup=ReplyKeyboardMarkup(categories_keyboard,
-                resize_keyboard=True)
+            chat_id=chat_id, text=config["messages"]["ask_question"],
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_counsel"}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"ask_counseling_question"}})
     else:
         unknown(update, context)
 
-# (5) Handles user positive reply to prompt to speak to a pastor.
+# (5) Handles user request to speak to a pastor.
 def handle_counselor_request_yes(update, context):
     chat_id = update.effective_chat.id
     message = update.message
@@ -128,6 +149,17 @@ def handle_counselor_request_yes(update, context):
             chat_id=chat_id, text=config["messages"]["counselor_request_invalid_info"]
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
+
+def handle_ask_question(update, context):
+    chat_id = update.effective_chat.id
+    message = update.message.text.strip().lower()
+
+    
+    db.new_questions.insert_one({"chat_id":chat_id, "question":message})
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["ask_question_success"]
+    )
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"ask_counseling_question"}})
 
 
 def add_request_to_queue(counseling_request:dict):

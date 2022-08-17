@@ -20,8 +20,8 @@ def birthday_notifier():
     Return: None
     """
     # Calculates the current date
-    tommorow = datetime.today() + timedelta(days=1)
-    x = str(tommorow.month)+'-'+str(tommorow.day)
+    tomorrow = datetime.today() + timedelta(days=1)
+    x = str(tomorrow.month)+'-'+str(tomorrow.day)
     # Finds users in the database whose birthdays match the current date
     birthdays = db.users.find({"birthday":x})
     sent = 0
@@ -82,6 +82,14 @@ def new_sermons():
             notify_new_sermon(user["chat_id"], t)
 
 numbers = {1:"first", 2:"second", 3:"third"}
+
+@sched.scheduled_job('cron', day_of_week='sat', hour=6)
+def check_feedback():
+    feedback = db.feedback.find({"status":"pending"})
+    if feedback:
+        bot.send_message(
+            chat_id=792501227, text=config["messages"]["feedback_notifier"]
+        )
 
 def notify_tickets():
     """

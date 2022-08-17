@@ -46,6 +46,8 @@ def handle_message_commands(update, context):
         reboot_about(update, context)
     elif title == "counseling":
         get_counsel(update, context)
+    elif title == "show active counseling requests":
+        show_active_requests(update, context)
     else:
         unknown(update, context)
 
@@ -141,8 +143,8 @@ def handle_message_response(update, context):
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif last_command == "get_counsel":
         handle_get_counsel(update, context)
-    elif last_command == "counselor_request":
-        handle_counselor_request(update, context)
+    elif last_command == "question_or_counselor_request":
+        handle_ask_question_or_request_counselor(update, context)
     elif last_command == "counselor_request_yes":
         handle_counselor_request_yes(update, context)
     elif last_command.startswith("cr_yes"):
@@ -158,6 +160,20 @@ def handle_message_response(update, context):
         notify_pastors(update, context)
     elif last_command.startswith("in-conversation-with"):
         conversation_handler(update, context)
+    elif last_command.startswith("feedback"):
+        type = last_command.split("=")[-1]
+        message = update.message.text
+
+        db.feedback.insert_one({
+            "type": type,
+            "message": message,
+            "status": "pending",
+            "user":chat_id
+        })
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["feedback_done"]
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 
 def cb_handle(update, context):
@@ -240,21 +256,21 @@ def cb_handle(update, context):
         )
     elif q_head[0] == "bd":
         if len(q_head) == 2:
-            btns = [[InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(1,8)],
+            buttons = [[InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(1,8)],
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(8,15)],
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(15,22)],
                 [InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(22,29)]]
             
             if q.split("=")[1] in ["9", "4", "6", "11"]:
-                btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,31)])
+                buttons.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,31)])
             elif q.split("=")[1] == "2":
-                btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,30)])
+                buttons.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,30)])
             else:
-                btns.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,32)])
+                buttons.append([InlineKeyboardButton(str(i), callback_data=q+"="+str(i)) for i in range(29,32)])
                 
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["birthday_day"],
-                reply_markup=InlineKeyboardMarkup(btns)
+                reply_markup=InlineKeyboardMarkup(buttons)
             )
         else:
             db.users.update_one({"chat_id":chat_id}, {"$set":{"birthday":q.split("=")[1]+"-"+q.split("=")[2]}})
@@ -268,22 +284,19 @@ def cb_handle(update, context):
             )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_sermon"}})
         else:
-            btns = [
+            buttons = [
                 
             ]
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["get_sermon_2"],
-                reply_markup=InlineKeyboardMarkup(btns)
+                reply_markup=InlineKeyboardMarkup(buttons)
             )
     elif q_head[0] == "cr":
         if q_head[1] == "yes":
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["cr_yes"],
                 reply_markup=InlineKeyboardMarkup(
-                    [[
-                        InlineKeyboardButton("Yes", callback_data="cr-yes="+q_head[2]),
-                        InlineKeyboardButton("No", callback_data="cr-no="+q_head[2])
-                    ]]
+                    [[InlineKeyboardButton("Add Note", callback_data="cr-yes="+q_head[2])]], resize_keyboard=True
                 )
             )
         else:
@@ -297,17 +310,14 @@ def cb_handle(update, context):
             chat_id=chat_id, text=config["messages"]["cr_yes_confirm"]
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"cr_yes="+q_head[1]}})
-    elif q_head[0] == "cr-no":
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["cr_done"]
-        )
-        db.counseling_requests.update_one({"request_message_id":int(q_head[1])}, {"$set":{"active":True}})
-        done(update, context)
-        notify_pastors(update, context)
     elif q_head[0] == "conv":
         handle_initial_conversation_cb(update, context)
     elif q_head[0] == "end_conv":
         end_conversation_cb_handler(update, context)
+    elif q_head[0] == "faq":
+        handle_get_faq_callback(update, context)
+    elif q_head[0] == "feedback":
+        feedback_cb_handler(update, context)
 
 
         
@@ -322,6 +332,7 @@ def main():
     dp.add_handler(CommandHandler("menu", menu))
     dp.add_handler(CommandHandler("blog", blog_posts))
     dp.add_handler(CommandHandler("campuses", campuses))
+    dp.add_handler(CommandHandler("feedback", feedback))
     dp.add_handler(CommandHandler("membership", membership_school))
     dp.add_handler(msg_handler)
     dp.add_handler(cb_handler)

@@ -33,19 +33,18 @@ bc_buttons = [
     ]
 ]
 
-pastor_keyboard = [[
-    KeyboardButton("Show Counseling Requests"),
-    KeyboardButton("Refer to Pastor"),
-]]
+counselor_keyboard = [
+    KeyboardButton("Show Active Counseling Requests")
+]
 
 counseling_buttons =[
     KeyboardButton("counseling"),
 ]
 
 categories_keyboard = [
-    [KeyboardButton("Love"), KeyboardButton("Joy")],
-    [KeyboardButton("Hope"), KeyboardButton("Grief")],
-    [KeyboardButton("Wisdom"), KeyboardButton("Marriage")],
+    [KeyboardButton("Spiritual Growth"), KeyboardButton("Relationships")],
+    [KeyboardButton("Career"), KeyboardButton("Mental Wellbeing")],
+    [KeyboardButton("Habits and Addictions"), KeyboardButton("Marriage and Family")]
 ]
 
 location_buttons = [
@@ -94,4 +93,5 @@ month_buttons = [
 
 normal_keyboard = [sermon_buttons, buttons1]
 admin_keyboard = [sermon_buttons, buttons1, buttons3]
+pastor_keyboard = [sermon_buttons, buttons1, counselor_keyboard]
 #admin_keyboard = [sermon_buttons, buttons1, buttons3, counseling_buttons]

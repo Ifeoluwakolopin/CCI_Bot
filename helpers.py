@@ -92,6 +92,8 @@ def validate_user_keyboard(chat_id) -> list:
     user = db.users.find_one({"chat_id":chat_id})
     if user["admin"] == True:
         return admin_keyboard
+    elif user["role"] == "pastor":
+        return pastor_keyboard
     else:
         return normal_keyboard
 
