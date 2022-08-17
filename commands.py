@@ -389,12 +389,12 @@ def stats(update, context):
             location_based_stats += loc + " users: " + str(loc_count)
             location_based_stats += "\n"
         
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["stats"].format(total_users, active_users, 
-                mute_users, total_sermons,
-                location_based_stats, birthdays,
-                todays_birthdays), parse_mode="Markdown"
-            )
-            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["stats"].format(total_users, active_users, 
+            mute_users, total_sermons,
+            location_based_stats, birthdays,
+            todays_birthdays), parse_mode="Markdown"
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     else:
         unknown(update, context)
