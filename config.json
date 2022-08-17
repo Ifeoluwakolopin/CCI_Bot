@@ -3,7 +3,7 @@
     "active_request":"Name: {}\n\nEmail: {}\n\nPhone: {}\n\n Message: {}",
     "active_requests":"Here is a list of active requests for counseling. Click on the button to start a conversation with any of them.\n\nPlease bear in mind that you should only start one conversation at a time.\n\nOnce you have started a conversation, other pastors can no longer start the same conversation.",
     "active_requests_none":"There are no active counseling requests at the moment.\n\nYou will be notified when someone request to speak with a counselor.",
-    "active_request_notify":"Someone has requested to speak to a pastor.\n\nHere is a list of the oldest requests made. Please attend to one of these requests at your earliest convenience.\n\nThis will ensure that newer requests are also attended to as soon as possible.\n Thank you Pastor.",
+    "active_request_notify":"Someone has requested counseling.\n There are now {} active requests. Click on show active counseling requests to attend to them.",
     "add_question_or_request_counselor": "Can't find what you're looking for?\n\nYou can add your own question or speak with a pastor using the buttons below.\n\nUse /cancel to cancel operation.",
     "ask_question":"Please type in the question you would like to ask.\nYou will be notified when your question has been answered.\nYou cna also suggest a new category of questions in your feedback.\n\nUse /cancel to cancel operation otherwise.",
     "ask_question_success":"Your question has been sent to the CCI Counseling team.\n\nYou will be notified when a response is posted.\n\nUse /menu to go back to the main menu.",

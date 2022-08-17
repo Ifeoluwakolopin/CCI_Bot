@@ -24,6 +24,8 @@ def start(update, context):
             "last_name":last_name,
             "last_command":None,
             "active":True,
+            "location":"None",
+            "birthday":"None",
             "role":"user"
         })
     else:

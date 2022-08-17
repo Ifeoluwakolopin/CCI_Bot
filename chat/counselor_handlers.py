@@ -240,8 +240,8 @@ def update_conversation(msg, counselor_id, user_id):
         }
     }, upsert=True)
 
-# TODO: Add appropriate buttons for counselors
-# TODO: Add appropriate buttons for ending conversation for both user and pastor
+def rate_conversation(update, context):
+    pass
 # TODO: Allow user to rate conversation.
 
 

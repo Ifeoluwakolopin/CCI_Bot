@@ -20,8 +20,8 @@ def birthday_notifier():
     Return: None
     """
     # Calculates the current date
-    tommorow = datetime.today() + timedelta(days=1)
-    x = str(tommorow.month)+'-'+str(tommorow.day)
+    tomorrow = datetime.today() + timedelta(days=1)
+    x = str(tomorrow.month)+'-'+str(tomorrow.day)
     # Finds users in the database whose birthdays match the current date
     birthdays = db.users.find({"birthday":x})
     sent = 0
