@@ -361,6 +361,8 @@ def cb_handle(update, context):
         handle_get_faq_callback(update, context)
     elif q_head[0] == "feedback":
         feedback_cb_handler(update, context)
+    elif q_head[0] == "counseling_feedback":
+        handle_counseling_feedback_cb(update, context)
 
 
         
