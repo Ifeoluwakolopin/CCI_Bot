@@ -235,6 +235,7 @@ def cb_handle(update, context):
                 db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":admin_user["last_command"]+"+"+q_head[1]}})
             else:
                 db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"bc_to+"+q_head[1]}})
+    # Search db for sermons
     elif q_head[0] == "s":
         sermon = search_db_title(q[2:])[0]
         if sermon["video"] is not None:
@@ -294,10 +295,13 @@ def cb_handle(update, context):
     elif q_head[0] == "cr":
         if q_head[1] == "yes":
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["cr_yes"],
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("Add Note", callback_data="cr-yes="+q_head[2])]], resize_keyboard=True
-                )
+                chat_id=chat_id, text=config["messages"]["cr_choose_category"],
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Spiritual Growth", callback_data="cr-cat=spiritual growth="+q_head[2]), InlineKeyboardButton("Relationships", callback_data="cr-cat=relationships="+q_head[2])],
+                    [InlineKeyboardButton("Career", callback_data="cr-cat=career="+q_head[2]), InlineKeyboardButton("Mental Wellbeing", callback_data="cr-cat=mental wellbeing="+q_head[2])],
+                    [InlineKeyboardButton("Habits and Addictions", callback_data="cr-cat=habits and addictions="+q_head[2]), InlineKeyboardButton("Marriage and Family", callback_data="cr-cat=marriage and family="+q_head[2])],
+                    [InlineKeyboardButton("Other", callback_data="cr-cat=other="+q_head[2])]
+                ])
             )
         else:
             context.bot.send_message(
@@ -305,6 +309,45 @@ def cb_handle(update, context):
             )
             db.counseling_requests.delete_one({"request_message_id":int(q_head[2])})
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
+    elif q_head[0] == "cr-cat":
+        db.counseling_requests.update_one(
+            {"request_message_id": int(q_head[-1])}, {"$set":{"topic":q_head[-2]}}
+        )
+        user_location = db.users.find_one({"chat_id":chat_id})["location"]
+        counseling_location_buttons = [
+            [InlineKeyboardButton("Lagos - Ikeja", callback_data="cr-loc=Ikeja="+q_head[-1]),
+            InlineKeyboardButton("Lagos - Lekki", callback_data="cr-loc=Lekki="+q_head[-1])],
+            [InlineKeyboardButton("Lagos - Yaba", callback_data="cr-loc=Yaba="+q_head[-1]),
+            InlineKeyboardButton("Ile-Ife", callback_data="cr-loc=Ile-ife="+q_head[-1])],
+            [InlineKeyboardButton("Ibadan", callback_data="cr-loc=Ibadan="+q_head[-1]),
+            InlineKeyboardButton("Port-Harcourt", callback_data="cr-loc=PH="+q_head[-1])],
+            [InlineKeyboardButton("Canada", callback_data="cr-loc=Canada="+q_head[-1]),
+            InlineKeyboardButton("Abuja", callback_data="cr-loc=Abuja="+q_head[-1])],
+            [InlineKeyboardButton("United Kingdom(UK)", callback_data="cr-loc=UK="+q_head[-1])],
+        ]
+        if user_location not in ["None", "Online"]:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["cr_confirm_location"].format(user_location),
+                reply_markup=InlineKeyboardMarkup(counseling_location_buttons)
+            )
+        else:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["cr_choose_location"],
+                reply_markup=InlineKeyboardMarkup(counseling_location_buttons)
+            )
+    elif q_head[0] == "cr-loc":
+        db.counseling_requests.update_one(
+            {"request_message_id": int(q_head[-1])}, {"$set":{"location":q_head[-2]}}
+        )
+        db.users.update_one(
+            {"chat_id":chat_id}, {"$set":{"location":q_head[-2]}}
+        )
+        context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["cr_yes"],
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("Add Note", callback_data="cr-yes="+q_head[2])]], resize_keyboard=True
+            )
+        )
     elif q_head[0] == "cr-yes":
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cr_yes_confirm"]

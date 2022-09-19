@@ -1,6 +1,6 @@
 {
   "messages":{
-    "active_request":"Name: {}\n\nEmail: {}\n\nPhone: {}\n\n Message: {}",
+    "active_request":"Name: {}\nEmail: {}\nPhone: {}\nCategory: {}\nMessage: {}",
     "active_requests":"Here is a list of active requests for counseling. Click on the button to start a conversation with any of them.\n\nPlease bear in mind that you should only start one conversation at a time.\n\nOnce you have started a conversation, other pastors can no longer start the same conversation.",
     "active_requests_none":"There are no active counseling requests at the moment.\n\nYou will be notified when someone request to speak with a counselor.",
     "active_request_notify":"Someone has requested counseling.\n There are now {} active requests. Click on show active counseling requests to attend to them.",
@@ -35,6 +35,9 @@
     "counselor_request_invalid_info":"It seems you have not entered your information in the right format.\n\nPlease try again.\n\nEnsure that your name, email and phone number are on different lines as shown be in the example below:\n\nName: John Doe\nEmail: johndoe@cci.mail\nPhone: +2343434343434\n\nUse /cancel to cancel operation.",
     "counselor_request_confirmation": "Would you like to send a question or short description of what you would like to discuss?.",
     "counselor_request_yes": "Please enter your name, email, and phone number.\n\nEnsure that your name, email and phone number are on different lines as shown be in the example below:\n\nName: John Doe\nEmail: johndoe@cci.mail\nPhone: +2343434343434\n\nUse /cancel to cancel operation.",
+    "cr_confirm_location":"Awesome! Finally, please confirm that your location is {}.\n\nYou can also use the buttons below to set the local CCI Branch or select the nearest one to you.",
+    "cr_choose_location":"Please confirm what branch of CCI you attend.\n\nIf you don't see your branch below, select a branch that is closest to you.",
+    "cr_choose_category":"Please select a topic that you would like your session to be about.\n\nThis will help us provide the best counseling experience for you!\n\nIf it is not one of the options below, please select the closest option using the buttons.",
     "cr_yes":"Awesome! Your request is ready to be sent.\n\nPlease tap the button below to add a note/description of what you would like to discuss during this counseling session.\n\n Be assured that your conversations with the pastor/counselor are private and will not be shared outside of the chat.\nUse /cancel to cancel operation.",
     "cr_yes_confirm":"Please enter a short description of what you would like to talk about.",
     "cr_done":"Your counseling request has been successfully sent.\n\nOne of our pastors will get to you shortly.\n\nThank you for your patience.",

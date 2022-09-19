@@ -134,7 +134,7 @@ def handle_counselor_request_yes(update, context):
             "email":email,
             "phone":phone,
             "request_message_id":message_id,
-            "note":None
+            "note":None,  
         })
 
         context.bot.send_message(

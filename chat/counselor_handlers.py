@@ -46,7 +46,8 @@ def show_active_requests(update, context):
                     text=config["messages"]["active_request"].format(
                         request["name"], 
                         request["email"], 
-                        request["phone"], 
+                        request["phone"],
+                        request["topic"],
                         msg
                     ), reply_markup=InlineKeyboardMarkup(
                         [
