@@ -29,7 +29,11 @@ def handle_get_counsel(update, context):
         ## TODO: Populate the database
         ## TODO: Integrate the calendar as the final step. (Google calender).
         faqs = topic_from_db["faqs"]
-        buttons = [[InlineKeyboardButton(faq["id"], callback_data="faq="+topic+"="+str(faq["id"]))] for faq in faqs]
+        keyboard_length = len(faqs)
+        buttons = [
+            [InlineKeyboardButton(faqs[idx]["id"], callback_data="faq="+topic+"="+str(faqs[idx]["id"])) for idx in range(0, keyboard_length//2)],
+            [InlineKeyboardButton(faqs[idx]["id"], callback_data="faq="+topic+"="+str(faqs[idx]["id"])) for idx in range(keyboard_length//2, keyboard_length)],
+        ]
         questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs])
 
         context.bot.send_message(
@@ -47,7 +51,7 @@ def handle_get_counsel(update, context):
     # adds topic to database
     add_topic_to_db(topic)
     # Prompts user to speak to a Pastor.
-    time.sleep(5)
+    time.sleep(1)
     ask_question_or_request_counselor(update, context)
 
 def handle_get_faq_callback(update, context):
@@ -95,18 +99,12 @@ def handle_ask_question_or_request_counselor(update, context):
     user = db.users.find_one({"chat_id":chat_id})
     user_request = update.message.text.strip().lower()
 
-    if user["admin"]:
-        btn = admin_keyboard
-    else:
-        btn = normal_keyboard
-
     if user_request == "speak to a pastor":
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_request_yes"],
-            reply_markup=ReplyKeyboardMarkup(btn, resize_keyboard=True)
-            )
+        )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
-    elif user_request == "ask a new question":
+    elif user_request == "ask a question":
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["ask_question"],
         )
@@ -159,7 +157,7 @@ def handle_ask_question(update, context):
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["ask_question_success"]
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"ask_counseling_question"}})
+    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 
 def add_request_to_queue(counseling_request:dict):
