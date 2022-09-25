@@ -7,8 +7,8 @@ from helpers import *
 
 ## HELPER FUNCTIONS
 # (1) 
-def get_active_requests():
-    requests = db.counseling_requests.find({"active":True, "status":"pending"}).sort("created", 1)
+def get_active_requests(topic):
+    requests = db.counseling_requests.find({"active":True, "status":"pending", "topic":topic}).sort("created", 1)
     return requests
 
 def set_request_inactive(request_id:str):
@@ -27,16 +27,25 @@ def show_active_requests(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({'chat_id':chat_id, 'role':'pastor'})
     if user:
-        top_five_requests = get_top_five_requests()
-        if top_five_requests.count() == 0:
+        active_requests = []
+        for topic in user['topics']:
+            active_requests += list(get_active_requests(topic))
+        
+        reqs = len(active_requests)
+        if reqs == 0:
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["active_requests_none"]
             )
         else:
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["active_requests"]
+                chat_id=chat_id, text=config["messages"]["active_requests"].format(reqs)
             )
-            for request in top_five_requests:
+            if reqs > 5:
+                top_reqs = active_requests[0:5]
+            else:
+                top_reqs = active_requests
+                
+            for request in top_reqs:
                 if request["note"]:
                     msg = request["note"]
                 else:
@@ -65,27 +74,27 @@ def show_active_requests(update, context):
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
 
 
-# FIXME: fix this function
-def notify_pastors(update, context):
-    pastors = db.users.find({"role":"pastor"})
+def notify_pastors(counseling_request):
+    pastors = db.users.find({"role":"pastor", "topics":counseling_request["topic"]})
     for pastor in pastors:
-        context.bot.send_message(
+        bot.send_message(
             chat_id=pastor["chat_id"], text=config["messages"]["active_request_notify"]
         )
-        top_five_requests = get_top_five_requests()
-        for request in top_five_requests:
-            if request["note"]:
-                msg = request["note"]
-            else:
-                msg = " "
-            context.bot.send_message(
-                chat_id=pastor["chat_id"], text=config["messages"]["active_request"].format(
-                    request["name"], request["email"], request["phone"], msg
-                ), reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("Start Conversation", 
-                    callback_data="conv="+str(request["request_message_id"]))]], resize_keyboard=True
-                    )
-                )
+        if counseling_request["note"]:
+            msg = counseling_request["note"]
+        else:
+            msg = " "
+        bot.send_message(
+            chat_id=pastor["chat_id"], text=config["messages"]["active_request"].format(
+            counseling_request["name"],
+            counseling_request["email"],
+            counseling_request["phone"],
+            counseling_request["topic"],
+            msg
+        ), reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Start Conversation", callback_data="conv="+str(counseling_request["request_message_id"]))]
+            ], resize_keyboard=True)
+        )
 
 def handle_initial_conversation_cb(update, context):
     chat_id = update.effective_chat.id

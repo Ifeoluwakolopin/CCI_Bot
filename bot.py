@@ -153,11 +153,13 @@ def handle_message_response(update, context):
         db.counseling_requests.update_one(
             {"request_message_id": message_id}, {"$set":{"active":True, "note": text}}
         )
+        req = db.counseling_requests.find_one({"request_message_id": message_id})
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cr_done"]
         )
         done(update, context)
-        notify_pastors(update, context)
+        # Notify pastors in particular category about new request.
+        notify_pastors(req)
     elif last_command.startswith("in-conversation-with"):
         conversation_handler(update, context)
     elif last_command.startswith("feedback"):
