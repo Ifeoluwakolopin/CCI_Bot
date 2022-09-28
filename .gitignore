@@ -5,3 +5,4 @@ temp_code_runner.py
 *.gitignore
 .vscode
 *.log
+venv

@@ -196,8 +196,8 @@ MAP_LOCATIONS = {
             },
             {
                 "location":"kubwa/Dei-dei",
-                "contact":"07066813520",
-                "name":"Opeyemi"
+                "contact":"08163962171",
+                "name":"Noah"
             },
             {
                 "location":"kubwa/Dei-dei",
