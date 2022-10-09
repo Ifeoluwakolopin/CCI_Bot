@@ -176,6 +176,8 @@ def handle_message_response(update, context):
             chat_id=chat_id, text=config["messages"]["feedback_done"]
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    elif last_command.startswith("transfer_req"):
+        counselor_transfer_msg_handler(update, context)
 
 
 def cb_handle(update, context):
@@ -365,6 +367,10 @@ def cb_handle(update, context):
         feedback_cb_handler(update, context)
     elif q_head[0] == "counseling_feedback":
         handle_counseling_feedback_cb(update, context)
+    elif q_head[0] == "transfer":
+        counselor_transfer_callback_handler(update, context)
+    elif q_head[0] == "transfer_req_confirm":
+        counselor_transfer_msg_confirm_cb_handler(update, context)
 
 
         
@@ -381,6 +387,7 @@ def main():
     dp.add_handler(CommandHandler("campuses", campuses))
     dp.add_handler(CommandHandler("feedback", feedback))
     dp.add_handler(CommandHandler("membership", membership_school))
+    dp.add_handler(CommandHandler("/transfer_counselor", counselor_transfer))
     dp.add_handler(msg_handler)
     dp.add_handler(cb_handler)
 
