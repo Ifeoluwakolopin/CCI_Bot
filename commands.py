@@ -153,12 +153,19 @@ def cancel(update, context):
     """
     chat_id = update.effective_chat.id
     user = db.users.find_one({'chat_id':chat_id})
+    keyboard = validate_user_keyboard(chat_id)
 
     try:
         if user["last_command"].startswith("in-conversation-with"):
             end_conversation_prompt(update, context)
+        elif user["last_command"].split("=")[0] == "transfer_req":
+            # cancel a counseling transfer request
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["counselor_transfer_cancel"],
+            )
+            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":user["last_command"].replace("transfer_req=", "")}})
         else:
-            keyboard = validate_user_keyboard(chat_id)
+            # cancel any other action
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["cancel"],
                 parse_mode="Markdown", disable_web_page_preview="True",
@@ -166,7 +173,6 @@ def cancel(update, context):
             )
             db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     except:
-        keyboard = validate_user_keyboard(chat_id)
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cancel"],
             parse_mode="Markdown", disable_web_page_preview="True",
