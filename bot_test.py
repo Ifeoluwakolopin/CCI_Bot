@@ -11,6 +11,7 @@ def main():
     dp.add_handler(CommandHandler("campuses", campuses))
     dp.add_handler(CommandHandler("feedback", feedback))
     dp.add_handler(CommandHandler("membership", membership_school))
+    dp.add_handler(CommandHandler("transfer_counselor", counselor_transfer))
     dp.add_handler(msg_handler)
     dp.add_handler(cb_handler)
 
