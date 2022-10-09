@@ -141,7 +141,7 @@ def handle_message_response(update, context):
             parse_mode="Markdown"
         )
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
-    elif last_command == "get_counsel":
+    elif last_command.startswith("get_counsel"):
         handle_get_counsel(update, context)
     elif last_command == "question_or_counselor_request":
         handle_ask_question_or_request_counselor(update, context)

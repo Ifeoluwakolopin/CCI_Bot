@@ -258,7 +258,6 @@ def start_conversation(chat_id, counseling_request):
             "active":True,
         })
 
-## TODO: Check how this works without upsert.
 def update_conversation(msg, counselor_id, user_id):
     db.conversations.update_one({
         "counselor_id":counselor_id,

@@ -37,6 +37,10 @@ counselor_keyboard = [
     KeyboardButton("Show Active Counseling Requests")
 ]
 
+counselor_keyboard2 = [
+    KeyboardButton("/transfer_counselor"),
+]
+
 counseling_buttons =[
     KeyboardButton("counseling"),
 ]
@@ -93,5 +97,7 @@ month_buttons = [
 
 normal_keyboard = [sermon_buttons, buttons1]
 admin_keyboard = [sermon_buttons, buttons1, buttons3]
-pastor_keyboard = [sermon_buttons, buttons1, counselor_keyboard]
-#admin_keyboard = [sermon_buttons, buttons1, buttons3, counseling_buttons]
+pastor_keyboard = [
+    sermon_buttons, buttons1, 
+    counselor_keyboard, counselor_keyboard2
+]

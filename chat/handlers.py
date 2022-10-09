@@ -25,16 +25,14 @@ def handle_get_counsel(update, context):
     topic_from_db = db.counseling_topics.find_one({"topic":topic})
 
     if topic_from_db:
-        ## TODO: limit this to 5 questions and add a button to see more.
-        ## TODO: Populate the database
-        ## TODO: Integrate the calendar as the final step. (Google calender).
         faqs = topic_from_db["faqs"]
-        keyboard_length = len(faqs)
+        
         buttons = [
-            [InlineKeyboardButton(faqs[idx]["id"], callback_data="faq="+topic+"="+str(faqs[idx]["id"])) for idx in range(0, keyboard_length//2)],
-            [InlineKeyboardButton(faqs[idx]["id"], callback_data="faq="+topic+"="+str(faqs[idx]["id"])) for idx in range(keyboard_length//2, keyboard_length)],
+            [InlineKeyboardButton(str(faqs[idx]["id"]), callback_data="faq="+topic+"="+str(faqs[idx]["id"])+"=5") for idx in range(0, 5)],
+            [InlineKeyboardButton("View More Questions", callback_data="faq="+topic+"="+str(5)+"=more")],
         ]
-        questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs])
+
+        questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs[0:5]])
 
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counseling_topic_reply"].format(
@@ -58,18 +56,51 @@ def handle_get_faq_callback(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     q_head = q.split("=")
-    response = db.counseling_topics.find_one({"topic":q_head[1]})
-    answer = response["faqs"][int(q_head[2])-1]["a"].strip()
+    topic = q_head[1]
+    response = db.counseling_topics.find_one({"topic":topic})
 
-    context.bot.send_message(
-        chat_id=chat_id, text=answer, reply_markup=ReplyKeyboardMarkup([
-            [KeyboardButton("Ask a new question")], 
-            [KeyboardButton("Speak to a Pastor")]
-            ], resize_keyboard=True
+    if q_head[-1] == "more":
+        last_idx = int(q_head[-2])
+        
+        faqs = db.counseling_topics.find_one({"topic":topic})["faqs"]
+        try:
+            buttons = [
+                [InlineKeyboardButton(str(faqs[idx]["id"]), callback_data="faq="+topic+"="+str(faqs[idx]["id"])+"="+str(last_idx+5)) for idx in range(last_idx, last_idx+5)],
+                [InlineKeyboardButton("View More Questions", callback_data="faq="+topic+"="+str(last_idx+5)+"=more")],
+            ]
+            
+            questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs[last_idx:last_idx+5]])
+        except:
+            l = len(faqs)
+            buttons = [
+                [InlineKeyboardButton(str(faqs[idx]["id"]), callback_data="faq="+topic+"="+str(faqs[idx]["id"])+"="+str(last_idx+5)) for idx in range(last_idx,l-1)]
+            ]
+            questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs[last_idx:len(faqs)-1]])
+            
+        if len(buttons[0]) == 0:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["counseling_topic_reply_end"].format(
+                    topic.capitalize()
+                )
+            )
+        else:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["counseling_topic_reply"].format(
+                    topic.capitalize(),
+                    questions
+                    ),
+                reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True)
+            )
+    else:
+        answer = response["faqs"][int(q_head[2])-1]["a"].strip()
+        buttons = [
+            [InlineKeyboardButton("View More Questions", callback_data="faq="+q_head[1]+"="+str(q_head[-1])+"=more")]
+        ]
+        context.bot.send_message(
+            chat_id=chat_id, text=answer, reply_markup=InlineKeyboardMarkup(
+                buttons, resize_keyboard=True
+            )
         )
-    )
-
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"question_or_counselor_request"}})
 
 def add_topic_to_db(topic:str):
     if not db.counseling_topics.find_one({"topic":topic}):
