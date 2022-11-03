@@ -61,6 +61,8 @@ def handle_message_response(update, context):
 
     if last_command == None:
         handle_message_commands(update, context)
+    elif last_command.startswith("in-conversation-with"):
+        conversation_handler(update, context)
     elif last_command == "get_sermon":
         title = update.message.text.strip()
         sermons = search_db_title(title)
@@ -160,8 +162,6 @@ def handle_message_response(update, context):
         done(update, context)
         # Notify pastors in particular category about new request.
         notify_pastors(req)
-    elif last_command.startswith("in-conversation-with"):
-        conversation_handler(update, context)
     elif last_command.startswith("feedback"):
         type = last_command.split("=")[-1]
         message = update.message.text
@@ -198,7 +198,7 @@ def cb_handle(update, context):
                 chat_id=chat_id, text=config["messages"]["location2"].format(q_head[2].capitalize()),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
-        elif len(q.split("=")) == 4:
+        elif len(q_head) == 4:
             locations = ""
             for loc in MAP_LOCATIONS[q_head[1]][q_head[2]]:
                 if loc["location"] == q_head[3]:
@@ -208,7 +208,6 @@ def cb_handle(update, context):
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["location3"].format(q_head[3].capitalize(), locations)
             )
-            db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     elif q_head[0] == "bc":
         if q_head[1] == "all":
             context.bot.send_message(
@@ -371,7 +370,6 @@ def cb_handle(update, context):
         counselor_transfer_callback_handler(update, context)
     elif q_head[0] == "transfer_req_confirm":
         counselor_transfer_msg_confirm_cb_handler(update, context)
-
 
         
 msg_handler = MessageHandler(Filters.all & (~Filters.command), handle_message_response)

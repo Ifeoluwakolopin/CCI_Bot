@@ -95,8 +95,20 @@ month_buttons = [
         InlineKeyboardButton("December", callback_data="bd=12")]
     ]
 
-normal_keyboard = [sermon_buttons, buttons1]
-admin_keyboard = [sermon_buttons, buttons1, buttons3]
+keyboard_commands = [
+    "latest sermon",
+    "get sermon",
+    "map",
+    "help",
+    "reboot camp",
+    "statistics",
+    "broadcast",
+    "show active counseling requests",
+    "counseling",
+]
+
+normal_keyboard = [sermon_buttons, buttons1, counseling_buttons]
+admin_keyboard = [sermon_buttons, buttons1, buttons3, counselor_keyboard, counselor_keyboard2]
 pastor_keyboard = [
     sermon_buttons, buttons1, 
     counselor_keyboard, counselor_keyboard2

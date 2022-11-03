@@ -109,7 +109,10 @@ def blog_posts(update, context):
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["blog_posts"], reply_markup=InlineKeyboardMarkup(button)
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    if validate_last_command(chat_id):
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    else:
+        notify_in_conversation(chat_id)
 
 def broadcast(update, context):
     """
@@ -134,18 +137,22 @@ def campuses(update, context):
     This gives a list of church campuses.
     """
     chat_id = update.effective_chat.id
-    ch = ""
-    for church in list(CHURCH_LOCATIONS.keys()):
-        ch += config["messages"]["church"].format(
-        church.capitalize(), CHURCH_LOCATIONS[church]["name"], CHURCH_LOCATIONS[church]["link"]
-        )
-        ch += "\n\n"
+    if validate_last_command(chat_id):
+        ch = ""
+        for church in list(CHURCH_LOCATIONS.keys()):
+            ch += config["messages"]["church"].format(
+            church.capitalize(), CHURCH_LOCATIONS[church]["name"], CHURCH_LOCATIONS[church]["link"]
+            )
+            ch += "\n\n"
 
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["find_church"].format(ch),
-        parse_mode="Markdown", disable_web_page_preview="True"
-    )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["find_church"].format(ch),
+            parse_mode="Markdown", disable_web_page_preview="True"
+        )
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    else:
+        notify_in_conversation(chat_id)
+    
 
 def cancel(update, context):
     """
@@ -195,16 +202,19 @@ def done(update, context):
 
 def feedback(update, context):
     chat_id = update.effective_chat.id
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["feedback"],
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Technical Issue", callback_data="feedback=technical")],
-            [InlineKeyboardButton("Suggestion", callback_data="feedback=suggestion")],
-            [InlineKeyboardButton("Other", callback_data="feedback=other")]
-        ],resize_keyboard=True
+    if validate_last_command(chat_id):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["feedback"],
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Technical Issue", callback_data="feedback=technical")],
+                [InlineKeyboardButton("Suggestion", callback_data="feedback=suggestion")],
+                [InlineKeyboardButton("Other", callback_data="feedback=other")]
+            ],resize_keyboard=True
+            )
         )
-    )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    else:
+        notify_in_conversation(chat_id)
 
 def feedback_cb_handler(update, context):
     chat_id = update.effective_chat.id
@@ -305,7 +315,11 @@ def menu(update, context):
         chat_id=chat_id, text=config["messages"]["menu"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    if validate_last_command(chat_id):
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    else:
+        notify_in_conversation(chat_id)
+
 
 def membership_school(update, context):
     chat_id = update.effective_chat.id
@@ -314,7 +328,10 @@ def membership_school(update, context):
         chat_id=chat_id, photo=open("img/membership.jpg", "rb"),
         caption=config["messages"]["membership"], reply_markup=InlineKeyboardMarkup(button)
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    if validate_last_command(chat_id):
+        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    else:
+        notify_in_conversation(chat_id)
 
 def mute(update, context):
     """
@@ -404,3 +421,24 @@ def stats(update, context):
         db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
     else:
         unknown(update, context)
+
+
+def validate_last_command(chat_id):
+    """
+    This function validates the last command of the user.
+    """
+    user = db.users.find_one({"chat_id":chat_id})
+    if user["last_command"].startswith("in-conversation"):
+        return False
+    else:
+        return True
+
+def notify_in_conversation(chat_id):
+    """
+    This function notifies the user that they is in a conversation.
+    """
+    keyboard = validate_user_keyboard(chat_id)
+    bot.send_message(
+        chat_id=chat_id, text=config["messages"]["in_conversation"],
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )

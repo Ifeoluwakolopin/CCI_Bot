@@ -131,11 +131,14 @@ def handle_initial_conversation_cb(update, context):
 def send_message_handler(msg, to):
     ## Send message to the other user.
     if msg.text:
-        bot.send_message(
-            chat_id=to, 
-            text=msg.text
-        )
-        return msg.text
+        if msg.text in keyboard_commands:
+            return "Error"
+        else:
+            bot.send_message(
+                chat_id=to, 
+                text=msg.text
+            )
+            return msg.text
     elif msg.photo:
         bot.send_photo(
             chat_id=to, photo=msg.photo[-1].file_id, 
@@ -169,19 +172,25 @@ def conversation_handler(update, context):
     msg = update.message
 
     message_value = send_message_handler(msg, int(send_to[1]))
-
-    message = {
-        "message":message_value,
-        "created":datetime.now(),
-        "from":chat_id,
-        "to":int(send_to[1]),
-    }
-
-    ## Update conversation object in database.
-    if send_to[2] == "pastor":
-        update_conversation(message, int(send_to[1]), chat_id)
+    if message_value == "Error":
+        keyboard = validate_user_keyboard(chat_id)
+        bot.send_message(
+            chat_id=chat_id, text=config["messages"]["in_conversation"],
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        )
     else:
-        update_conversation(message, chat_id, int(send_to[1]))
+        message = {
+            "message":message_value,
+            "created":datetime.now(),
+            "from":chat_id,
+            "to":int(send_to[1]),
+        }
+
+        ## Update conversation object in database.
+        if send_to[2] == "pastor":
+            update_conversation(message, int(send_to[1]), chat_id)
+        else:
+            update_conversation(message, chat_id, int(send_to[1]))
 
 
 def end_conversation_prompt(update, context):
@@ -208,15 +217,16 @@ def end_conversation_cb_handler(update, context):
     q_head = q.split("=")
     user = db.users.find_one({"chat_id":chat_id})
     
-    # TODO: Checking for the role might cause error [confirm]
     if user["role"]=="pastor":
         keyboard1, keyboard2 = pastor_keyboard, normal_keyboard
         pastor_id = chat_id
         user_id = int(q_head[3])
+        other = "pastor"
     else:
         keyboard1, keyboard2 = normal_keyboard, pastor_keyboard
         user_id = chat_id
         pastor_id = int(q_head[3])
+        other = "user"
 
 
     if q_head[1] == "yes":
@@ -226,7 +236,7 @@ def end_conversation_cb_handler(update, context):
         )
         context.bot.send_message(
             chat_id=int(q_head[3]), text=config["messages"]["conversation_end_notify"].format(
-                q_head[4]
+                other
             ), reply_markup=ReplyKeyboardMarkup(keyboard2, resize_keyboard=True)
         )
         # update counseling_request status to completed
