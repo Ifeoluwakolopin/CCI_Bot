@@ -38,7 +38,7 @@ counselor_keyboard = [
 ]
 
 counselor_keyboard2 = [
-    KeyboardButton("/transfer_counselor"),
+    KeyboardButton("/transfer"),
 ]
 
 counseling_buttons =[
