@@ -27,7 +27,3 @@ dp = updater.dispatcher
 # Database
 client = pymongo.MongoClient(os.getenv("MONGO_URI"))
 db = client[os.getenv("DB_NAME")]
-
-5352138168
-
-db.users.update_one({"chat_id":5352138168}, {"$set":{"role":"pastor", "topics":["relationship", "career"]}})

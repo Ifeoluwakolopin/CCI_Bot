@@ -107,7 +107,7 @@ keyboard_commands = [
     "counseling",
 ]
 
-normal_keyboard = [sermon_buttons, buttons1, counseling_buttons]
+normal_keyboard = [sermon_buttons, buttons1]
 admin_keyboard = [sermon_buttons, buttons1, buttons3, counselor_keyboard, counselor_keyboard2]
 pastor_keyboard = [
     sermon_buttons, buttons1, 
