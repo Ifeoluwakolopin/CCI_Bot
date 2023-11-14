@@ -1,15 +1,13 @@
 import os
+import certifi
 import json
 import logging
-import pymongo
 import telegram
-from keyboards import *
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from pymongo import MongoClient
 from telegram.ext import Updater
 from dotenv import dotenv_values, load_dotenv
 
 load_dotenv()
-
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -26,5 +24,5 @@ updater = Updater(os.getenv("BOT_TOKEN"), use_context=True)
 dp = updater.dispatcher
 
 # Database
-client = pymongo.MongoClient(os.getenv("MONGO_URI"))
+client = MongoClient(os.getenv("MONGO_URI"), tlsCAFile=certifi.where())
 db = client[os.getenv("DB_NAME")]

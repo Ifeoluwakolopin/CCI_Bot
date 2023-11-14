@@ -11,7 +11,7 @@ load_dotenv()
 
 class WebScrapers:
     @staticmethod
-    def service_ticket(start="", end=""):
+    def service_ticket(start: str = "", end: str = "") -> list:
         """
         This takes in a string of time
         in the format'yyy-mm-ddThh-mm-ss' and returns tickets available

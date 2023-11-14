@@ -1,9 +1,12 @@
 from datetime import datetime
-
-from telegram import ReplyKeyboardMarkup
-from chat.models import Message
-from keyboards import *
-from helpers import *
+from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from bot import db, bot, config
+from bot.keyboards import (
+    validate_user_keyboard,
+    keyboard_commands,
+    normal_keyboard,
+    pastor_keyboard,
+)
 
 
 ## HELPER FUNCTIONS

@@ -1,9 +1,15 @@
 import time
+import json
 from datetime import datetime
-from commands import unknown
-from telegram import KeyboardButton, ReplyKeyboardMarkup
-from keyboards import *
-from helpers import *
+from bot import db
+from bot.commands import unknown
+from telegram import (
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+from bot.keyboards import categories_keyboard
 
 config = json.load(open("config.json", encoding="utf-8"))
 

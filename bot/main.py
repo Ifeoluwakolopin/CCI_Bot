@@ -1,13 +1,51 @@
 import os
-from chat.counselor_handlers import *
-from commands import *
-from helpers import *
-from chat.handlers import *
-from locations import MAP_LOCATIONS
+from . import dp, updater, PORT, db, config, bot
+from .database import search_db_title
+from .commands import (
+    get_devotional,
+    latest_sermon,
+    get_sermon,
+    helps,
+    stats,
+    broadcast_message_handler,
+    map_loc,
+    cancel,
+    reboot_about,
+    unknown,
+    start,
+    mute,
+    unmute,
+    menu,
+    done,
+    blog_posts,
+    campuses,
+    feedback,
+    membership_school,
+    feedback_cb_handler,
+)
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
+from chat.handlers import (
+    get_counsel,
+    handle_get_counsel,
+    handle_ask_question_or_request_counselor,
+    handle_counselor_request_yes,
+    handle_get_faq_callback,
+)
+from chat.counselor_handlers import (
+    show_active_requests,
+    conversation_handler,
+    counselor_transfer_msg_confirm_cb_handler,
+    counselor_transfer_msg_handler,
+    notify_pastors,
+    handle_initial_conversation_cb,
+    end_conversation_cb_handler,
+    handle_counseling_feedback_cb,
+    counselor_transfer_callback_handler,
+    counselor_transfer,
+)
 from dotenv import dotenv_values, load_dotenv
 
 load_dotenv()
@@ -38,7 +76,7 @@ def handle_message_commands(update, context):
     elif title == "statistics":
         stats(update, context)
     elif title == "broadcast":
-        broadcast(update, context)
+        broadcast_message_handler(update, context)
     elif title == "map":
         map_loc(update, context)
     elif title == "cancel":
@@ -101,65 +139,9 @@ def handle_message_response(update, context):
                     )
         menu(update, context)
     elif last_command.startswith("bc_to"):
-        msg = update.message.text
+        # TODO: fix broadcast handling
 
-        if msg is not None and msg.lower() in [
-            "how to broadcast",
-            "text",
-            "video",
-            "photo",
-            "animation",
-        ]:
-            title = msg.lower()
-            if title == "how to broadcast":
-                bc_help(update, context)
-            elif title == "text":
-                bc_text(update, context)
-            elif title == "video":
-                bc_video(update, context)
-            elif title == "photo":
-                bc_photo(update, context)
-            elif title == "animation":
-                bc_animation(update, context)
-        else:
-            q = last_command.split("+")
-
-            if q[0] == "bc_to_all":
-                users = db.users.find({})
-            else:
-                locations = q[1:-1]
-                users = db.users.find({"location": {"$in": locations}})
-
-            bc_type = q[-1]
-
-            if bc_type == "bc_text":
-                message = update.message.text
-                BroadcastHandlers.text(users, message)
-            elif bc_type == "bc_photo":
-                photo = update.message.photo[-1].file_id
-                caption = update.message.caption or ""
-                BroadcastHandlers.photo(users, photo, caption)
-            elif bc_type == "bc_video":
-                video = update.message.video.file_id
-                caption = update.message.caption or ""
-                BroadcastHandlers.video(users, video, caption)
-            elif bc_type == "bc_animation":
-                animation = update.message.animation.file_id
-                caption = update.message.caption or ""
-                BroadcastHandlers.animation(users, animation, caption)
-
-            if q[0] == "bc_to_all":
-                sent_to = db.users.count_documents({"active": True})
-            else:
-                locations = q[1:-1]
-                sent_to = db.users.count_documents(
-                    {"location": {"$in": locations}, "active": True}
-                )
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["finished_broadcast"].format(sent_to),
-            )
-            done(update, context)
+        pass
 
     elif last_command == "map":
         context.bot.send_message(
@@ -205,89 +187,11 @@ def cb_handle(update, context):
     q = update.callback_query.data
     q_head = q.split("=")
     if q_head[0] == "map":
-        if q[4:] in list(MAP_LOCATIONS.keys()):
-            buttons = [
-                [InlineKeyboardButton(i.capitalize(), callback_data=q + "=" + i)]
-                for i in list(MAP_LOCATIONS[q[4:]].keys())
-            ]
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["location2"].format(q[4:].capitalize()),
-                reply_markup=InlineKeyboardMarkup(buttons),
-            )
-        elif len(q_head) == 3:
-            towns = set([i["location"] for i in MAP_LOCATIONS[q_head[1]][q_head[2]]])
-            buttons = [
-                [InlineKeyboardButton(i.capitalize(), callback_data=q + "=" + i)]
-                for i in list(towns)
-            ]
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["location2"].format(q_head[2].capitalize()),
-                reply_markup=InlineKeyboardMarkup(buttons),
-            )
-        elif len(q_head) == 4:
-            locations = ""
-            for loc in MAP_LOCATIONS[q_head[1]][q_head[2]]:
-                if loc["location"] == q_head[3]:
-                    locations += config["messages"]["location4"].format(
-                        loc["name"], loc["contact"]
-                    )
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["location3"].format(
-                    q_head[3].capitalize(), locations
-                ),
-            )
-    elif q_head[0] == "bc":
-        if q_head[1] == "all":
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["broadcast_type"],
-                reply_markup=ReplyKeyboardMarkup(bc_buttons, resize_keyboard=True),
-            )
-            db.users.update_one(
-                {"chat_id": chat_id}, {"$set": {"last_command": "bc_to_all"}}
-            )
-        else:
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["broadcast_location"],
-                reply_markup=InlineKeyboardMarkup(
-                    bc_location_buttons, resize_keyboard=True
-                ),
-            )
-            db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        # TODO: refactor map location handling
+        pass
     elif q_head[0] == "bc-to":
-        admin_user = db.users.find_one({"chat_id": chat_id})
-        if q_head[1] == "done":
-            locs = admin_user["last_command"].split("+")[1:]
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["broadcast_location_done"].format(
-                    ", ".join(locs)
-                ),
-                reply_markup=ReplyKeyboardMarkup(bc_buttons, resize_keyboard=True),
-            )
-        else:
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["broadcast_location_added"].format(q_head[1]),
-            )
-            if admin_user["last_command"] is not None:
-                db.users.update_one(
-                    {"chat_id": chat_id},
-                    {
-                        "$set": {
-                            "last_command": admin_user["last_command"] + "+" + q_head[1]
-                        }
-                    },
-                )
-            else:
-                db.users.update_one(
-                    {"chat_id": chat_id},
-                    {"$set": {"last_command": "bc_to+" + q_head[1]}},
-                )
+        # TODO: refactor broadcast handling
+        pass
     # Search db for sermons
     elif q_head[0] == "s":
         sermon = search_db_title(q[2:])[0]
@@ -540,7 +444,7 @@ msg_handler = MessageHandler(Filters.all & (~Filters.command), handle_message_re
 cb_handler = CallbackQueryHandler(cb_handle)
 
 
-def main():
+def main(deploy: bool = False) -> None:
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("mute", mute))
     dp.add_handler(CommandHandler("unmute", unmute))
@@ -554,13 +458,14 @@ def main():
     dp.add_handler(msg_handler)
     dp.add_handler(cb_handler)
 
-    updater.start_webhook(
-        listen="0.0.0.0", port=int(PORT), url_path=os.getenv("BOT_TOKEN")
-    )
-    updater.bot.setWebhook("https://cci-bot.herokuapp.com/" + os.getenv("BOT_TOKEN"))
+    if deploy:
+        updater.start_webhook(
+            listen="0.0.0.0", port=int(PORT), url_path=os.getenv("BOT_TOKEN")
+        )
+        updater.bot.setWebhook(
+            "https://cci-bot.herokuapp.com/" + os.getenv("BOT_TOKEN")
+        )
+    else:
+        updater.start_polling()
+
     updater.idle()
-
-
-if __name__ == "__main__":
-    main()
-    # jobs.sched.start()

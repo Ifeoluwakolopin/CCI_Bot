@@ -1,10 +1,11 @@
 import requests
 from datetime import datetime, timedelta
-from helpers import *
+from bot import bot, db, config, logger
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from apscheduler.schedulers.blocking import BlockingScheduler
-from commands import notify_new_sermon
-from scrapers import WebScrapers
+from bot.commands import notify_new_sermon
+from bot.database import insert_sermon
+from bot.scrapers import WebScrapers
 
 sched = BlockingScheduler()
 
@@ -41,25 +42,6 @@ def birthday_notifier():
     logger.info("BIRTHDAY: Sent {sent} birthday wishes")
 
 
-def _insert_sermon(sermon: dict):
-    """
-    This takes in a sermon and checks inserts the sermon into the
-    database if it does not already exist.
-
-    Keyword arguments:
-    sermon -- dict: contains attributes that define a sermon
-
-    Return: returns True or None if sermon exists in the database
-    """
-
-    if db.sermons.find_one({"title": sermon["title"]}) is not None:
-        return None
-    else:
-        db.sermons.insert_one(sermon)
-        logger.info("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
-        return True
-
-
 @sched.scheduled_job("cron", day_of_week="mon-sun", hour=6)
 def new_sermons():
     """
@@ -74,7 +56,7 @@ def new_sermons():
     sermons = WebScrapers.cci_sermons()
     titles = []
     for sermon in sermons:
-        if _insert_sermon(sermon) is True:
+        if insert_sermon(sermon) is True:
             titles.append(sermon)
     if len(titles) > 0:
         lsermon = titles[0]

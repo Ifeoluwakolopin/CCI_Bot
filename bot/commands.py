@@ -1,134 +1,131 @@
+from . import bot, db, config
+from .bot_types import BotUser
+from .helpers import BroadcastHandlers, MessageHelper
+from .database import add_user_to_db, set_user_active, set_user_last_command
 from datetime import date
 from datetime import datetime as dt
 from chat.counselor_handlers import end_conversation_prompt
-from helpers import *
-from scrapers import WebScrapers
-from keyboards import *
-from locations import MAP_LOCATIONS, CHURCH_LOCATIONS
+from .helpers import PromptHelper
+from .scrapers import WebScrapers
+from .keyboards import validate_user_keyboard
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 
 
 def start(update, context):
     """
-    This is the response of the bot on startup
+    This is the response of the bot on startup.
+
+    Args:
+        update (Update): An object representing an incoming update.
+        context (CallbackContext): An object that provides access to additional data and capabilities.
     """
     chat_id = update.effective_chat.id
-    first_name = str(update["message"]["chat"]["first_name"])
-    last_name = str(update["message"]["chat"]["last_name"])
-    # add user to database
-    if not db.users.find_one({"chat_id": chat_id}):
-        db.users.insert_one(
-            {
-                "chat_id": chat_id,
-                "date": dt.now(),
-                "admin": False,
-                "mute": False,
-                "first_name": first_name,
-                "last_name": last_name,
-                "last_command": None,
-                "active": True,
-                "location": "None",
-                "birthday": "None",
-                "role": "user",
-            }
-        )
-    else:
-        db.users.update_one(
-            {"chat_id": chat_id}, {"$set": {"last_command": None, "active": True}}
-        )
-    # checks if user is admin and return the appropriate keyboard
+    first_name = update.message.chat.first_name
+    last_name = update.message.chat.last_name
+
+    # Create and add user to database
+    user = BotUser(chat_id, first_name, last_name)
+    add_user_to_db(user)
+
+    # Set user as active
+    set_user_active(chat_id, True)
+
+    # Determine keyboard based on user status
     keyboard = validate_user_keyboard(chat_id)
-    # send welcome message
-    context.bot.send_message(
+
+    # Send welcome message
+    send_welcome_message(chat_id, first_name, context.bot, keyboard)
+
+    # Trigger additional prompts
+    trigger_additional_prompts(chat_id)
+
+
+def send_welcome_message(chat_id, first_name, bot, keyboard):
+    """
+    Sends a welcome message to the user.
+
+    Args:
+        chat_id (int): The chat ID of the user.
+        first_name (str): The first name of the user.
+        bot (Bot): The bot instance.
+        keyboard (list): The keyboard to be sent with the message.
+    """
+    welcome_message = config["messages"]["start"].format(first_name)
+    bot.send_message(
         chat_id=chat_id,
-        text=config["messages"]["start"].format(
-            update["message"]["chat"]["first_name"]
-        ),
+        text=welcome_message,
         parse_mode="Markdown",
         disable_web_page_preview="True",
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
-    location_prompt(chat_id)
-    birthday_prompt(chat_id)
 
 
-# Broadcast Functions
-def bc_animation(update, context):
+def trigger_additional_prompts(chat_id):
     """
-    This function sends animation as broadcast
+    Triggers additional prompts for the user.
+
+    Args:
+        chat_id (int): The chat ID of the user.
     """
-    chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id": chat_id, "admin": True})
-    if user:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["bc"].format("animation")
-        )
-        db.users.update_one(
-            {"chat_id": chat_id},
-            {"$set": {"last_command": user["last_command"] + "+bc_animation"}},
-        )
+    # TODO: uncomment when location prompt is ready
+    # PromptHelper.location_prompt(chat_id)
+    PromptHelper.birthday_prompt(chat_id)
 
 
-def bc_help(update, context):
+def bc_setup(update, context):
     """
-    This function sends instruction on how to use broadcasts
+    Unified function to set up broadcast for different types of messages.
     """
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "admin": True})
-    if user:
-        context.bot.send_message(chat_id=chat_id, text=config["messages"]["bc_help"])
-        db.users.update_one(
-            {"chat_id": chat_id},
-            {"$set": {"last_command": user["last_command"] + "+bc_help"}},
-        )
+    if not user:
+        return
+
+    # Send a message to the admin to select the type of broadcast
+    context.bot.send_message(chat_id=chat_id, text=config["messages"]["bc_prompt"])
+
+    # Update the last command with a general broadcast tag
+    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": "broadcast"}})
 
 
-def bc_photo(update, context):
+def handle_broadcast(update):
     """
-    This function sends photo as broadcast
-    """
-    chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id": chat_id, "admin": True})
-    if user:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["bc"].format("photo")
-        )
-        db.users.update_one(
-            {"chat_id": chat_id},
-            {"$set": {"last_command": user["last_command"] + "+bc_photo"}},
-        )
-
-
-def bc_text(update, context):
-    """
-    This function sends text as broadcast
+    Handles the broadcast action based on the admin's response.
     """
     chat_id = update.effective_chat.id
+    message = update.message
     user = db.users.find_one({"chat_id": chat_id, "admin": True})
-    if user:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["bc"].format("message")
+    if not user or user.get("last_command") != "broadcast":
+        return
+
+    # Fetch all users to broadcast to
+    users = db.users.find({"active": True})
+
+    if message.text:
+        BroadcastHandlers.broadcast_message(
+            users, message.text, MessageHelper.send_text
         )
-        db.users.update_one(
-            {"chat_id": chat_id},
-            {"$set": {"last_command": user["last_command"] + "+bc_text"}},
+    elif message.photo:
+        photo = message.photo[-1].file_id
+        caption = message.caption or ""
+        BroadcastHandlers.broadcast_message(
+            users, photo, MessageHelper.send_photo, caption
+        )
+    elif message.video:
+        video = message.video.file_id
+        caption = message.caption or ""
+        BroadcastHandlers.broadcast_message(
+            users, video, MessageHelper.send_video, caption
+        )
+    elif message.animation:
+        animation = message.animation.file_id
+        caption = message.caption or ""
+        BroadcastHandlers.broadcast_message(
+            users, animation, MessageHelper.send_animation, caption
         )
 
-
-def bc_video(update, context):
-    """
-    This function sends video as broadcast.
-    """
-    chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id": chat_id, "admin": True})
-    if user:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["bc"].format("video")
-        )
-        db.users.update_one(
-            {"chat_id": chat_id},
-            {"$set": {"last_command": user["last_command"] + "+bc_video"}},
-        )
+    # Reset last_command after broadcast
+    set_user_last_command(chat_id, None)
 
 
 def blog_posts(update, context):
@@ -145,7 +142,7 @@ def blog_posts(update, context):
         notify_in_conversation(chat_id)
 
 
-def broadcast(update, context):
+def broadcast_message_handler(update, context):
     """
     This function allows for an admin personnel send broadcast
     to all users
@@ -177,22 +174,8 @@ def campuses(update, context):
     """
     chat_id = update.effective_chat.id
     if validate_last_command(chat_id):
-        ch = ""
-        for church in list(CHURCH_LOCATIONS.keys()):
-            ch += config["messages"]["church"].format(
-                church.capitalize(),
-                CHURCH_LOCATIONS[church]["name"],
-                CHURCH_LOCATIONS[church]["link"],
-            )
-            ch += "\n\n"
-
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["find_church"].format(ch),
-            parse_mode="Markdown",
-            disable_web_page_preview="True",
-        )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        # TODO: Handle church location prompt
+        pass
     else:
         notify_in_conversation(chat_id)
 
@@ -392,22 +375,8 @@ def map_loc(update, context):
     """
     This handles requests for map locations.
     """
-    chat_id = update.effective_chat.id
-    context.bot.send_photo(
-        chat_id=chat_id,
-        photo=open("img/MAP.jpg", "rb"),
-        caption=config["messages"]["map"],
-    )
-    buttons = [
-        [InlineKeyboardButton(i.capitalize(), callback_data="map=" + i)]
-        for i in list(MAP_LOCATIONS.keys())
-    ]
-    context.bot.send_message(
-        chat_id=chat_id,
-        text=config["messages"]["location"],
-        reply_markup=InlineKeyboardMarkup(buttons),
-    )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": "map"}})
+    # TODO: redo map location prompt
+    pass
 
 
 def menu(update, context):
