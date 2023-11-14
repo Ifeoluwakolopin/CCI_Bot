@@ -1,5 +1,5 @@
 from . import db
-from telegram import KeyboardButton, InlineKeyboardButton
+from telegram import KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 sermon_buttons = [
     KeyboardButton("latest sermon"),
@@ -73,7 +73,17 @@ month_buttons = [
         InlineKeyboardButton("December", callback_data="bd=12"),
     ],
 ]
-
+ask_question_or_counseling_keyboard = InlineKeyboardMarkup(
+    [
+        [InlineKeyboardButton("Ask a question", callback_data="qa_or_c=" + str(0))],
+        [
+            InlineKeyboardButton(
+                "Speak to a Counselor", callback_data="qa_or_c=" + str(1)
+            )
+        ],
+    ],
+    resize_keyboard=True,
+)
 location_buttons = []
 
 normal_keyboard = [sermon_buttons, buttons1 + counseling_buttons]

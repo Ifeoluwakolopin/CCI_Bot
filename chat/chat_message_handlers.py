@@ -1,25 +1,32 @@
 from datetime import datetime
 from bot import db, config
-from bot.commands import unknown
-from bot.helpers import find_text_for_callback
-from bot.database import add_topic_to_db
+from bot.keyboards import ask_question_or_counseling_keyboard
+from bot.helpers import (
+    find_text_for_callback,
+    create_buttons_from_data,
+    handle_view_more,
+)
+from bot.database import (
+    add_topic_to_db,
+    get_all_counseling_topics,
+    set_user_last_command,
+)
 from telegram import (
     Update,
-    KeyboardButton,
-    ReplyKeyboardMarkup,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
 from telegram.ext import CallbackContext
-from bot.keyboards import categories_keyboard
 
 
 def counseling(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
+    counseling_topics = get_all_counseling_topics()
+    categories_keyboard = create_buttons_from_data(counseling_topics, "counsel", 5, 1)
     context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["counseling_start"],
-        reply_markup=InlineKeyboardMarkup(categories_keyboard, resize_keyboard=True),
+        reply_markup=categories_keyboard,
     )
 
 
@@ -28,45 +35,34 @@ def handle_counseling(update, context):
     topic = find_text_for_callback(update.callback_query).lower()
     topic_from_db = db.counseling_topics.find_one({"topic": topic})
 
-    if topic_from_db:
-        faqs = topic_from_db["faqs"]
+    questions = topic_from_db["faqs"]
 
-        buttons = [
-            [
-                InlineKeyboardButton(
-                    str(faqs[idx]["id"]),
-                    callback_data="faq=" + topic + "=" + str(faqs[idx]["id"]) + "=5",
-                )
-                for idx in range(0, 5)
-            ],
-            [
-                InlineKeyboardButton(
-                    "View More Questions",
-                    callback_data="faq=" + topic + "=" + str(5) + "=more",
-                )
-            ],
-        ]
+    ids = [faq["id"] for faq in questions]
+    topic_callback_info = f"faq={topic}"
+    row, cols = 1, 5
 
-        questions = "\n\n".join(
-            ["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs[0:5]]
-        )
+    # Create buttons using the sliced FAQs
+    buttons = create_buttons_from_data(ids, topic_callback_info, row, cols)
 
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["counseling_topic_reply"].format(
-                topic.capitalize(), questions
-            ),
-            reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True),
-        )
-    else:
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["counseling_topic_not_found"],
-            reply_markup=InlineKeyboardMarkup(
-                categories_keyboard, resize_keyboard=True
-            ),
-        )
-    # adds topic to database
+    num_questions = row * cols
+
+    # Slicing the FAQs to match the number of buttons
+    displayed_faqs = questions[:num_questions]
+
+    # Format the questions for display
+    questions = "\n\n".join(
+        ["{0}. {1}".format(faq["id"], faq["q"]) for faq in displayed_faqs]
+    )
+
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["counseling_topic_reply"].format(
+            topic.capitalize(), questions
+        ),
+        reply_markup=buttons,
+    )
+
+    # Add topic to database and ask question or request counselor
     add_topic_to_db(topic)
     ask_question_or_request_counselor(update, context)
 
@@ -76,21 +72,7 @@ def ask_question_or_request_counselor(update, context):
     context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["add_question_or_request_counselor"],
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "Ask a question", callback_data="qa_or_c=" + str(0)
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "Speak to a Counselor", callback_data="qa_or_c=" + str(1)
-                    )
-                ],
-            ],
-            resize_keyboard=True,
-        ),
+        reply_markup=ask_question_or_counseling_keyboard,
     )
 
 
@@ -175,105 +157,51 @@ def handle_counselor_request_yes(update, context):
 
 def handle_get_faq_callback(update, context):
     chat_id = update.effective_chat.id
-    q = update.callback_query.data
-    q_head = q.split("=")
+    question_id = find_text_for_callback(update.callback_query).lower()
+    q_head = update.callback_query.data.split("=")
     topic = q_head[1]
     response = db.counseling_topics.find_one({"topic": topic})
 
-    if q_head[-1] == "more":
-        last_idx = int(q_head[-2])
+    if q_head[2] == "more":
+        last_idx = int(q_head[-1])
+        questions = response["faqs"]
 
-        faqs = db.counseling_topics.find_one({"topic": topic})["faqs"]
-        try:
-            buttons = [
-                [
-                    InlineKeyboardButton(
-                        str(faqs[idx]["id"]),
-                        callback_data="faq="
-                        + topic
-                        + "="
-                        + str(faqs[idx]["id"])
-                        + "="
-                        + str(last_idx + 5),
-                    )
-                    for idx in range(last_idx, last_idx + 5)
-                ],
-                [
-                    InlineKeyboardButton(
-                        "View More Questions",
-                        callback_data="faq="
-                        + topic
-                        + "="
-                        + str(last_idx + 5)
-                        + "=more",
-                    )
-                ],
-            ]
+        row, cols = 1, 5
 
-            questions = "\n\n".join(
-                [
-                    "{0}. {1}".format(faq["id"], faq["q"])
-                    for faq in faqs[last_idx : last_idx + 5]
-                ]
-            )
-        except:
-            l = len(faqs)
-            buttons = [
-                [
-                    InlineKeyboardButton(
-                        str(faqs[idx]["id"]),
-                        callback_data="faq="
-                        + topic
-                        + "="
-                        + str(faqs[idx]["id"])
-                        + "="
-                        + str(last_idx + 5),
-                    )
-                    for idx in range(last_idx, l - 1)
-                ]
-            ]
-            questions = "\n\n".join(
-                [
-                    "{0}. {1}".format(faq["id"], faq["q"])
-                    for faq in faqs[last_idx : len(faqs) - 1]
-                ]
-            )
+        num_questions = min(last_idx + row * cols, len(questions))
 
-        if len(buttons[0]) == 0:
+        # Slicing the FAQs to match the number of buttons
+        displayed_faqs = questions[last_idx:num_questions]
+
+        ids = [faq["id"] for faq in questions]
+        updated_buttons = handle_view_more(
+            update.callback_query, ids, f"faq={topic}", row, cols
+        )
+        # Format the questions for display
+        questions = "\n\n".join(
+            ["{0}. {1}".format(faq["id"], faq["q"]) for faq in displayed_faqs]
+        )
+
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["counseling_topic_reply"].format(
+                topic.capitalize(), questions
+            ),
+            reply_markup=updated_buttons,
+        )
+
+        if num_questions == len(questions):
             context.bot.send_message(
                 chat_id=chat_id,
-                text=config["messages"]["counseling_topic_reply_end"].format(
-                    topic.capitalize()
-                ),
-            )
-        else:
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["counseling_topic_reply"].format(
-                    topic.capitalize(), questions
-                ),
-                reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True),
+                text=config["messages"]["counseling_topic_reply_end"],
+                reply_markup=ask_question_or_counseling_keyboard,
             )
     else:
-        answer = response["faqs"][int(q_head[2]) - 1]["a"].strip()
-        buttons = [
-            [
-                InlineKeyboardButton(
-                    "View More Questions",
-                    callback_data="faq=" + q_head[1] + "=" + str(q_head[-1]) + "=more",
-                )
-            ]
-        ]
+        answer = response["faqs"][int(question_id) - 1]["a"].strip()
         context.bot.send_message(
             chat_id=chat_id,
             text=answer,
-            reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True),
         )
-
-
-def get_topics_from_db():
-    topics = db.counseling_topics.find()
-    return [topic["topic"] for topic in topics]
 
 
 def handle_ask_question(update, context):
@@ -284,7 +212,7 @@ def handle_ask_question(update, context):
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["ask_question_success"]
     )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+    set_user_last_command(chat_id, None)
 
 
 def add_request_to_queue(counseling_request: dict):

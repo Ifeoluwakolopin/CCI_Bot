@@ -33,7 +33,7 @@
     "counseling_request_transferred":"You have already transferred this counseling session. Please use the buttons below to perform another action.",
     "counseling_start": "Welcome to CCI Counseling Unit assistant!\n\nReady to receive Godly counsel?\nPlease select or type in a topic you would like to receive counseling on.\n\nUse /cancel to cancel operation.",
     "counseling_topic_reply":"Here are some of FAQs on {0}.\n\nUse the buttons to view the answer to the question\n\n{1}",
-    "counseling_topic_reply_end":"There are no more FAQs under this topic.\n\nYou can check back later for more questions, ask your own question, or request to speak to a pastor using the buttons below.\n\nUse /menu to go back to the main menu.",
+    "counseling_topic_reply_end":"There are no more FAQs under this topic.\n\nYou can check back later for more questions, ask your own question, or request to speak to a pastor using the buttons below.\n\nUse /cancel to cancel operation.",
     "counseling_topic_not_found":"Sorry, we could not find any topic matching your search.\n\nPlease try again or use the buttons below to get a list of frequently asked questions.",
     "counselor_request_contact_info_confirm":"Please confirm that the information you provided is correct.\n\nName: {0}\nEmail: {1}\nPhone Number: {2}",
     "counselor_request_invalid_info":"It seems you have not entered your information in the right format.\n\nPlease try again.\n\nEnsure that your name, email and phone number are on different lines as shown be in the example below:\n\nName: John Doe\nEmail: johndoe@cci.mail\nPhone: +2343434343434\n\nUse /cancel to cancel operation.",

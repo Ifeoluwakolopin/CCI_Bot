@@ -1,6 +1,7 @@
 import os
 from . import dp, updater, PORT, db, config, bot
-from .database import search_db_title
+from .database import search_db_title, get_all_counseling_topics, set_user_last_command
+from .helpers import handle_view_more
 from .commands import (
     get_devotional,
     latest_sermon,
@@ -186,9 +187,21 @@ def cb_handle(update, context):
     if q_head[0] == "map":
         # TODO: refactor map location handling
         pass
-    elif q_head[0] == "cat":
+    elif q_head[0] == "counsel":
         # TODO: Handle this callback properly
-        handle_counseling(update, context)
+        if q_head[1] == "more":
+            counseling_topics = get_all_counseling_topics()
+            updated_buttons = handle_view_more(
+                callback, counseling_topics, "counsel", 5, 1
+            )
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=config["messages"]["counseling_start"],
+                reply_markup=updated_buttons,
+            )
+            set_user_last_command(chat_id, None)
+        else:
+            handle_counseling(update, context)
     elif q_head[0] == "qa_or_c":
         handle_ask_question_or_request_counselor(update, context)
     elif q_head[0] == "bc-to":

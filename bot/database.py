@@ -69,14 +69,17 @@ def search_db_title(title: str) -> list:
     title -- string containing words to be searched.
     Return: list of documents containing title
     """
-    query = {
-        "title": {"$regex": title, "$options": "i"}
-    }  # Case-insensitive regex search
-    result = list(db.sermons.find(query))
-    return result
+    try:
+        query = {
+            "title": {"$regex": title, "$options": "i"}
+        }  # Case-insensitive regex search
+        result = list(db.sermons.find(query))
+        return result
+    except:
+        return []
 
 
-def insert_sermon(sermon: dict):
+def insert_sermon(sermon: dict) -> bool:
     """
     This takes in a sermon and checks inserts the sermon into the
     database if it does not already exist.
@@ -88,7 +91,7 @@ def insert_sermon(sermon: dict):
     """
 
     if db.sermons.find_one({"title": sermon["title"]}) is not None:
-        return None
+        return False
     else:
         db.sermons.insert_one(sermon)
         logger.info("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
@@ -110,3 +113,58 @@ def add_topic_to_db(topic: str):
         db.counseling_topics.insert_one({"topic": topic, "faqs": [], "count": 1})
     else:
         db.counseling_topics.update_one({"topic": topic}, {"$inc": {"count": 1}})
+
+
+def get_church_locations() -> list:
+    """
+    This function returns a list of church locations from the database
+
+    Keyword arguments:
+    None
+
+    Return: list of church locations
+    """
+    return list(db.church_locations.find())
+
+
+def get_map_locations() -> list:
+    """
+    This function returns a list of map locations from the database
+
+    Keyword arguments:
+    None
+
+    Return: list of map locations
+    """
+    return list(db.map_locations.find())
+
+
+def get_all_counseling_topics() -> list:
+    """
+    Retrieves all 'topic' attributes from the 'counseling_topics' collection.
+
+    Args:
+        db: The MongoDB database instance.
+
+    Returns:
+        list: A list of all topics in the 'counseling_topics' collection.
+    """
+    topics = db.counseling_topics.find({}, {"topic": 1, "_id": 0})
+    return [document["topic"] for document in topics]
+
+
+def add_request_to_queue(counseling_request: dict) -> None:
+    db.counseling_requests.insert_one(
+        {
+            "created": counseling_request["created"],
+            "name": counseling_request["name"],
+            "email": counseling_request["email"],
+            "phone": counseling_request["phone"],
+            "chat_id": counseling_request["chat_id"],
+            "request_message_id": counseling_request["request_message_id"],
+            "active": False,
+            "note": counseling_request["note"],
+            "status": "pending",
+            "counselor_chat_id": None,
+        }
+    )

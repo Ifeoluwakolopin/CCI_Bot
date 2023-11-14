@@ -2,7 +2,7 @@ from . import db, bot, config
 from .keyboards import location_buttons, month_buttons
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .database import set_user_active
-from telegram import InlineKeyboardMarkup, CallbackQuery
+from telegram import InlineKeyboardMarkup, CallbackQuery, InlineKeyboardButton
 
 
 def find_text_for_callback(callback_query: CallbackQuery) -> str | None:
@@ -28,6 +28,78 @@ def find_text_for_callback(callback_query: CallbackQuery) -> str | None:
             if button.callback_data == callback_data:
                 return button.text
     return None
+
+
+def create_buttons_from_data(
+    data: list, callback_info: str, rows: int, cols: int, start_index: int = 0
+) -> InlineKeyboardMarkup:
+    """
+    Creates a list of InlineKeyboardButtons from the provided data, displaying a limited number of items at a time.
+    Includes a 'View More' button to navigate through additional items.
+
+    Args:
+        data (list): The list of data items from the database.
+        callback_info (str): Base information to be included in the callback data of each button.
+        rows (int): Number of rows for the button layout.
+        cols (int): Number of columns for the button layout.
+        start_index (int): The starting index from the data list to display the buttons.
+
+    Returns:
+        InlineKeyboardMarkup: The InlineKeyboardMarkup object with the created buttons.
+    """
+    buttons = []
+    total_buttons = rows * cols
+    end_index = start_index + total_buttons
+    data_len = len(data)
+
+    # Limit end_index to the length of the data
+    end_index = min(end_index, data_len)
+
+    for idx, item in enumerate(data[start_index:end_index], start=start_index):
+        row_idx = (idx - start_index) // cols
+        if len(buttons) <= row_idx:
+            buttons.append([])
+
+        button_text = str(item)
+        callback_data = f"{callback_info}={idx}"
+        buttons[row_idx].append(
+            InlineKeyboardButton(button_text, callback_data=callback_data)
+        )
+
+    # Add 'View More' button if there are more items to display
+    if data_len > end_index:
+        view_more_callback_data = f"{callback_info}=more={end_index}"
+        buttons.append(
+            [InlineKeyboardButton("View More", callback_data=view_more_callback_data)]
+        )
+
+    return InlineKeyboardMarkup(buttons, resize_keyboard=True)
+
+
+def handle_view_more(
+    callback_query: dict, data: list, callback_info: str, rows: int, cols: int
+) -> InlineKeyboardMarkup:
+    """
+    Handles the 'View More' button click, generating the next set of buttons from the data.
+
+    Args:
+        callback_query (dict): The callback query received from the Telegram API.
+        data (list): The list of data items from the database.
+        callback_info (str): Base information to be included in the callback data of each button.
+        rows (int): Number of rows for the button layout.
+        cols (int): Number of columns for the button layout.
+
+    Returns:
+        InlineKeyboardMarkup: The InlineKeyboardMarkup object with the next set of created buttons.
+    """
+    # Extract the last index from the callback data
+    last_index_str = callback_query.data.split("=")[-1]
+    last_index = int(last_index_str)
+
+    # Generate the next set of buttons starting from the last index
+    return create_buttons_from_data(
+        data, callback_info, rows, cols, start_index=last_index
+    )
 
 
 class PromptHelper:
