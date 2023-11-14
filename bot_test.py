@@ -1,5 +1,6 @@
 from bot import *
 
+
 ## Run full bot test locally using polling, before pushing to Heroku.
 def main():
     dp.add_handler(CommandHandler("start", start))
@@ -17,7 +18,7 @@ def main():
 
     updater.start_polling()
     updater.idle()
-    #jobs.sched.start()
+    # jobs.sched.start()
 
 
 if __name__ == "__main__":

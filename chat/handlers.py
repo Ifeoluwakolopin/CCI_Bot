@@ -7,44 +7,61 @@ from helpers import *
 
 config = json.load(open("config.json", encoding="utf-8"))
 
+
 # (1) Provides reply for initial 'get counsel' command.
 def get_counsel(update, context):
     chat_id = update.effective_chat.id
     context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["counseling_start"],
-        reply_markup=ReplyKeyboardMarkup(categories_keyboard, resize_keyboard=True)
+        chat_id=chat_id,
+        text=config["messages"]["counseling_start"],
+        reply_markup=ReplyKeyboardMarkup(categories_keyboard, resize_keyboard=True),
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"get_counsel"}})
+    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": "get_counsel"}})
+
 
 # (2) Handles getting the user the right topics for their request
 # Also provides suggestion to speak to a pastor or add a new question.
 def handle_get_counsel(update, context):
     chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id":chat_id})
+    user = db.users.find_one({"chat_id": chat_id})
     topic = update.message.text.strip().lower()
-    topic_from_db = db.counseling_topics.find_one({"topic":topic})
+    topic_from_db = db.counseling_topics.find_one({"topic": topic})
 
     if topic_from_db:
         faqs = topic_from_db["faqs"]
-        
+
         buttons = [
-            [InlineKeyboardButton(str(faqs[idx]["id"]), callback_data="faq="+topic+"="+str(faqs[idx]["id"])+"=5") for idx in range(0, 5)],
-            [InlineKeyboardButton("View More Questions", callback_data="faq="+topic+"="+str(5)+"=more")],
+            [
+                InlineKeyboardButton(
+                    str(faqs[idx]["id"]),
+                    callback_data="faq=" + topic + "=" + str(faqs[idx]["id"]) + "=5",
+                )
+                for idx in range(0, 5)
+            ],
+            [
+                InlineKeyboardButton(
+                    "View More Questions",
+                    callback_data="faq=" + topic + "=" + str(5) + "=more",
+                )
+            ],
         ]
 
-        questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs[0:5]])
+        questions = "\n\n".join(
+            ["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs[0:5]]
+        )
 
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counseling_topic_reply"].format(
-                topic.capitalize(),
-                questions
-                ),
-            reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True)
+            chat_id=chat_id,
+            text=config["messages"]["counseling_topic_reply"].format(
+                topic.capitalize(), questions
+            ),
+            reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True),
         )
     else:
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counseling_topic_not_found"],
-            reply_markup=ReplyKeyboardMarkup(categories_keyboard, resize_keyboard=True)
+            chat_id=chat_id,
+            text=config["messages"]["counseling_topic_not_found"],
+            reply_markup=ReplyKeyboardMarkup(categories_keyboard, resize_keyboard=True),
         )
     # adds topic to database
     add_topic_to_db(topic)
@@ -52,155 +69,239 @@ def handle_get_counsel(update, context):
     time.sleep(1)
     ask_question_or_request_counselor(update, context)
 
+
 def handle_get_faq_callback(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     q_head = q.split("=")
     topic = q_head[1]
-    response = db.counseling_topics.find_one({"topic":topic})
+    response = db.counseling_topics.find_one({"topic": topic})
 
     if q_head[-1] == "more":
         last_idx = int(q_head[-2])
-        
-        faqs = db.counseling_topics.find_one({"topic":topic})["faqs"]
+
+        faqs = db.counseling_topics.find_one({"topic": topic})["faqs"]
         try:
             buttons = [
-                [InlineKeyboardButton(str(faqs[idx]["id"]), callback_data="faq="+topic+"="+str(faqs[idx]["id"])+"="+str(last_idx+5)) for idx in range(last_idx, last_idx+5)],
-                [InlineKeyboardButton("View More Questions", callback_data="faq="+topic+"="+str(last_idx+5)+"=more")],
+                [
+                    InlineKeyboardButton(
+                        str(faqs[idx]["id"]),
+                        callback_data="faq="
+                        + topic
+                        + "="
+                        + str(faqs[idx]["id"])
+                        + "="
+                        + str(last_idx + 5),
+                    )
+                    for idx in range(last_idx, last_idx + 5)
+                ],
+                [
+                    InlineKeyboardButton(
+                        "View More Questions",
+                        callback_data="faq="
+                        + topic
+                        + "="
+                        + str(last_idx + 5)
+                        + "=more",
+                    )
+                ],
             ]
-            
-            questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs[last_idx:last_idx+5]])
+
+            questions = "\n\n".join(
+                [
+                    "{0}. {1}".format(faq["id"], faq["q"])
+                    for faq in faqs[last_idx : last_idx + 5]
+                ]
+            )
         except:
             l = len(faqs)
             buttons = [
-                [InlineKeyboardButton(str(faqs[idx]["id"]), callback_data="faq="+topic+"="+str(faqs[idx]["id"])+"="+str(last_idx+5)) for idx in range(last_idx,l-1)]
+                [
+                    InlineKeyboardButton(
+                        str(faqs[idx]["id"]),
+                        callback_data="faq="
+                        + topic
+                        + "="
+                        + str(faqs[idx]["id"])
+                        + "="
+                        + str(last_idx + 5),
+                    )
+                    for idx in range(last_idx, l - 1)
+                ]
             ]
-            questions = "\n\n".join(["{0}. {1}".format(faq["id"], faq["q"]) for faq in faqs[last_idx:len(faqs)-1]])
-            
+            questions = "\n\n".join(
+                [
+                    "{0}. {1}".format(faq["id"], faq["q"])
+                    for faq in faqs[last_idx : len(faqs) - 1]
+                ]
+            )
+
         if len(buttons[0]) == 0:
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["counseling_topic_reply_end"].format(
+                chat_id=chat_id,
+                text=config["messages"]["counseling_topic_reply_end"].format(
                     topic.capitalize()
-                )
+                ),
             )
         else:
             context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["counseling_topic_reply"].format(
-                    topic.capitalize(),
-                    questions
-                    ),
-                reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True)
+                chat_id=chat_id,
+                text=config["messages"]["counseling_topic_reply"].format(
+                    topic.capitalize(), questions
+                ),
+                reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True),
             )
     else:
-        answer = response["faqs"][int(q_head[2])-1]["a"].strip()
+        answer = response["faqs"][int(q_head[2]) - 1]["a"].strip()
         buttons = [
-            [InlineKeyboardButton("View More Questions", callback_data="faq="+q_head[1]+"="+str(q_head[-1])+"=more")]
+            [
+                InlineKeyboardButton(
+                    "View More Questions",
+                    callback_data="faq=" + q_head[1] + "=" + str(q_head[-1]) + "=more",
+                )
+            ]
         ]
         context.bot.send_message(
-            chat_id=chat_id, text=answer, reply_markup=InlineKeyboardMarkup(
-                buttons, resize_keyboard=True
-            )
+            chat_id=chat_id,
+            text=answer,
+            reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True),
         )
 
-def add_topic_to_db(topic:str):
-    if not db.counseling_topics.find_one({"topic":topic}):
-        db.counseling_topics.insert_one({"topic":topic, "faqs":[], "count":1})
+
+def add_topic_to_db(topic: str):
+    if not db.counseling_topics.find_one({"topic": topic}):
+        db.counseling_topics.insert_one({"topic": topic, "faqs": [], "count": 1})
     else:
-        db.counseling_topics.update_one({"topic":topic}, {"$inc":{"count":1}})
-    
+        db.counseling_topics.update_one({"topic": topic}, {"$inc": {"count": 1}})
+
+
 def get_topics_from_db():
     topics = db.counseling_topics.find()
     return [topic["topic"] for topic in topics]
+
 
 # (3) Provides prompt for user to request to speak to a pastor.
 def ask_question_or_request_counselor(update, context):
     chat_id = update.effective_chat.id
     context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["add_question_or_request_counselor"],
-        reply_markup=ReplyKeyboardMarkup([
-            [KeyboardButton("Ask a question")], 
-            [KeyboardButton("Speak to a Pastor")]
-            ], resize_keyboard=True)
+        chat_id=chat_id,
+        text=config["messages"]["add_question_or_request_counselor"],
+        reply_markup=ReplyKeyboardMarkup(
+            [[KeyboardButton("Ask a question")], [KeyboardButton("Speak to a Pastor")]],
+            resize_keyboard=True,
+        ),
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"question_or_counselor_request"}})
+    db.users.update_one(
+        {"chat_id": chat_id},
+        {"$set": {"last_command": "question_or_counselor_request"}},
+    )
+
 
 # (4) Handles user reply to prompt to speak to a pastor.
 def handle_ask_question_or_request_counselor(update, context):
     chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id":chat_id})
+    user = db.users.find_one({"chat_id": chat_id})
     user_request = update.message.text.strip().lower()
 
     if user_request == "speak to a pastor":
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counselor_request_yes"],
+            chat_id=chat_id,
+            text=config["messages"]["counselor_request_yes"],
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
+        db.users.update_one(
+            {"chat_id": chat_id}, {"$set": {"last_command": "counselor_request_yes"}}
+        )
     elif user_request == "ask a question":
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["ask_question"],
+            chat_id=chat_id,
+            text=config["messages"]["ask_question"],
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"ask_counseling_question"}})
+        db.users.update_one(
+            {"chat_id": chat_id}, {"$set": {"last_command": "ask_counseling_question"}}
+        )
     else:
         unknown(update, context)
+
 
 # (5) Handles user request to speak to a pastor.
 def handle_counselor_request_yes(update, context):
     chat_id = update.effective_chat.id
     message = update.message
     try:
-
         contact_info = message.text.split("\n")
         name = contact_info[0].strip()
-        email = contact_info[1].strip() # regex email validation
-        phone = contact_info[2].strip() # regex validate phone number
+        email = contact_info[1].strip()  # regex email validation
+        phone = contact_info[2].strip()  # regex validate phone number
         message_id = message.message_id
-        
+
         # temporarily add request to db queue
-        add_request_to_queue({
-            "created":datetime.now(),
-            "chat_id":chat_id,
-            "name":name,
-            "email":email,
-            "phone":phone,
-            "request_message_id":message_id,
-            "note":None,  
-        })
+        add_request_to_queue(
+            {
+                "created": datetime.now(),
+                "chat_id": chat_id,
+                "name": name,
+                "email": email,
+                "phone": phone,
+                "request_message_id": message_id,
+                "note": None,
+            }
+        )
 
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counselor_request_contact_info_confirm"].format(name, email, phone),
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Yes, this is correct", callback_data="cr=yes="+str(message_id))],
-                [InlineKeyboardButton("No, I want to make a change", callback_data="cr=no="+str(message_id))]
-                ], resize_keyboard=True)
-            )
+            chat_id=chat_id,
+            text=config["messages"]["counselor_request_contact_info_confirm"].format(
+                name, email, phone
+            ),
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "Yes, this is correct",
+                            callback_data="cr=yes=" + str(message_id),
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "No, I want to make a change",
+                            callback_data="cr=no=" + str(message_id),
+                        )
+                    ],
+                ],
+                resize_keyboard=True,
+            ),
+        )
     except:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_request_invalid_info"]
         )
-        db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":"counselor_request_yes"}})
+        db.users.update_one(
+            {"chat_id": chat_id}, {"$set": {"last_command": "counselor_request_yes"}}
+        )
+
 
 def handle_ask_question(update, context):
     chat_id = update.effective_chat.id
     message = update.message.text.strip().lower()
 
-    
-    db.new_questions.insert_one({"chat_id":chat_id, "question":message})
+    db.new_questions.insert_one({"chat_id": chat_id, "question": message})
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["ask_question_success"]
     )
-    db.users.update_one({"chat_id":chat_id}, {"$set":{"last_command":None}})
+    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
 
 
-def add_request_to_queue(counseling_request:dict):
-    db.counseling_requests.insert_one({
-        "created":counseling_request["created"],
-        "name":counseling_request["name"],
-        "email": counseling_request["email"],
-        "phone":counseling_request["phone"],
-        "chat_id":counseling_request["chat_id"],
-        "request_message_id":counseling_request["request_message_id"],
-        "active":False,
-        "note":counseling_request["note"],
-        "status":"pending",
-        "counselor_chat_id": None
-    })
+def add_request_to_queue(counseling_request: dict):
+    db.counseling_requests.insert_one(
+        {
+            "created": counseling_request["created"],
+            "name": counseling_request["name"],
+            "email": counseling_request["email"],
+            "phone": counseling_request["phone"],
+            "chat_id": counseling_request["chat_id"],
+            "request_message_id": counseling_request["request_message_id"],
+            "active": False,
+            "note": counseling_request["note"],
+            "status": "pending",
+            "counselor_chat_id": None,
+        }
+    )
