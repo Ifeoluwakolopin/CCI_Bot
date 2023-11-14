@@ -27,14 +27,14 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
-from chat.handlers import (
-    get_counsel,
-    handle_get_counsel,
+from chat.chat_message_handlers import (
+    counseling,
+    handle_counseling,
     handle_ask_question_or_request_counselor,
     handle_counselor_request_yes,
     handle_get_faq_callback,
 )
-from chat.counselor_handlers import (
+from chat.chat_callback_handlers import (
     show_active_requests,
     conversation_handler,
     counselor_transfer_msg_confirm_cb_handler,
@@ -84,7 +84,7 @@ def handle_message_commands(update, context):
     elif title == "reboot camp":
         reboot_about(update, context)
     elif title == "counseling":
-        get_counsel(update, context)
+        counseling(update, context)
     elif title == "show active counseling requests":
         show_active_requests(update, context)
     else:
@@ -150,10 +150,6 @@ def handle_message_response(update, context):
             parse_mode="Markdown",
         )
         db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    elif last_command.startswith("get_counsel"):
-        handle_get_counsel(update, context)
-    elif last_command == "question_or_counselor_request":
-        handle_ask_question_or_request_counselor(update, context)
     elif last_command == "counselor_request_yes":
         handle_counselor_request_yes(update, context)
     elif last_command.startswith("cr_yes"):
@@ -184,11 +180,17 @@ def handle_message_response(update, context):
 
 def cb_handle(update, context):
     chat_id = update.effective_chat.id
-    q = update.callback_query.data
+    callback = update.callback_query
+    q = callback.data
     q_head = q.split("=")
     if q_head[0] == "map":
         # TODO: refactor map location handling
         pass
+    elif q_head[0] == "cat":
+        # TODO: Handle this callback properly
+        handle_counseling(update, context)
+    elif q_head[0] == "qa_or_c":
+        handle_ask_question_or_request_counselor(update, context)
     elif q_head[0] == "bc-to":
         # TODO: refactor broadcast handling
         pass

@@ -2,7 +2,7 @@ import requests
 import json
 import requests
 from bs4 import BeautifulSoup
-from datetime import date as dt
+from datetime import date as datetime
 from dotenv import load_dotenv
 import os
 
@@ -14,7 +14,7 @@ class WebScrapers:
     def service_ticket(start: str = "", end: str = "") -> list:
         """
         This takes in a string of time
-        in the format'yyy-mm-ddThh-mm-ss' and returns tickets available
+        in the format'yyy-mm-ddatetimehh-mm-ss' and returns tickets available
         for the provided time.
         """
         params = {
@@ -134,7 +134,7 @@ class WebScrapers:
         )
         image = soup.find("div", {"class": "td-module-thumb"}).find("img").get("src")
         excerpt = soup.find("div", {"class": "td-excerpt"}).text.strip()
-        date = str(dt.today())
+        date = str(datetime.today())
 
         d = {
             "title": title,

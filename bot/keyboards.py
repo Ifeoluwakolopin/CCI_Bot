@@ -37,9 +37,18 @@ counseling_buttons = [
 ]
 
 categories_keyboard = [
-    [KeyboardButton("Spiritual Growth"), KeyboardButton("Relationships")],
-    [KeyboardButton("Career"), KeyboardButton("Mental Wellbeing")],
-    [KeyboardButton("Habits and Addictions"), KeyboardButton("Marriage and Family")],
+    [
+        InlineKeyboardButton("Spiritual Growth", callback_data="cat=" + "sg"),
+        InlineKeyboardButton("Relationships", callback_data="cat=" + "r"),
+    ],
+    [
+        InlineKeyboardButton("Career", callback_data="cat=" + "car"),
+        InlineKeyboardButton("Mental Wellbeing", callback_data="cat=" + "mw"),
+    ],
+    [
+        InlineKeyboardButton("Habits and Addictions", callback_data="cat=" + "ha"),
+        InlineKeyboardButton("Marriage and Family", callback_data="cat=" + "mf"),
+    ],
 ]
 
 month_buttons = [

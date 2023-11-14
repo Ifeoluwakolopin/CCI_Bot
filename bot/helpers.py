@@ -2,7 +2,32 @@ from . import db, bot, config
 from .keyboards import location_buttons, month_buttons
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .database import set_user_active
-from telegram import InlineKeyboardMarkup
+from telegram import InlineKeyboardMarkup, CallbackQuery
+
+
+def find_text_for_callback(callback_query: CallbackQuery) -> str | None:
+    """
+    Searches for the text associated with the callback_data within a callback_query object.
+
+    The function iterates through the 'inline_keyboard' of the 'reply_markup' in the 'message'
+    part of the callback_query to find a button whose 'callback_data' matches the callback_data in
+    the callback_query. If found, it returns the 'text' of that button. If no matching callback_data is found,
+    it returns None.
+
+    Args:
+        callback_query (CallbackQuery): The callback query object received from the Telegram API.
+
+    Returns:
+        str | None: The text of the button that matches the callback_data, or None if no match is found.
+    """
+    callback_data = callback_query.data
+    inline_keyboard = callback_query.message.reply_markup.inline_keyboard
+
+    for row in inline_keyboard:
+        for button in row:
+            if button.callback_data == callback_data:
+                return button.text
+    return None
 
 
 class PromptHelper:

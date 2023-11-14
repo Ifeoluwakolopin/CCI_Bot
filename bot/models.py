@@ -2,6 +2,38 @@ import json
 from datetime import datetime
 
 
+class BotUser:
+    def __init__(
+        self, chat_id: int, first_name: str | None, last_name: str | None
+    ) -> None:
+        self.chat_id = chat_id
+        self.first_name = first_name
+        self.last_name = last_name
+        self.date = datetime.now()
+        self.admin = False
+        self.mute = False
+        self.last_command = None
+        self.active = True
+        self.location = "None"
+        self.birthday = "None"
+        self.role = "user"
+
+    def to_dict(self):
+        return {
+            "chat_id": self.chat_id,
+            "date": self.date,
+            "admin": self.admin,
+            "mute": self.mute,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "last_command": self.last_command,
+            "active": self.active,
+            "location": self.location,
+            "birthday": self.birthday,
+            "role": self.role,
+        }
+
+
 class Message:
     def __init__(
         self,
@@ -9,15 +41,15 @@ class Message:
         sender: str,
         receiver: str,
         text: str,
-        status=None,
-        time_sent=datetime.now(),
-        reply_to=False,
+        status: str | None = None,
+        time_sent: datetime = datetime.now(),
+        reply_to: bool = False,
     ) -> None:
         self.message_id = message_id
         self.sender = sender
         self.receiver = receiver
         self.text = text
-        self.status = status
+        self.status: str = status
         self.time_sent = time_sent
         self.reply_to = reply_to
 
@@ -35,7 +67,7 @@ class Message:
             indent=2,
         )
 
-    def update_message_status(self, update="sent"):
+    def update_message_status(self, update: str = "sent"):
         self.status = update
         return f"Message status: {update}"
 

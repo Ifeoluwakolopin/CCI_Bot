@@ -1,36 +1,31 @@
-import time
-import json
 from datetime import datetime
-from bot import db
+from bot import db, config
 from bot.commands import unknown
+from bot.helpers import find_text_for_callback
+from bot.database import add_topic_to_db
 from telegram import (
+    Update,
     KeyboardButton,
     ReplyKeyboardMarkup,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
+from telegram.ext import CallbackContext
 from bot.keyboards import categories_keyboard
 
-config = json.load(open("config.json", encoding="utf-8"))
 
-
-# (1) Provides reply for initial 'get counsel' command.
-def get_counsel(update, context):
+def counseling(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["counseling_start"],
-        reply_markup=ReplyKeyboardMarkup(categories_keyboard, resize_keyboard=True),
+        reply_markup=InlineKeyboardMarkup(categories_keyboard, resize_keyboard=True),
     )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": "get_counsel"}})
 
 
-# (2) Handles getting the user the right topics for their request
-# Also provides suggestion to speak to a pastor or add a new question.
-def handle_get_counsel(update, context):
+def handle_counseling(update, context):
     chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id": chat_id})
-    topic = update.message.text.strip().lower()
+    topic = find_text_for_callback(update.callback_query).lower()
     topic_from_db = db.counseling_topics.find_one({"topic": topic})
 
     if topic_from_db:
@@ -67,13 +62,115 @@ def handle_get_counsel(update, context):
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counseling_topic_not_found"],
-            reply_markup=ReplyKeyboardMarkup(categories_keyboard, resize_keyboard=True),
+            reply_markup=InlineKeyboardMarkup(
+                categories_keyboard, resize_keyboard=True
+            ),
         )
     # adds topic to database
     add_topic_to_db(topic)
-    # Prompts user to speak to a Pastor.
-    time.sleep(1)
     ask_question_or_request_counselor(update, context)
+
+
+def ask_question_or_request_counselor(update, context):
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["add_question_or_request_counselor"],
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Ask a question", callback_data="qa_or_c=" + str(0)
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "Speak to a Counselor", callback_data="qa_or_c=" + str(1)
+                    )
+                ],
+            ],
+            resize_keyboard=True,
+        ),
+    )
+
+
+def handle_ask_question_or_request_counselor(update, context):
+    chat_id = update.effective_chat.id
+    user_request = find_text_for_callback(update.callback_query).lower()
+
+    print(user_request)
+
+    if user_request == "speak to a counselor":
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["counselor_request_yes"],
+        )
+        db.users.update_one(
+            {"chat_id": chat_id}, {"$set": {"last_command": "counselor_request_yes"}}
+        )
+    else:
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["ask_question"],
+        )
+        db.users.update_one(
+            {"chat_id": chat_id}, {"$set": {"last_command": "ask_counseling_question"}}
+        )
+
+
+def handle_counselor_request_yes(update, context):
+    chat_id = update.effective_chat.id
+    message = update.message
+    try:
+        contact_info = message.text.split("\n")
+        name = contact_info[0].strip()
+        email = contact_info[1].strip()  # regex email validation
+        phone = contact_info[2].strip()  # regex validate phone number
+        message_id = message.message_id
+
+        # temporarily add request to db queue
+        add_request_to_queue(
+            {
+                "created": datetime.now(),
+                "chat_id": chat_id,
+                "name": name,
+                "email": email,
+                "phone": phone,
+                "request_message_id": message_id,
+                "note": None,
+            }
+        )
+
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["counselor_request_contact_info_confirm"].format(
+                name, email, phone
+            ),
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "Yes, this is correct",
+                            callback_data="cr=yes=" + str(message_id),
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "No, I want to make a change",
+                            callback_data="cr=no=" + str(message_id),
+                        )
+                    ],
+                ],
+                resize_keyboard=True,
+            ),
+        )
+    except:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["counselor_request_invalid_info"]
+        )
+        db.users.update_one(
+            {"chat_id": chat_id}, {"$set": {"last_command": "counselor_request_yes"}}
+        )
 
 
 def handle_get_faq_callback(update, context):
@@ -174,115 +271,9 @@ def handle_get_faq_callback(update, context):
         )
 
 
-def add_topic_to_db(topic: str):
-    if not db.counseling_topics.find_one({"topic": topic}):
-        db.counseling_topics.insert_one({"topic": topic, "faqs": [], "count": 1})
-    else:
-        db.counseling_topics.update_one({"topic": topic}, {"$inc": {"count": 1}})
-
-
 def get_topics_from_db():
     topics = db.counseling_topics.find()
     return [topic["topic"] for topic in topics]
-
-
-# (3) Provides prompt for user to request to speak to a pastor.
-def ask_question_or_request_counselor(update, context):
-    chat_id = update.effective_chat.id
-    context.bot.send_message(
-        chat_id=chat_id,
-        text=config["messages"]["add_question_or_request_counselor"],
-        reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("Ask a question")], [KeyboardButton("Speak to a Pastor")]],
-            resize_keyboard=True,
-        ),
-    )
-    db.users.update_one(
-        {"chat_id": chat_id},
-        {"$set": {"last_command": "question_or_counselor_request"}},
-    )
-
-
-# (4) Handles user reply to prompt to speak to a pastor.
-def handle_ask_question_or_request_counselor(update, context):
-    chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id": chat_id})
-    user_request = update.message.text.strip().lower()
-
-    if user_request == "speak to a pastor":
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["counselor_request_yes"],
-        )
-        db.users.update_one(
-            {"chat_id": chat_id}, {"$set": {"last_command": "counselor_request_yes"}}
-        )
-    elif user_request == "ask a question":
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["ask_question"],
-        )
-        db.users.update_one(
-            {"chat_id": chat_id}, {"$set": {"last_command": "ask_counseling_question"}}
-        )
-    else:
-        unknown(update, context)
-
-
-# (5) Handles user request to speak to a pastor.
-def handle_counselor_request_yes(update, context):
-    chat_id = update.effective_chat.id
-    message = update.message
-    try:
-        contact_info = message.text.split("\n")
-        name = contact_info[0].strip()
-        email = contact_info[1].strip()  # regex email validation
-        phone = contact_info[2].strip()  # regex validate phone number
-        message_id = message.message_id
-
-        # temporarily add request to db queue
-        add_request_to_queue(
-            {
-                "created": datetime.now(),
-                "chat_id": chat_id,
-                "name": name,
-                "email": email,
-                "phone": phone,
-                "request_message_id": message_id,
-                "note": None,
-            }
-        )
-
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["counselor_request_contact_info_confirm"].format(
-                name, email, phone
-            ),
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "Yes, this is correct",
-                            callback_data="cr=yes=" + str(message_id),
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "No, I want to make a change",
-                            callback_data="cr=no=" + str(message_id),
-                        )
-                    ],
-                ],
-                resize_keyboard=True,
-            ),
-        )
-    except:
-        context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counselor_request_invalid_info"]
-        )
-        db.users.update_one(
-            {"chat_id": chat_id}, {"$set": {"last_command": "counselor_request_yes"}}
-        )
 
 
 def handle_ask_question(update, context):

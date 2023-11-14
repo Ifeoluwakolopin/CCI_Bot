@@ -1,5 +1,6 @@
 from . import db, logger
-from bot.bot_types import BotUser, Result
+from .models import BotUser
+from .bot_types import Result
 
 
 def set_user_last_command(chat_id: int, last_command: str | None) -> bool:
@@ -92,3 +93,20 @@ def insert_sermon(sermon: dict):
         db.sermons.insert_one(sermon)
         logger.info("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
         return True
+
+
+def add_topic_to_db(topic: str):
+    """
+    This takes in a topic and adds it to the database if it does not
+
+    Keyword arguments:
+    topic -- str: contains the topic to be added to the database
+
+    Return: None
+
+    """
+
+    if not db.counseling_topics.find_one({"topic": topic}):
+        db.counseling_topics.insert_one({"topic": topic, "faqs": [], "count": 1})
+    else:
+        db.counseling_topics.update_one({"topic": topic}, {"$inc": {"count": 1}})

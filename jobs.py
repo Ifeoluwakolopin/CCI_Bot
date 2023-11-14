@@ -6,40 +6,48 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from bot.commands import notify_new_sermon
 from bot.database import insert_sermon
 from bot.scrapers import WebScrapers
+from bot.helpers import MessageHelper, BroadcastHandlers
 
 sched = BlockingScheduler()
 
 
-@sched.scheduled_job("cron", day_of_week="mon-sun", hour=23, minute=00)
+@sched.scheduled_job("cron", day_of_week="mon-sun", hour=23, minute=0)
 def birthday_notifier():
     """
-    This functions sends out daily notifications to users
-    on their birthdays
-
-    Keyword arguments:
-    None - None
-
-    Return: None
+    This function sends out daily notifications to users on their birthdays.
     """
-    # Calculates the current date
+    # Calculate tomorrow's date
     tomorrow = datetime.today() + timedelta(days=1)
-    x = str(tomorrow.month) + "-" + str(tomorrow.day)
-    # Finds users in the database whose birthdays match the current date
-    birthdays = db.users.find({"birthday": x})
-    sent = 0
-    for user in birthdays:
-        try:
-            bot.send_photo(
-                chat_id=user["chat_id"],
-                photo=open("img/birthday.jpg", "rb"),
-                caption=config["messages"]["birthday_message1"].format(
-                    user["first_name"]
-                ),
-            )
-            sent += 1
-        except:
-            pass
-    logger.info("BIRTHDAY: Sent {sent} birthday wishes")
+    date_str = f"{tomorrow.month}-{tomorrow.day}"
+
+    # Find users whose birthdays match tomorrow's date
+    birthday_users = db.users.find({"birthday": date_str})
+    users_with_birthdays = list(birthday_users)
+
+    # Prepare the message and photo for each user
+    photo_path = "img/birthday.jpg"
+    messages = [
+        {
+            "chat_id": user["chat_id"],
+            "photo": photo_path,
+            "caption": config["messages"]["birthday_message1"].format(
+                user["first_name"]
+            ),
+        }
+        for user in users_with_birthdays
+    ]
+
+    # Use BroadcastHandlers to send the messages
+    for message in messages:
+        BroadcastHandlers.broadcast_message(
+            [message["chat_id"]],  # List containing one user's chat ID
+            message["photo"],
+            MessageHelper.send_photo,
+            message["caption"],
+        )
+
+    # Log the number of birthday wishes sent
+    logger.info(f"BIRTHDAY: Sent {len(users_with_birthdays)} birthday wishes")
 
 
 @sched.scheduled_job("cron", day_of_week="mon-sun", hour=6)

@@ -1,10 +1,10 @@
 from . import bot, db, config
-from .bot_types import BotUser
+from .models import BotUser
 from .helpers import BroadcastHandlers, MessageHelper
 from .database import add_user_to_db, set_user_active, set_user_last_command
 from datetime import date
-from datetime import datetime as dt
-from chat.counselor_handlers import end_conversation_prompt
+from datetime import datetime
+from chat.chat_callback_handlers import end_conversation_prompt
 from .helpers import PromptHelper
 from .scrapers import WebScrapers
 from .keyboards import validate_user_keyboard
@@ -489,7 +489,7 @@ def stats(update, context):
         total_sermons = db.sermons.count_documents({})
         location_based_stats = ""
         birthdays = db.users.count_documents({"birthday": {"$exists": True}})
-        today = dt.today()
+        today = datetime.today()
         x = str(today.month) + "-" + str(today.day)
         todays_birthdays = db.users.count_documents({"birthday": x})
 
