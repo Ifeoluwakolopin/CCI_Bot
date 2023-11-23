@@ -7,33 +7,11 @@ from bot.keyboards import (
     normal_keyboard,
     pastor_keyboard,
 )
-
-
-## HELPER FUNCTIONS
-# (1)
-def get_active_requests(topic):
-    requests = db.counseling_requests.find(
-        {"active": True, "status": "pending", "topic": topic}
-    ).sort("created", 1)
-    return requests
-
-
-def set_request_inactive(request_id: str):
-    db.counseling_requests.update_one(
-        {"request_message_id": request_id}, {"$set": {"active": False}}
-    )
-
-
-def set_request_status(request_id: str, status: str):
-    db.counseling_requests.update_one(
-        {"request_message_id": request_id}, {"$set": {"status": status}}
-    )
-
-
-def get_top_five_requests():
-    all_requests = get_active_requests()
-    top_five = all_requests[0:5]
-    return top_five
+from bot.database import (
+    set_user_last_command,
+    get_active_counseling_requests,
+    set_counseling_request_status,
+)
 
 
 # function to displays all active requests to pastors : button
@@ -43,7 +21,7 @@ def show_active_requests(update, context):
     if user:
         active_requests = []
         for topic in user["topics"]:
-            active_requests += list(get_active_requests(topic))
+            active_requests += list(get_active_counseling_requests(topic))
 
         reqs = len(active_requests)
         if reqs == 0:
@@ -93,7 +71,7 @@ def show_active_requests(update, context):
             text=config["messages"]["unknown"],
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id, None)
 
 
 def notify_pastors(counseling_request):
@@ -156,37 +134,25 @@ def handle_initial_conversation_cb(update, context):
             {"$set": {"counselor_chat_id": chat_id}},
         )
         ## set user status as in-conversation with pastor
-        db.users.update_one(
-            {"chat_id": req["chat_id"]},
-            {
-                "$set": {
-                    "last_command": "in-conversation-with="
-                    + str(chat_id)
-                    + "=pastor="
-                    + str(req["request_message_id"])
-                }
-            },
+        msg_id = req["request_message_id"]
+        user_chat_id = req["chat_id"]
+        set_user_last_command(
+            user_chat_id, f"in-conversation-with={chat_id}=pastor={msg_id}"
         )
+
         ## set pastor status as in-conversation with user
-        db.users.update_one(
-            {"chat_id": chat_id},
-            {
-                "$set": {
-                    "last_command": "in-conversation-with="
-                    + str(req["chat_id"])
-                    + "=user="
-                    + str(req["request_message_id"])
-                }
-            },
+        set_user_last_command(
+            chat_id, f"in-conversation-with={user_chat_id}=user={msg_id}"
         )
+
         ## start conversation
         start_conversation(chat_id, req)
-        set_request_status(req["request_message_id"], "ongoing")
+        set_counseling_request_status(req["request_message_id"], "ongoing")
     else:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["conversation_already_started"]
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id, None)
 
 
 def send_message_handler(msg, to):
@@ -329,15 +295,15 @@ def end_conversation_cb_handler(update, context):
             reply_markup=ReplyKeyboardMarkup(keyboard2, resize_keyboard=True),
         )
         # update counseling_request status to completed
-        set_request_status(int(user["last_command"].split("=")[-1]), "completed")
+        set_counseling_request_status(
+            int(user["last_command"].split("=")[-1]), "completed"
+        )
         # update conversation status to completed
         set_conversation_status(user_id, pastor_id, False)
 
         # update user last_command to None
-        db.users.update_many(
-            {"chat_id": {"$in": [chat_id, int(q_head[3])]}},
-            {"$set": {"last_command": None}},
-        )
+        set_user_last_command(chat_id, None)
+        set_user_last_command(q_head[3], None)
         # Ask user to provide feedback on their conversation.
         request_counseling_feedback_from_user(user_id, pastor_id)
     else:
@@ -435,7 +401,7 @@ def handle_counseling_feedback_cb(update, context):
     context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["counseling_feedback_thanks"]
     )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+    set_user_last_command(chat_id, None)
 
 
 # TODO: create a function to get calendly link and send
@@ -452,10 +418,8 @@ def counselor_transfer(update, context):
                 {"request_message_id": int(user["last_command"].split("=")[-1])}
             )["location"]
             pastors = db.users.find({"role": "pastor", "location": location})
-            db.users.update_one(
-                {"chat_id": chat_id},
-                {"$set": {"last_command": "transfer_req=" + user["last_command"]}},
-            )
+            last_command = user["last_command"]
+            set_user_last_command(chat_id, f"transfer_req={last_command}")
             context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["counselor_transfer_prompt"],
@@ -483,7 +447,7 @@ def counselor_transfer(update, context):
             text=config["messages"]["unknown"],
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id, None)
 
 
 def counselor_transfer_callback_handler(update, context):
@@ -499,10 +463,7 @@ def counselor_transfer_callback_handler(update, context):
         ),
     )
     last_command = "=".join(user["last_command"].split("=")[-4:])
-    db.users.update_one(
-        {"chat_id": chat_id},
-        {"$set": {"last_command": "transfer_req=" + q_head[1] + "=" + last_command}},
-    )
+    set_user_last_command(chat_id, f"transfer_req={q_head[1]}={last_command}")
 
 
 def counselor_transfer_msg_handler(update, context):
@@ -635,17 +596,14 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
                 ),
             )
 
-            db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+            set_user_last_command(chat_id, None)
         else:
             location = db.counseling_requests.find_one(
                 {"request_message_id": int(user["last_command"].split("=")[-1])}
             )["location"]
             pastors = db.users.find({"role": "pastor", "location": location})
             last_command = "=".join(user["last_command"].split("=")[-4:])
-            db.users.update_one(
-                {"chat_id": chat_id},
-                {"$set": {"last_command": "transfer_req=" + last_command}},
-            )
+            set_user_last_command(chat_id, f"transfer_req={last_command}")
             context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["counselor_transfer_edit"],
@@ -670,4 +628,4 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
                 validate_user_keyboard(chat_id), resize_keyboard=True
             ),
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id, None)

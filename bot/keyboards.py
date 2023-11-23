@@ -1,5 +1,5 @@
 from . import db
-from telegram import KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import KeyboardButton, InlineKeyboardButton
 
 sermon_buttons = [
     KeyboardButton("latest sermon"),
@@ -36,55 +36,6 @@ counseling_buttons = [
     KeyboardButton("counseling"),
 ]
 
-categories_keyboard = [
-    [
-        InlineKeyboardButton("Spiritual Growth", callback_data="cat=" + "sg"),
-        InlineKeyboardButton("Relationships", callback_data="cat=" + "r"),
-    ],
-    [
-        InlineKeyboardButton("Career", callback_data="cat=" + "car"),
-        InlineKeyboardButton("Mental Wellbeing", callback_data="cat=" + "mw"),
-    ],
-    [
-        InlineKeyboardButton("Habits and Addictions", callback_data="cat=" + "ha"),
-        InlineKeyboardButton("Marriage and Family", callback_data="cat=" + "mf"),
-    ],
-]
-
-month_buttons = [
-    [
-        InlineKeyboardButton("January", callback_data="bd=1"),
-        InlineKeyboardButton("February", callback_data="bd=2"),
-        InlineKeyboardButton("March", callback_data="bd=3"),
-    ],
-    [
-        InlineKeyboardButton("April", callback_data="bd=4"),
-        InlineKeyboardButton("May", callback_data="bd=5"),
-        InlineKeyboardButton("June", callback_data="bd=6"),
-    ],
-    [
-        InlineKeyboardButton("July", callback_data="bd=7"),
-        InlineKeyboardButton("August", callback_data="bd=8"),
-        InlineKeyboardButton("September", callback_data="bd=9"),
-    ],
-    [
-        InlineKeyboardButton("October", callback_data="bd=10"),
-        InlineKeyboardButton("November", callback_data="bd=11"),
-        InlineKeyboardButton("December", callback_data="bd=12"),
-    ],
-]
-ask_question_or_counseling_keyboard = InlineKeyboardMarkup(
-    [
-        [InlineKeyboardButton("Ask a question", callback_data="qa_or_c=" + str(0))],
-        [
-            InlineKeyboardButton(
-                "Speak to a Counselor", callback_data="qa_or_c=" + str(1)
-            )
-        ],
-    ],
-    resize_keyboard=True,
-)
-location_buttons = []
 
 normal_keyboard = [sermon_buttons, buttons1 + counseling_buttons]
 pastor_keyboard = normal_keyboard + [counselor_keyboard, counselor_keyboard2]

@@ -2,8 +2,7 @@ from . import bot, db, config
 from .models import BotUser
 from .helpers import BroadcastHandlers, MessageHelper
 from .database import add_user_to_db, set_user_active, set_user_last_command
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
 from chat.chat_callback_handlers import end_conversation_prompt
 from .helpers import PromptHelper
 from .scrapers import WebScrapers
@@ -136,10 +135,10 @@ def blog_posts(update, context):
         text=config["messages"]["blog_posts"],
         reply_markup=InlineKeyboardMarkup(button),
     )
-    if validate_last_command(chat_id):
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    else:
+    if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
+    else:
+        set_user_last_command(chat_id)
 
 
 def broadcast_message_handler(update, context):
@@ -163,7 +162,7 @@ def broadcast_message_handler(update, context):
                 ],
             ),
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id)
     else:
         unknown(update, context)
 
@@ -173,11 +172,11 @@ def campuses(update, context):
     This gives a list of church campuses.
     """
     chat_id = update.effective_chat.id
-    if validate_last_command(chat_id):
+    if check_user_in_conversation(chat_id):
+        notify_in_conversation(chat_id)
+    else:
         # TODO: Handle church location prompt
         pass
-    else:
-        notify_in_conversation(chat_id)
 
 
 def cancel(update, context):
@@ -246,7 +245,9 @@ def done(update, context):
 
 def feedback(update, context):
     chat_id = update.effective_chat.id
-    if validate_last_command(chat_id):
+    if check_user_in_conversation(chat_id):
+        notify_in_conversation(chat_id)
+    else:
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["feedback"],
@@ -268,8 +269,6 @@ def feedback(update, context):
             ),
         )
         db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    else:
-        notify_in_conversation(chat_id)
 
 
 def feedback_cb_handler(update, context):
@@ -390,10 +389,10 @@ def menu(update, context):
         text=config["messages"]["menu"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
-    if validate_last_command(chat_id):
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    else:
+    if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
+    else:
+        set_user_last_command(chat_id, None)
 
 
 def membership_school(update, context):
@@ -407,10 +406,10 @@ def membership_school(update, context):
         caption=config["messages"]["membership"],
         reply_markup=InlineKeyboardMarkup(button),
     )
-    if validate_last_command(chat_id):
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    else:
+    if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
+    else:
+        set_user_last_command(chat_id, None)
 
 
 def mute(update, context):
@@ -511,25 +510,26 @@ def stats(update, context):
             ),
             parse_mode="Markdown",
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id, None)
     else:
         unknown(update, context)
 
 
-def validate_last_command(chat_id):
+def check_user_in_conversation(chat_id):
     """
     This function validates the last command of the user.
     """
     user = db.users.find_one({"chat_id": chat_id})
-    if user["last_command"].startswith("in-conversation"):
-        return False
+    if user["last_command"]:
+        if user["last_command"].startswith("in-conversation"):
+            return True
     else:
-        return True
+        return False
 
 
 def notify_in_conversation(chat_id):
     """
-    This function notifies the user that they is in a conversation.
+    This function notifies the user that they are in a conversation.
     """
     keyboard = validate_user_keyboard(chat_id)
     bot.send_message(

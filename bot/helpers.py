@@ -1,5 +1,4 @@
 from . import db, bot, config
-from .keyboards import location_buttons, month_buttons
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .database import set_user_active
 from telegram import InlineKeyboardMarkup, CallbackQuery, InlineKeyboardButton
@@ -113,13 +112,15 @@ class PromptHelper:
         chat_id -- identifies a specific user
         Return: None
         """
-
+        # TODO: check church location schema and fix.
         user = db.users.find_one({"chat_id": chat_id})
+        locations = db.church_locations.find({})
+        keyboard = create_buttons_from_data(locations, "loc", 3, 1)
         try:
             bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["lc"].format(user["first_name"]),
-                reply_markup=InlineKeyboardMarkup(location_buttons),
+                reply_markup=keyboard,
                 resize_keyboard=True,
             )
         except:
@@ -136,11 +137,28 @@ class PromptHelper:
         Return: None
         """
         user = db.users.find_one({"chat_id": chat_id})
+        months = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ]
+        buttons = create_buttons_from_data(
+            months, callback_info="bd", rows=3, cols=4, start_index=1
+        )
         try:
             bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_prompt"].format(user["first_name"]),
-                reply_markup=InlineKeyboardMarkup(month_buttons),
+                reply_markup=buttons,
             )
         except:
             set_user_active(chat_id, False)

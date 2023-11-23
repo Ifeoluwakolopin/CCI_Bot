@@ -5,6 +5,8 @@
     "active_requests_none":"There are no active counseling requests at the moment.\n\nYou will be notified when someone request to speak with a counselor.",
     "active_request_notify":"Someone has requested counseling.",
     "add_question_or_request_counselor": "Can't find what you're looking for?\n\nYou can add your own question or speak with a pastor using the buttons below.\n\nUse /cancel to cancel operation.",
+    "ask_for_a_counselor_text":"Speak to a Counselor",
+    "ask_question_text":"Ask a Question",
     "ask_question":"Please type in the question you would like to ask.\nYou will be notified when your question has been answered.\nYou cna also suggest a new category of questions in your feedback.\n\nUse /cancel to cancel operation otherwise.",
     "ask_question_success":"Your question has been sent to the CCI Counseling team.\n\nYou will be notified when a response is posted.\n\nUse /menu to go back to the main menu.",
     "bc":"Enter {} you want to broadcast:\n\nUse /cancel to cancel operation.",
