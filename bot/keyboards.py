@@ -12,6 +12,11 @@ buttons1 = [
     KeyboardButton("help"),
 ]
 
+buttons2 = [
+    KeyboardButton("location"),
+    KeyboardButton("counseling"),
+]
+
 buttons3 = [
     KeyboardButton("statistics"),
     KeyboardButton("broadcast"),
@@ -32,12 +37,8 @@ counselor_keyboard2 = [
     KeyboardButton("/transfer"),
 ]
 
-counseling_buttons = [
-    KeyboardButton("counseling"),
-]
 
-
-normal_keyboard = [sermon_buttons, buttons1 + counseling_buttons]
+normal_keyboard = [sermon_buttons, buttons1 + buttons2]
 pastor_keyboard = normal_keyboard + [counselor_keyboard, counselor_keyboard2]
 admin_keyboard = pastor_keyboard + [buttons3]
 

@@ -1,7 +1,7 @@
 import os
 from . import dp, updater, PORT, db, config, bot
 from .database import search_db_title, set_user_last_command
-from .helpers import handle_view_more, create_buttons_from_data
+from .helpers import create_buttons_from_data
 from .commands import (
     get_devotional,
     latest_sermon,
@@ -23,6 +23,8 @@ from .commands import (
     feedback,
     membership_school,
     feedback_cb_handler,
+    set_church_location,
+    church_location_callback_handler,
 )
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
@@ -34,6 +36,7 @@ from chat.chat_message_handlers import (
     handle_ask_question_or_request_counselor,
     handle_counselor_request_yes,
     handle_counseling_info_confirm,
+    handle_counseling_location_confirm,
     handle_get_faq_callback,
 )
 from chat.chat_callback_handlers import (
@@ -89,6 +92,8 @@ def handle_message_commands(update, context):
         counseling(update, context)
     elif title == "show active counseling requests":
         show_active_requests(update, context)
+    elif title == "location":
+        set_church_location(update, context)
     else:
         unknown(update, context)
 
@@ -213,10 +218,7 @@ def cb_handle(update, context):
             reply_markup=InlineKeyboardMarkup(button),
         )
     elif q_head[0] == "loc":
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"location": q[4:]}})
-        bot.send_message(
-            chat_id=chat_id, text=config["messages"]["lc_confirm"].format(q[4:])
-        )
+        church_location_callback_handler(update, context)
     elif q_head[0] == "bd":
         if len(q_head) == 2:
             month = q_head[1]
@@ -262,26 +264,15 @@ def cb_handle(update, context):
             )
     elif q_head[0] == "confirm_info":
         handle_counseling_info_confirm(update, context)
-    elif q_head[0] == "cr-loc":
-        db.counseling_requests.update_one(
-            {"request_message_id": int(q_head[-1])}, {"$set": {"location": q_head[-2]}}
-        )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"location": q_head[-2]}})
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["cr_yes"],
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "Add Note", callback_data="cr-yes=" + q_head[2]
-                        )
-                    ]
-                ],
-                resize_keyboard=True,
-            ),
-        )
+    elif q_head[0] == "confirm_loc":
+        handle_counseling_location_confirm(update, context)
     elif q_head[0] == "cr-yes":
+        user_local_church = db.users.find_one(
+            {"chat_id": chat_id}, {"location": 1, "_id": 0}
+        ).get("location")
+        db.counseling_requests.update_one(
+            {"request_message_id": q_head[1]}, {"$set": {"location": user_local_church}}
+        )
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cr_yes_confirm"]
         )

@@ -124,7 +124,25 @@ def get_church_locations() -> list:
 
     Return: list of church locations
     """
-    return list(db.church_locations.find())
+    pipeline = [
+        {"$project": {"states": {"$objectToArray": "$states"}}},
+        {"$unwind": "$states"},
+        {
+            "$project": {
+                "locationName": "$states.k",
+                "locations": {"$objectToArray": "$states.v"},
+            }
+        },
+        {"$unwind": "$locations"},
+        {
+            "$project": {
+                "locationName": "$locations.k",
+                "name": "$locations.v.name",
+                "link": "$locations.v.link",
+            }
+        },
+    ]
+    return list(db.church_locations.aggregate(pipeline))
 
 
 def get_map_locations() -> list:

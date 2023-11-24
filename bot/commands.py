@@ -1,10 +1,21 @@
 from . import bot, db, config
 from .models import BotUser
-from .helpers import BroadcastHandlers, MessageHelper
-from .database import add_user_to_db, set_user_active, set_user_last_command
+from .helpers import (
+    BroadcastHandlers,
+    MessageHelper,
+    PromptHelper,
+    create_buttons_from_data,
+    handle_view_more,
+    find_text_for_callback,
+)
+from .database import (
+    add_user_to_db,
+    set_user_active,
+    set_user_last_command,
+    get_church_locations,
+)
 from datetime import date, datetime
 from chat.chat_callback_handlers import end_conversation_prompt
-from .helpers import PromptHelper
 from .scrapers import WebScrapers
 from .keyboards import validate_user_keyboard
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
@@ -67,8 +78,11 @@ def trigger_additional_prompts(chat_id):
         chat_id (int): The chat ID of the user.
     """
     # TODO: uncomment when location prompt is ready
-    # PromptHelper.location_prompt(chat_id)
-    PromptHelper.birthday_prompt(chat_id)
+    user = db.users.find_one({"chat_id": chat_id})
+    PromptHelper.location_prompt(
+        chat_id, config["messages"]["lc"].format(user["first_name"])
+    )
+    # PromptHelper.birthday_prompt(chat_id)
 
 
 def bc_setup(update, context):
@@ -473,6 +487,58 @@ def reboot_about(update, context):
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
     db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+
+
+def set_church_location(update, context):
+    """
+    This function sets the church location for a user
+    """
+    chat_id = update.effective_chat.id
+    church_locations = get_church_locations()
+    countries = [location["locationName"] for location in church_locations]
+
+    user = db.users.find_one({"chat_id": chat_id})
+    rows, cols = 3, 2
+    buttons = create_buttons_from_data(countries, "loc", rows, cols)
+
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["lc"].format(user["first_name"]),
+        reply_markup=buttons,
+    )
+
+
+def church_location_callback_handler(update, context):
+    """
+    This function handles the callback from the church location prompt
+    """
+    chat_id = update.effective_chat.id
+    query_data = update.callback_query.data.split("=")
+    church_locations = get_church_locations()
+    countries = [location["locationName"] for location in church_locations]
+    rows, cols = 3, 2
+
+    if query_data[1] == "more":
+        updated_buttons = handle_view_more(
+            update.callback_query,
+            countries,
+            "loc",
+            rows,
+            cols,
+        )
+
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["lc_other"],
+            reply_markup=updated_buttons,
+        )
+    else:
+        location = find_text_for_callback(update.callback_query).lower()
+        db.users.update_one({"chat_id": chat_id}, {"$set": {"location": location}})
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["lc_done"].format(location),
+        )
 
 
 def stats(update, context):

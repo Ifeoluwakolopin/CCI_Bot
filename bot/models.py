@@ -17,6 +17,7 @@ class BotUser:
         self.location = "None"
         self.birthday = "None"
         self.role = "user"
+        self.location = None
 
     def to_dict(self):
         return {
@@ -31,6 +32,7 @@ class BotUser:
             "location": self.location,
             "birthday": self.birthday,
             "role": self.role,
+            "location": self.location,
         }
 
 

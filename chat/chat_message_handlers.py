@@ -1,9 +1,12 @@
+import time
 from datetime import datetime
 from bot import db, config
 from bot.helpers import (
+    add_note,
     find_text_for_callback,
     create_buttons_from_data,
     handle_view_more,
+    PromptHelper,
 )
 from bot.database import (
     update_counseling_topics,
@@ -119,6 +122,9 @@ def handle_ask_question_or_request_counselor(update, context):
 
     if user_request == config["messages"]["ask_for_a_counselor_text"]:
         context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["counselor_request_start"]
+        )
+        context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_request_yes"],
         )
@@ -172,9 +178,7 @@ def handle_counselor_request_yes(update, context, topic):
                     [
                         InlineKeyboardButton(
                             "No, I want to make a change",
-                            callback_data="confirm_info=no="
-                            + str(message_id)
-                            + f"={topic}",
+                            callback_data="confirm_info=no=" + str(message_id),
                         )
                     ],
                 ],
@@ -185,7 +189,6 @@ def handle_counselor_request_yes(update, context, topic):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_request_invalid_info"]
         )
-        set_user_last_command(chat_id, f"counselor_request={topic}")
 
 
 def handle_counseling_info_confirm(update, context):
@@ -193,17 +196,72 @@ def handle_counseling_info_confirm(update, context):
     query = update.callback_query.data.split("=")
 
     if query[1] == "yes":
-        user_local_church = db.users.find_one({"chat_id": chat_id})["location"]
-        # TODO: ask user to confirm their location
+        user_local_church = db.users.find_one(
+            {"chat_id": chat_id}, {"location": 1, "_id": 0}
+        ).get("location")
+
+        if user_local_church:
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=config["messages"]["counselor_request_location_confirm"].format(
+                    user_local_church.capitalize()
+                ),
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "Yes, this is correct",
+                                callback_data="confirm_loc=yes=" + str(query[-1]),
+                            )
+                        ],
+                        [
+                            InlineKeyboardButton(
+                                "No, I want to make a change",
+                                callback_data="confirm_loc=no=" + str(query[-1]),
+                            )
+                        ],
+                    ],
+                    resize_keyboard=True,
+                ),
+            )
+        else:
+            PromptHelper.location_prompt(
+                chat_id, config["messages"]["lc_prompt_counseling"]
+            )
+            add_note(
+                update,
+                context,
+                config["messages"]["counselor_request_note_after_location"],
+                query[-1],
+            )
 
     else:
-        topic = query[-1]
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_request_invalid_info"],
         )
         db.counseling_requests.delete_one({"request_message_id": int(query[2])})
-        set_user_last_command(chat_id, f"counselor_request={topic}")
+        print("deleted")
+
+
+def handle_counseling_location_confirm(update, context):
+    chat_id = update.effective_chat.id
+    query = update.callback_query.data.split("=")
+
+    if query[1] == "yes":
+        add_note(
+            update, context, config["messages"]["counselor_request_note"], query[-1]
+        )
+    else:
+        PromptHelper.location_prompt(
+            chat_id, config["messages"]["lc_prompt_counseling"]
+        )
+        add_note(
+            update,
+            context,
+            config["messages"]["counselor_request_note_after_location"],
+            query[-1],
+        )
 
 
 def handle_get_faq_callback(update, context):
