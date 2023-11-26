@@ -10,6 +10,7 @@ from bot.keyboards import (
 )
 from bot.database import (
     set_user_last_command,
+    get_user_last_command,
     get_active_counseling_requests,
     set_counseling_request_status,
 )
@@ -111,8 +112,21 @@ def handle_initial_conversation_cb(update, context):
     q = update.callback_query.data
     q_head = q.split("=")
     req = db.counseling_requests.find_one({"request_message_id": int(q_head[1])})
-    if req["status"] == "pending":
+    if req["user_chat_id"] == chat_id:
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["conversation_start_self_not_allowed"],
+        )
+    elif req["status"] == "pending":
         pastor = db.users.find_one({"chat_id": chat_id})
+        user_chat_id = req["user_chat_id"]
+
+        if get_user_last_command(user_chat_id).startswith("in-conversation-with"):
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=config["messages"]["user_in_separate_conversation"],
+            )
+            return
         ## notify pastor that conversation has started
         context.bot.send_message(
             chat_id=chat_id,
@@ -133,7 +147,7 @@ def handle_initial_conversation_cb(update, context):
         )
         ## set user status as in-conversation with pastor
         msg_id = req["request_message_id"]
-        user_chat_id = req["user_chat_id"]
+
         set_user_last_command(
             user_chat_id, f"in-conversation-with={chat_id}=pastor={msg_id}"
         )

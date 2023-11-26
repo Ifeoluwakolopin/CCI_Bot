@@ -1,3 +1,4 @@
+import json
 from . import bot, db, config
 from .models import BotUser
 from .helpers import (
@@ -12,6 +13,7 @@ from .database import (
     add_user_to_db,
     set_user_active,
     set_user_last_command,
+    get_user_last_command,
     get_church_locations,
 )
 from datetime import date, datetime
@@ -97,8 +99,107 @@ def bc_setup(update, context):
     # Send a message to the admin to select the type of broadcast
     context.bot.send_message(chat_id=chat_id, text=config["messages"]["bc_prompt"])
 
-    # Update the last command with a general broadcast tag
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": "broadcast"}})
+    set_user_last_command(chat_id, "broadcast")
+
+
+def find_user(update, context):
+    chat_id = update.effective_chat.id
+    if db.users.find_one({"chat_id": chat_id, "admin": True}):
+        context.bot.send_message(chat_id=chat_id, text=config["messages"]["find_user"])
+        set_user_last_command(chat_id, "find_user")
+    else:
+        unknown(update, context)
+
+
+def find_user_message_handler(update, context):
+    chat_id = update.effective_chat.id
+    msg = update.message.text.split("\n")
+    db_query = {k: v.strip() for k, v in [i.split(":") for i in msg]}
+    if "admin" in db_query:
+        db_query["admin"] = True if db_query["admin"].lower() == "true" else False
+    users = db.users.find(db_query, {"_id": 0, "date": 0})
+    if users.count() == 0:
+        update.message.reply_text("No users found")
+    else:
+        for user in users:
+            keyboard = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "Update Location",
+                            callback_data="update=loc=" + str(user["chat_id"]),
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "Update Birthday",
+                            callback_data="update=bd=" + str(user["chat_id"]),
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "Update Role",
+                            callback_data="update=role=" + str(user["chat_id"]),
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            "Update Admin Status",
+                            callback_data="update=admin=" + str(user["chat_id"]),
+                        )
+                    ],
+                ]
+            )
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=config["messages"]["user_found"].format(
+                    json.dumps(user, indent=2)
+                ),
+                reply_markup=keyboard,
+            )
+
+
+def handle_find_user_callback(update, context):
+    chat_id = update.effective_chat.id
+    query_data = update.callback_query.data.split("=")
+    user_id = query_data[-1]
+    user = db.users.find_one({"chat_id": int(user_id)})
+    if query_data[1] == "loc":
+        action = "location"
+    elif query_data[1] == "bd":
+        action = "birthday"
+    elif query_data[1] == "role":
+        action = "role"
+    else:
+        action = "admin"
+
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["update_user"].format(
+            user["first_name"], user["last_name"], action
+        ),
+    )
+    set_user_last_command(chat_id, f"update_user={action}={user_id}")
+
+
+def handle_update_user(update, context):
+    chat_id = update.effective_chat.id
+    last_command = get_user_last_command(chat_id).split("=")
+    user_id = last_command[-1]
+    msg = update.message.text
+    if last_command[1] == "admin":
+        if msg.lower() == "true":
+            update = {"admin": True}
+        else:
+            update = {"admin": False}
+    else:
+        update = {last_command[1]: msg}
+    db.users.update_one({"chat_id": int(user_id)}, {"$set": update})
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["update_user_done"].format(last_command[1], update),
+    )
+    done(update, context)
 
 
 def handle_broadcast(update):
@@ -245,7 +346,7 @@ def done(update, context):
         disable_web_page_preview="True",
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+    set_user_last_command(chat_id, None)
 
 
 def feedback(update, context):

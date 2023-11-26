@@ -23,7 +23,11 @@ from .commands import (
     membership_school,
     feedback_cb_handler,
     set_church_location,
+    find_user,
     church_location_callback_handler,
+    handle_find_user_callback,
+    handle_update_user,
+    find_user_message_handler,
 )
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
@@ -57,7 +61,7 @@ load_dotenv()
 
 def handle_message_commands(update, context):
     """
-    This matches incoming commands form users to their respective functions
+    This matches incoming commands from users to their respective functions
 
     Keyword arguments:
     update -- metadata containing information on incoming request.
@@ -77,6 +81,8 @@ def handle_message_commands(update, context):
         get_sermon(update, context)
     elif title == "help":
         helps(update, context)
+    elif title == "find user":
+        find_user(update, context)
     elif title == "statistics":
         stats(update, context)
     elif title == "broadcast":
@@ -109,6 +115,10 @@ def handle_message_response(update, context):
         handle_message_commands(update, context)
     elif last_command.startswith("in-conversation-with"):
         conversation_handler(update, context)
+    elif last_command == "find_user":
+        find_user_message_handler(update, context)
+    elif last_command.startswith("update_user"):
+        handle_update_user(update, context)
     elif last_command == "get_sermon":
         title = update.message.text.strip()
         sermons = search_db_title(title)
@@ -193,6 +203,8 @@ def cb_handle(update, context):
     if q_head[0] == "map":
         # TODO: refactor map location handling
         pass
+    elif q_head[0] == "update":
+        handle_find_user_callback(update, context)
     elif q_head[0] == "counsel":
         handle_counseling(update, context)
     elif q_head[0] == "qa_or_c":

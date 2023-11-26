@@ -25,6 +25,22 @@ def set_user_last_command(chat_id: int, last_command: str | None) -> bool:
         return False
 
 
+def get_user_last_command(chat_id: int) -> str | None:
+    """
+    This gets the last_command field of a user to the current time.
+
+    Keyword arguments:
+    chat_id -- int: identifies a specific user
+
+    Return: last_command
+    """
+    try:
+        user = db.users.find_one({"chat_id": chat_id})
+        return user["last_command"]
+    except:
+        return None
+
+
 def set_user_active(chat_id: int, active: bool) -> Result:
     """
     This sets the active field of a user to the current time.

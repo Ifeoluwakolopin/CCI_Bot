@@ -20,6 +20,7 @@ buttons2 = [
 buttons3 = [
     KeyboardButton("statistics"),
     KeyboardButton("broadcast"),
+    KeyboardButton("find user"),
 ]
 
 bc_buttons = [
