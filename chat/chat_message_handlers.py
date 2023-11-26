@@ -124,6 +124,7 @@ def handle_ask_question_or_request_counselor(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_request_start"]
         )
+        time.sleep(1)
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_request_yes"],
@@ -151,7 +152,7 @@ def handle_counselor_request_yes(update, context, topic):
         add_request_to_queue(
             {
                 "created": datetime.now(),
-                "chat_id": chat_id,
+                "user_chat_id": chat_id,
                 "name": name,
                 "email": email,
                 "phone": phone,
@@ -348,7 +349,7 @@ def add_request_to_queue(counseling_request: dict):
             "name": counseling_request["name"],
             "email": counseling_request["email"],
             "phone": counseling_request["phone"],
-            "chat_id": counseling_request["chat_id"],
+            "user_chat_id": counseling_request["user_chat_id"],
             "request_message_id": counseling_request["request_message_id"],
             "active": False,
             "note": counseling_request["note"],

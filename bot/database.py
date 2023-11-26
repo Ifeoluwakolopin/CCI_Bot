@@ -188,11 +188,11 @@ def add_request_to_queue(counseling_request: dict) -> None:
     )
 
 
-def get_active_counseling_requests(topic):
+def get_active_counseling_requests(topics: list):
     requests = db.counseling_requests.find(
-        {"active": True, "status": "pending", "topic": topic}
+        {"active": True, "status": "pending", "topic": {"$in": topics}}
     ).sort("created", 1)
-    return requests
+    return list(requests)
 
 
 def set_counseling_request_activity(request_id: str):
@@ -205,9 +205,3 @@ def set_counseling_request_status(request_id: str, status: str):
     db.counseling_requests.update_one(
         {"request_message_id": request_id}, {"$set": {"status": status}}
     )
-
-
-def get_top_five_requests():
-    all_requests = get_active_counseling_requests()
-    top_five = all_requests[0:5]
-    return top_five

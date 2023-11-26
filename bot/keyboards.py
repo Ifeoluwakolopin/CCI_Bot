@@ -1,5 +1,5 @@
 from . import db
-from telegram import KeyboardButton, InlineKeyboardButton
+from telegram import KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 sermon_buttons = [
     KeyboardButton("latest sermon"),
@@ -70,3 +70,48 @@ def validate_user_keyboard(chat_id) -> list:
         return pastor_keyboard
     else:
         return normal_keyboard
+
+
+def get_counseling_feedback_keyboard(user_chat_id, pastor_chat_id):
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "1",
+                    callback_data="counseling_feedback=1="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+                InlineKeyboardButton(
+                    "2",
+                    callback_data="counseling_feedback=2="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+                InlineKeyboardButton(
+                    "3",
+                    callback_data="counseling_feedback=3="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+                InlineKeyboardButton(
+                    "4",
+                    callback_data="counseling_feedback=4="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+                InlineKeyboardButton(
+                    "5",
+                    callback_data="counseling_feedback=5="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+            ]
+        ],
+        resize_keyboard=True,
+    )

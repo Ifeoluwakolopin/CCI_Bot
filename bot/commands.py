@@ -143,15 +143,18 @@ def handle_broadcast(update):
 
 def blog_posts(update, context):
     chat_id = update.effective_chat.id
-    button = [[InlineKeyboardButton("Read blog posts", url="https://ccing.org/blogs/")]]
-    context.bot.send_message(
-        chat_id=chat_id,
-        text=config["messages"]["blog_posts"],
-        reply_markup=InlineKeyboardMarkup(button),
-    )
+
     if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
     else:
+        button = [
+            [InlineKeyboardButton("Read blog posts", url="https://ccing.org/blogs/")]
+        ]
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["blog_posts"],
+            reply_markup=InlineKeyboardMarkup(button),
+        )
         set_user_last_command(chat_id)
 
 
@@ -179,18 +182,6 @@ def broadcast_message_handler(update, context):
         set_user_last_command(chat_id)
     else:
         unknown(update, context)
-
-
-def campuses(update, context):
-    """
-    This gives a list of church campuses.
-    """
-    chat_id = update.effective_chat.id
-    if check_user_in_conversation(chat_id):
-        notify_in_conversation(chat_id)
-    else:
-        # TODO: Handle church location prompt
-        pass
 
 
 def cancel(update, context):
@@ -229,7 +220,7 @@ def cancel(update, context):
                 disable_web_page_preview="True",
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             )
-            db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+            set_user_last_command(chat_id, None)
     except:
         context.bot.send_message(
             chat_id=chat_id,
@@ -238,7 +229,7 @@ def cancel(update, context):
             disable_web_page_preview="True",
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id, None)
 
 
 def done(update, context):
@@ -411,18 +402,23 @@ def menu(update, context):
 
 def membership_school(update, context):
     chat_id = update.effective_chat.id
-    button = [
-        [InlineKeyboardButton("Register", url="https://ccing.org/membership-class/")]
-    ]
-    context.bot.send_photo(
-        chat_id=chat_id,
-        photo=open("img/membership.jpg", "rb"),
-        caption=config["messages"]["membership"],
-        reply_markup=InlineKeyboardMarkup(button),
-    )
+
     if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
     else:
+        button = [
+            [
+                InlineKeyboardButton(
+                    "Register", url="https://ccing.org/membership-class/"
+                )
+            ]
+        ]
+        context.bot.send_photo(
+            chat_id=chat_id,
+            photo=open("img/membership.jpg", "rb"),
+            caption=config["messages"]["membership"],
+            reply_markup=InlineKeyboardMarkup(button),
+        )
         set_user_last_command(chat_id, None)
 
 
@@ -475,7 +471,7 @@ def unknown(update, context):
         text=config["messages"]["unknown"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+    set_user_last_command(chat_id, None)
 
 
 def reboot_about(update, context):
@@ -486,7 +482,7 @@ def reboot_about(update, context):
         text=config["messages"]["reboot_camp"]["about"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+    set_user_last_command(chat_id, None)
 
 
 def set_church_location(update, context):

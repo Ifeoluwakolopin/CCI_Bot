@@ -19,7 +19,6 @@ from .commands import (
     menu,
     done,
     blog_posts,
-    campuses,
     feedback,
     membership_school,
     feedback_cb_handler,
@@ -267,11 +266,11 @@ def cb_handle(update, context):
     elif q_head[0] == "confirm_loc":
         handle_counseling_location_confirm(update, context)
     elif q_head[0] == "cr-yes":
-        user_local_church = db.users.find_one(
-            {"chat_id": chat_id}, {"location": 1, "_id": 0}
-        ).get("location")
+        user_local_church = db.users.find_one({"chat_id": chat_id}).get("location")
+        print(user_local_church)
         db.counseling_requests.update_one(
-            {"request_message_id": q_head[1]}, {"$set": {"location": user_local_church}}
+            {"request_message_id": int(q_head[1])},
+            {"$set": {"location": user_local_church}},
         )
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cr_yes_confirm"]
@@ -304,7 +303,7 @@ def main(deploy: bool = False) -> None:
     dp.add_handler(CommandHandler("cancel", cancel))
     dp.add_handler(CommandHandler("menu", menu))
     dp.add_handler(CommandHandler("blog", blog_posts))
-    dp.add_handler(CommandHandler("campuses", campuses))
+    dp.add_handler(CommandHandler("campuses", set_church_location))
     dp.add_handler(CommandHandler("feedback", feedback))
     dp.add_handler(CommandHandler("membership", membership_school))
     dp.add_handler(CommandHandler("transfer", counselor_transfer))
