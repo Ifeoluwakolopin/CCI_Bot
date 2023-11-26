@@ -626,11 +626,11 @@ def set_church_location(update, context):
     """
     chat_id = update.effective_chat.id
     church_locations = get_church_locations()
-    countries = [location["locationName"] for location in church_locations]
+    branches = [location["locationName"] for location in church_locations]
 
     user = db.users.find_one({"chat_id": chat_id})
     rows, cols = 3, 2
-    buttons = create_buttons_from_data(countries, "loc", rows, cols)
+    buttons = create_buttons_from_data(branches, "loc", rows, cols)
 
     context.bot.send_message(
         chat_id=chat_id,
@@ -688,16 +688,26 @@ def stats(update, context):
         active_users = db.users.count_documents({"active": True})
         mute_users = db.users.count_documents({"mute": True})
         total_sermons = db.sermons.count_documents({})
-        location_based_stats = ""
         birthdays = db.users.count_documents({"birthday": {"$exists": True}})
         today = datetime.today()
-        x = str(today.month) + "-" + str(today.day)
-        todays_birthdays = db.users.count_documents({"birthday": x})
+        todays_birthdays = db.users.count_documents(
+            {"birthday": f"{today.month}-{today.day}"}
+        )
 
-        for loc in db.users.distinct("location"):
-            loc_count = db.users.count_documents({"location": loc})
-            location_based_stats += loc + " users: " + str(loc_count)
-            location_based_stats += "\n"
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$location",  # Group by the location field
+                    "count": {"$sum": 1},  # Count the occurrences
+                }
+            },
+            {
+                "$sort": {"count": -1}
+            },  # Optional: sorts the results by count in descending order
+        ]
+
+        location_counts_cursor = db.users.aggregate(pipeline)
+        location_counts = {doc["_id"]: doc["count"] for doc in location_counts_cursor}
 
         context.bot.send_message(
             chat_id=chat_id,
@@ -706,9 +716,9 @@ def stats(update, context):
                 active_users,
                 mute_users,
                 total_sermons,
-                location_based_stats,
                 birthdays,
                 todays_birthdays,
+                json.dumps(location_counts, indent=2),
             ),
             parse_mode="Markdown",
         )
