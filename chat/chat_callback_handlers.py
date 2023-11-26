@@ -77,7 +77,7 @@ def notify_pastors(counseling_request):
         {
             "role": "pastor",
             "topics": counseling_request["topic"],
-            "locations": counseling_request["location"],
+            "location": counseling_request["location"],
             "chat_id": {"$ne": counseling_request["user_chat_id"]},
         }
     )
@@ -125,7 +125,10 @@ def handle_initial_conversation_cb(update, context):
         pastor = db.users.find_one({"chat_id": chat_id})
         user_chat_id = req["user_chat_id"]
 
-        if get_user_last_command(user_chat_id).startswith("in-conversation-with"):
+        user_last_command = get_user_last_command(user_chat_id)
+        if user_last_command is not None and user_last_command.startswith(
+            "in-conversation-with"
+        ):
             context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["user_in_separate_conversation"],
@@ -168,7 +171,6 @@ def handle_initial_conversation_cb(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["conversation_already_started"]
         )
-        set_user_last_command(chat_id, None)
 
 
 def send_message_handler(msg, to):
@@ -403,20 +405,17 @@ def handle_counseling_feedback_cb(update, context):
     set_user_last_command(chat_id, None)
 
 
-# TODO: create a function to get calendly link and send
-def create_calendly_link():
-    pass
-
-
 def counselor_transfer(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
     if user["role"] == "pastor":
         if user["last_command"].startswith("in-conversation-with"):
-            location = db.counseling_requests.find_one(
+            req = db.counseling_requests.find_one(
                 {"request_message_id": int(user["last_command"].split("=")[-1])}
-            )["location"]
-            pastors = db.users.find({"role": "pastor", "location": location})
+            )
+            pastors = db.users.find(
+                {"role": "pastor", "locations": req["location"], "topics": req["topic"]}
+            )
             last_command = user["last_command"]
             set_user_last_command(chat_id, f"transfer_req={last_command}")
             context.bot.send_message(
@@ -475,7 +474,7 @@ def counselor_transfer_msg_handler(update, context):
         user_id = int(user["last_command"].split("=")[-3])
 
         db.conversations.update_one(
-            {"counselor_id": chat_id, "user_id": user_id, "active": True},
+            {"counselor_id": chat_id, "user_chat_id": user_id, "active": True},
             {"$set": {"counselor_transfer_msg": msg}},
         )
         context.bot.send_message(
@@ -544,7 +543,7 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
             db.conversations.update_one(
                 {
                     "counselor_id": chat_id,
-                    "user_id": int(last_commands[-3]),
+                    "user_chat_id": int(last_commands[-3]),
                     "active": True,
                 },
                 {
