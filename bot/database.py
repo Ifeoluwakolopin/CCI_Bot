@@ -204,9 +204,14 @@ def add_request_to_queue(counseling_request: dict) -> None:
     )
 
 
-def get_active_counseling_requests(topics: list):
+def get_active_counseling_requests(topics: list, locations: list):
     requests = db.counseling_requests.find(
-        {"active": True, "status": "pending", "topic": {"$in": topics}}
+        {
+            "active": True,
+            "status": "pending",
+            "topic": {"$in": topics},
+            "location": {"$in": locations},
+        }
     ).sort("created", 1)
     return list(requests)
 

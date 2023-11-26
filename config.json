@@ -100,6 +100,8 @@
     "unmute":"Yay🎉\n\nYou have un-muted CCI Bot.",
     "update_user":"Updating user details for User: {0} {1}:\n\nPlease type in the new {2} value for the user. Enter true/false for admin.\n\nUse /cancel to cancel operation.",
     "update_user_done":"Updated user details for User: {0}:\n\n{1}",
+    "update_user_location": "Updating user details for User: {0} {1}:\n\nPlease type in the new location value for the user. It should be one of the locations below:\n\n{2}.\n\nUse /cancel to cancel operation.",
+    "update_remove_pastor_location":"Pastor {} {}.\nType in the location you want to remove from this pastor's allowed counseling locations.\n\nThe value should be one of the following: {}.Use /cancel to cancel operation.",
     "user_found":"{}",
     "user_in_separate_conversation":"The user you are trying to start a conversation with is currently in a conversation with another pastor.\n\nPlease select another user to start a conversation with.",
     "reboot_camp":{

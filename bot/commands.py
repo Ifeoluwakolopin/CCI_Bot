@@ -122,40 +122,49 @@ def find_user_message_handler(update, context):
         update.message.reply_text("No users found")
     else:
         for user in users:
-            keyboard = InlineKeyboardMarkup(
+            keyboard = [
                 [
+                    InlineKeyboardButton(
+                        "Update Location",
+                        callback_data="update=loc=" + str(user["chat_id"]),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "Update Birthday",
+                        callback_data="update=bd=" + str(user["chat_id"]),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "Update Role",
+                        callback_data="update=role=" + str(user["chat_id"]),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "Update Admin Status",
+                        callback_data="update=admin=" + str(user["chat_id"]),
+                    )
+                ],
+            ]
+
+            if user["role"]:
+                keyboard.append(
                     [
                         InlineKeyboardButton(
-                            "Update Location",
-                            callback_data="update=loc=" + str(user["chat_id"]),
+                            "Remove from Locations",
+                            callback_data="update=rm_loc=" + str(user["chat_id"]),
                         )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "Update Birthday",
-                            callback_data="update=bd=" + str(user["chat_id"]),
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "Update Role",
-                            callback_data="update=role=" + str(user["chat_id"]),
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "Update Admin Status",
-                            callback_data="update=admin=" + str(user["chat_id"]),
-                        )
-                    ],
-                ]
-            )
+                    ]
+                )
+
             context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["user_found"].format(
                     json.dumps(user, indent=2)
                 ),
-                reply_markup=keyboard,
+                reply_markup=InlineKeyboardMarkup(keyboard),
             )
 
 
@@ -166,6 +175,23 @@ def handle_find_user_callback(update, context):
     user = db.users.find_one({"chat_id": int(user_id)})
     if query_data[1] == "loc":
         action = "location"
+        church_locations = get_church_locations()
+        branches = [location["locationName"] for location in church_locations]
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["update_user_location"].format(
+                user["first_name"], user["last_name"], branches
+            ),
+        )
+    elif query_data[1] == "rm_loc":
+        action = "remove location"
+        locations = list(user["locations"])
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["update_remove_pastor_location"].format(
+                user["first_name"], user["last_name"], locations
+            ),
+        )
     elif query_data[1] == "bd":
         action = "birthday"
     elif query_data[1] == "role":
@@ -173,12 +199,13 @@ def handle_find_user_callback(update, context):
     else:
         action = "admin"
 
-    context.bot.send_message(
-        chat_id=chat_id,
-        text=config["messages"]["update_user"].format(
-            user["first_name"], user["last_name"], action
-        ),
-    )
+    if action != "location" and action != "remove location":
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["update_user"].format(
+                user["first_name"], user["last_name"], action
+            ),
+        )
     set_user_last_command(chat_id, f"update_user={action}={user_id}")
 
 
@@ -189,17 +216,24 @@ def handle_update_user(update, context):
     msg = update.message.text
     if last_command[1] == "admin":
         if msg.lower() == "true":
-            update = {"admin": True}
+            update = {"$set": {"admin": True}}
         else:
-            update = {"admin": False}
+            update = {"$set": {"admin": False}}
+    elif last_command[1] == "remove location":
+        update = {"$pull": {"locations": msg}}
+    elif last_command[1] == "location" and db.users.find_one(
+        {"chat_id": int(user_id), "role": "pastor"}
+    ):
+        update = {"$addToSet": {"locations": msg}, "$set": {"location": msg}}
     else:
-        update = {last_command[1]: msg}
-    db.users.update_one({"chat_id": int(user_id)}, {"$set": update})
+        update = {"$set": {last_command[1]: msg}}
+
+    db.users.update_one({"chat_id": int(user_id)}, update)
     context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["update_user_done"].format(last_command[1], update),
     )
-    done(update, context)
+    set_user_last_command(chat_id, None)
 
 
 def handle_broadcast(update):
@@ -632,6 +666,11 @@ def church_location_callback_handler(update, context):
     else:
         location = find_text_for_callback(update.callback_query).lower()
         db.users.update_one({"chat_id": chat_id}, {"$set": {"location": location}})
+        if db.users.find_one({"chat_id": chat_id, "role": "pastor"}):
+            db.users.update_one(
+                {"chat_id": chat_id}, {"$addToSet": {"locations": location}}
+            )
+
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["lc_done"].format(location),

@@ -21,7 +21,9 @@ def show_active_requests(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "pastor"})
     if user:
-        active_requests = get_active_counseling_requests(user["topics"])
+        active_requests = get_active_counseling_requests(
+            user["topics"], user["locations"]
+        )
 
         reqs = len(active_requests)
         if reqs == 0:
@@ -75,9 +77,11 @@ def notify_pastors(counseling_request):
         {
             "role": "pastor",
             "topics": counseling_request["topic"],
+            "locations": counseling_request["location"],
             "chat_id": {"$ne": counseling_request["user_chat_id"]},
         }
     )
+
     for pastor in pastors:
         bot.send_message(
             chat_id=pastor["chat_id"], text=config["messages"]["active_request_notify"]
