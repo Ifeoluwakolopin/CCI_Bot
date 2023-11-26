@@ -25,6 +25,22 @@ def set_user_last_command(chat_id: int, last_command: str | None) -> bool:
         return False
 
 
+def get_user_last_command(chat_id: int) -> str | None:
+    """
+    This gets the last_command field of a user to the current time.
+
+    Keyword arguments:
+    chat_id -- int: identifies a specific user
+
+    Return: last_command
+    """
+    try:
+        user = db.users.find_one({"chat_id": chat_id})
+        return user["last_command"]
+    except:
+        return None
+
+
 def set_user_active(chat_id: int, active: bool) -> Result:
     """
     This sets the active field of a user to the current time.
@@ -98,7 +114,7 @@ def insert_sermon(sermon: dict) -> bool:
         return True
 
 
-def add_topic_to_db(topic: str):
+def update_counseling_topics(topic: str):
     """
     This takes in a topic and adds it to the database if it does not
 
@@ -124,7 +140,25 @@ def get_church_locations() -> list:
 
     Return: list of church locations
     """
-    return list(db.church_locations.find())
+    pipeline = [
+        {"$project": {"states": {"$objectToArray": "$states"}}},
+        {"$unwind": "$states"},
+        {
+            "$project": {
+                "locationName": "$states.k",
+                "locations": {"$objectToArray": "$states.v"},
+            }
+        },
+        {"$unwind": "$locations"},
+        {
+            "$project": {
+                "locationName": "$locations.k",
+                "name": "$locations.v.name",
+                "link": "$locations.v.link",
+            }
+        },
+    ]
+    return list(db.church_locations.aggregate(pipeline))
 
 
 def get_map_locations() -> list:
@@ -167,4 +201,28 @@ def add_request_to_queue(counseling_request: dict) -> None:
             "status": "pending",
             "counselor_chat_id": None,
         }
+    )
+
+
+def get_active_counseling_requests(topics: list, locations: list):
+    requests = db.counseling_requests.find(
+        {
+            "active": True,
+            "status": "pending",
+            "topic": {"$in": topics},
+            "location": {"$in": locations},
+        }
+    ).sort("created", 1)
+    return list(requests)
+
+
+def set_counseling_request_activity(request_id: str):
+    db.counseling_requests.update_one(
+        {"request_message_id": request_id}, {"$set": {"active": False}}
+    )
+
+
+def set_counseling_request_status(request_id: str, status: str):
+    db.counseling_requests.update_one(
+        {"request_message_id": request_id}, {"$set": {"status": status}}
     )

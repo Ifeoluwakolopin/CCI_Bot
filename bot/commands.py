@@ -1,11 +1,23 @@
+import json
 from . import bot, db, config
 from .models import BotUser
-from .helpers import BroadcastHandlers, MessageHelper
-from .database import add_user_to_db, set_user_active, set_user_last_command
-from datetime import date
-from datetime import datetime
+from .helpers import (
+    BroadcastHandlers,
+    MessageHelper,
+    PromptHelper,
+    create_buttons_from_data,
+    handle_view_more,
+    find_text_for_callback,
+)
+from .database import (
+    add_user_to_db,
+    set_user_active,
+    set_user_last_command,
+    get_user_last_command,
+    get_church_locations,
+)
+from datetime import date, datetime
 from chat.chat_callback_handlers import end_conversation_prompt
-from .helpers import PromptHelper
 from .scrapers import WebScrapers
 from .keyboards import validate_user_keyboard
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
@@ -68,8 +80,11 @@ def trigger_additional_prompts(chat_id):
         chat_id (int): The chat ID of the user.
     """
     # TODO: uncomment when location prompt is ready
-    # PromptHelper.location_prompt(chat_id)
-    PromptHelper.birthday_prompt(chat_id)
+    user = db.users.find_one({"chat_id": chat_id})
+    PromptHelper.location_prompt(
+        chat_id, config["messages"]["lc"].format(user["first_name"])
+    )
+    # PromptHelper.birthday_prompt(chat_id)
 
 
 def bc_setup(update, context):
@@ -84,8 +99,141 @@ def bc_setup(update, context):
     # Send a message to the admin to select the type of broadcast
     context.bot.send_message(chat_id=chat_id, text=config["messages"]["bc_prompt"])
 
-    # Update the last command with a general broadcast tag
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": "broadcast"}})
+    set_user_last_command(chat_id, "broadcast")
+
+
+def find_user(update, context):
+    chat_id = update.effective_chat.id
+    if db.users.find_one({"chat_id": chat_id, "admin": True}):
+        context.bot.send_message(chat_id=chat_id, text=config["messages"]["find_user"])
+        set_user_last_command(chat_id, "find_user")
+    else:
+        unknown(update, context)
+
+
+def find_user_message_handler(update, context):
+    chat_id = update.effective_chat.id
+    msg = update.message.text.split("\n")
+    db_query = {k: v.strip() for k, v in [i.split(":") for i in msg]}
+    if "admin" in db_query:
+        db_query["admin"] = True if db_query["admin"].lower() == "true" else False
+    users = db.users.find(db_query, {"_id": 0, "date": 0})
+    if users.count() == 0:
+        update.message.reply_text("No users found")
+    else:
+        for user in users:
+            keyboard = [
+                [
+                    InlineKeyboardButton(
+                        "Update Location",
+                        callback_data="update=loc=" + str(user["chat_id"]),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "Update Birthday",
+                        callback_data="update=bd=" + str(user["chat_id"]),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "Update Role",
+                        callback_data="update=role=" + str(user["chat_id"]),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "Update Admin Status",
+                        callback_data="update=admin=" + str(user["chat_id"]),
+                    )
+                ],
+            ]
+
+            if user["role"]:
+                keyboard.append(
+                    [
+                        InlineKeyboardButton(
+                            "Remove from Locations",
+                            callback_data="update=rm_loc=" + str(user["chat_id"]),
+                        )
+                    ]
+                )
+
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=config["messages"]["user_found"].format(
+                    json.dumps(user, indent=2)
+                ),
+                reply_markup=InlineKeyboardMarkup(keyboard),
+            )
+
+
+def handle_find_user_callback(update, context):
+    chat_id = update.effective_chat.id
+    query_data = update.callback_query.data.split("=")
+    user_id = query_data[-1]
+    user = db.users.find_one({"chat_id": int(user_id)})
+    if query_data[1] == "loc":
+        action = "location"
+        church_locations = get_church_locations()
+        branches = [location["locationName"] for location in church_locations]
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["update_user_location"].format(
+                user["first_name"], user["last_name"], branches
+            ),
+        )
+    elif query_data[1] == "rm_loc":
+        action = "remove location"
+        locations = list(user["locations"])
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["update_remove_pastor_location"].format(
+                user["first_name"], user["last_name"], locations
+            ),
+        )
+    elif query_data[1] == "bd":
+        action = "birthday"
+    elif query_data[1] == "role":
+        action = "role"
+    else:
+        action = "admin"
+
+    if action != "location" and action != "remove location":
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["update_user"].format(
+                user["first_name"], user["last_name"], action
+            ),
+        )
+    set_user_last_command(chat_id, f"update_user={action}={user_id}")
+
+
+def handle_update_user(update, context):
+    chat_id = update.effective_chat.id
+    last_command = get_user_last_command(chat_id).split("=")
+    user_id = last_command[-1]
+    msg = update.message.text
+    if last_command[1] == "admin":
+        if msg.lower() == "true":
+            update = {"$set": {"admin": True}}
+        else:
+            update = {"$set": {"admin": False}}
+    elif last_command[1] == "remove location":
+        update = {"$pull": {"locations": msg}}
+    elif last_command[1] == "location" and db.users.find_one(
+        {"chat_id": int(user_id), "role": "pastor"}
+    ):
+        update = {"$addToSet": {"locations": msg}, "$set": {"location": msg}}
+    else:
+        update = {"$set": {last_command[1]: msg}}
+
+    db.users.update_one({"chat_id": int(user_id)}, update)
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["update_user_done"].format(last_command[1], update),
+    )
+    set_user_last_command(chat_id, None)
 
 
 def handle_broadcast(update):
@@ -130,16 +278,19 @@ def handle_broadcast(update):
 
 def blog_posts(update, context):
     chat_id = update.effective_chat.id
-    button = [[InlineKeyboardButton("Read blog posts", url="https://ccing.org/blogs/")]]
-    context.bot.send_message(
-        chat_id=chat_id,
-        text=config["messages"]["blog_posts"],
-        reply_markup=InlineKeyboardMarkup(button),
-    )
-    if validate_last_command(chat_id):
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    else:
+
+    if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
+    else:
+        button = [
+            [InlineKeyboardButton("Read blog posts", url="https://ccing.org/blogs/")]
+        ]
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["blog_posts"],
+            reply_markup=InlineKeyboardMarkup(button),
+        )
+        set_user_last_command(chat_id)
 
 
 def broadcast_message_handler(update, context):
@@ -163,21 +314,9 @@ def broadcast_message_handler(update, context):
                 ],
             ),
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id)
     else:
         unknown(update, context)
-
-
-def campuses(update, context):
-    """
-    This gives a list of church campuses.
-    """
-    chat_id = update.effective_chat.id
-    if validate_last_command(chat_id):
-        # TODO: Handle church location prompt
-        pass
-    else:
-        notify_in_conversation(chat_id)
 
 
 def cancel(update, context):
@@ -216,7 +355,7 @@ def cancel(update, context):
                 disable_web_page_preview="True",
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             )
-            db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+            set_user_last_command(chat_id, None)
     except:
         context.bot.send_message(
             chat_id=chat_id,
@@ -225,7 +364,7 @@ def cancel(update, context):
             disable_web_page_preview="True",
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id, None)
 
 
 def done(update, context):
@@ -241,12 +380,14 @@ def done(update, context):
         disable_web_page_preview="True",
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+    set_user_last_command(chat_id, None)
 
 
 def feedback(update, context):
     chat_id = update.effective_chat.id
-    if validate_last_command(chat_id):
+    if check_user_in_conversation(chat_id):
+        notify_in_conversation(chat_id)
+    else:
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["feedback"],
@@ -268,8 +409,6 @@ def feedback(update, context):
             ),
         )
         db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    else:
-        notify_in_conversation(chat_id)
 
 
 def feedback_cb_handler(update, context):
@@ -390,27 +529,32 @@ def menu(update, context):
         text=config["messages"]["menu"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
-    if validate_last_command(chat_id):
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    else:
+    if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
+    else:
+        set_user_last_command(chat_id, None)
 
 
 def membership_school(update, context):
     chat_id = update.effective_chat.id
-    button = [
-        [InlineKeyboardButton("Register", url="https://ccing.org/membership-class/")]
-    ]
-    context.bot.send_photo(
-        chat_id=chat_id,
-        photo=open("img/membership.jpg", "rb"),
-        caption=config["messages"]["membership"],
-        reply_markup=InlineKeyboardMarkup(button),
-    )
-    if validate_last_command(chat_id):
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    else:
+
+    if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
+    else:
+        button = [
+            [
+                InlineKeyboardButton(
+                    "Register", url="https://ccing.org/membership-class/"
+                )
+            ]
+        ]
+        context.bot.send_photo(
+            chat_id=chat_id,
+            photo=open("img/membership.jpg", "rb"),
+            caption=config["messages"]["membership"],
+            reply_markup=InlineKeyboardMarkup(button),
+        )
+        set_user_last_command(chat_id, None)
 
 
 def mute(update, context):
@@ -462,7 +606,7 @@ def unknown(update, context):
         text=config["messages"]["unknown"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+    set_user_last_command(chat_id, None)
 
 
 def reboot_about(update, context):
@@ -473,7 +617,64 @@ def reboot_about(update, context):
         text=config["messages"]["reboot_camp"]["about"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
-    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+    set_user_last_command(chat_id, None)
+
+
+def set_church_location(update, context):
+    """
+    This function sets the church location for a user
+    """
+    chat_id = update.effective_chat.id
+    church_locations = get_church_locations()
+    countries = [location["locationName"] for location in church_locations]
+
+    user = db.users.find_one({"chat_id": chat_id})
+    rows, cols = 3, 2
+    buttons = create_buttons_from_data(countries, "loc", rows, cols)
+
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["lc"].format(user["first_name"]),
+        reply_markup=buttons,
+    )
+
+
+def church_location_callback_handler(update, context):
+    """
+    This function handles the callback from the church location prompt
+    """
+    chat_id = update.effective_chat.id
+    query_data = update.callback_query.data.split("=")
+    church_locations = get_church_locations()
+    countries = [location["locationName"] for location in church_locations]
+    rows, cols = 3, 2
+
+    if query_data[1] == "more":
+        updated_buttons = handle_view_more(
+            update.callback_query,
+            countries,
+            "loc",
+            rows,
+            cols,
+        )
+
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["lc_other"],
+            reply_markup=updated_buttons,
+        )
+    else:
+        location = find_text_for_callback(update.callback_query).lower()
+        db.users.update_one({"chat_id": chat_id}, {"$set": {"location": location}})
+        if db.users.find_one({"chat_id": chat_id, "role": "pastor"}):
+            db.users.update_one(
+                {"chat_id": chat_id}, {"$addToSet": {"locations": location}}
+            )
+
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["lc_done"].format(location),
+        )
 
 
 def stats(update, context):
@@ -511,25 +712,26 @@ def stats(update, context):
             ),
             parse_mode="Markdown",
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id, None)
     else:
         unknown(update, context)
 
 
-def validate_last_command(chat_id):
+def check_user_in_conversation(chat_id):
     """
     This function validates the last command of the user.
     """
     user = db.users.find_one({"chat_id": chat_id})
-    if user["last_command"].startswith("in-conversation"):
-        return False
+    if user["last_command"]:
+        if user["last_command"].startswith("in-conversation"):
+            return True
     else:
-        return True
+        return False
 
 
 def notify_in_conversation(chat_id):
     """
-    This function notifies the user that they is in a conversation.
+    This function notifies the user that they are in a conversation.
     """
     keyboard = validate_user_keyboard(chat_id)
     bot.send_message(

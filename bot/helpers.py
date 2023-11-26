@@ -1,7 +1,6 @@
 from . import db, bot, config
-from .keyboards import location_buttons, month_buttons
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .database import set_user_active
+from .database import set_user_active, get_church_locations
 from telegram import InlineKeyboardMarkup, CallbackQuery, InlineKeyboardButton
 
 
@@ -102,9 +101,29 @@ def handle_view_more(
     )
 
 
+def add_note(update, context, msg: str, request_message_id: int):
+    chat_id = update.effective_chat.id
+
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=msg,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Add Note",
+                        callback_data="cr-yes=" + str(request_message_id),
+                    )
+                ]
+            ],
+            resize_keyboard=True,
+        ),
+    )
+
+
 class PromptHelper:
     @staticmethod
-    def location_prompt(chat_id: int) -> None:
+    def location_prompt(chat_id: int, msg: str) -> None:
         """
         This functions takes in a chat id, and sends a message
         to request for the user's physical church location.
@@ -113,14 +132,17 @@ class PromptHelper:
         chat_id -- identifies a specific user
         Return: None
         """
+        church_locations = get_church_locations()
+        countries = [location["locationName"] for location in church_locations]
 
-        user = db.users.find_one({"chat_id": chat_id})
+        rows, cols = 3, 2
+        buttons = create_buttons_from_data(countries, "loc", rows, cols)
+
         try:
             bot.send_message(
                 chat_id=chat_id,
-                text=config["messages"]["lc"].format(user["first_name"]),
-                reply_markup=InlineKeyboardMarkup(location_buttons),
-                resize_keyboard=True,
+                text=msg,
+                reply_markup=buttons,
             )
         except:
             set_user_active(chat_id, False)
@@ -136,11 +158,28 @@ class PromptHelper:
         Return: None
         """
         user = db.users.find_one({"chat_id": chat_id})
+        months = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ]
+        buttons = create_buttons_from_data(
+            months, callback_info="bd", rows=3, cols=4, start_index=1
+        )
         try:
             bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_prompt"].format(user["first_name"]),
-                reply_markup=InlineKeyboardMarkup(month_buttons),
+                reply_markup=buttons,
             )
         except:
             set_user_active(chat_id, False)

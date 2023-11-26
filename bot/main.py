@@ -1,7 +1,7 @@
 import os
 from . import dp, updater, PORT, db, config, bot
-from .database import search_db_title, get_all_counseling_topics, set_user_last_command
-from .helpers import handle_view_more
+from .database import search_db_title, set_user_last_command
+from .helpers import create_buttons_from_data
 from .commands import (
     get_devotional,
     latest_sermon,
@@ -19,10 +19,15 @@ from .commands import (
     menu,
     done,
     blog_posts,
-    campuses,
     feedback,
     membership_school,
     feedback_cb_handler,
+    set_church_location,
+    find_user,
+    church_location_callback_handler,
+    handle_find_user_callback,
+    handle_update_user,
+    find_user_message_handler,
 )
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
@@ -33,6 +38,8 @@ from chat.chat_message_handlers import (
     handle_counseling,
     handle_ask_question_or_request_counselor,
     handle_counselor_request_yes,
+    handle_counseling_info_confirm,
+    handle_counseling_location_confirm,
     handle_get_faq_callback,
 )
 from chat.chat_callback_handlers import (
@@ -54,7 +61,7 @@ load_dotenv()
 
 def handle_message_commands(update, context):
     """
-    This matches incoming commands form users to their respective functions
+    This matches incoming commands from users to their respective functions
 
     Keyword arguments:
     update -- metadata containing information on incoming request.
@@ -74,6 +81,8 @@ def handle_message_commands(update, context):
         get_sermon(update, context)
     elif title == "help":
         helps(update, context)
+    elif title == "find user":
+        find_user(update, context)
     elif title == "statistics":
         stats(update, context)
     elif title == "broadcast":
@@ -88,6 +97,8 @@ def handle_message_commands(update, context):
         counseling(update, context)
     elif title == "show active counseling requests":
         show_active_requests(update, context)
+    elif title == "location":
+        set_church_location(update, context)
     else:
         unknown(update, context)
 
@@ -104,6 +115,10 @@ def handle_message_response(update, context):
         handle_message_commands(update, context)
     elif last_command.startswith("in-conversation-with"):
         conversation_handler(update, context)
+    elif last_command == "find_user":
+        find_user_message_handler(update, context)
+    elif last_command.startswith("update_user"):
+        handle_update_user(update, context)
     elif last_command == "get_sermon":
         title = update.message.text.strip()
         sermons = search_db_title(title)
@@ -150,9 +165,10 @@ def handle_message_response(update, context):
             text=config["messages"]["map_feedback"],
             parse_mode="Markdown",
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    elif last_command == "counselor_request_yes":
-        handle_counselor_request_yes(update, context)
+        set_user_last_command(chat_id, None)
+    elif last_command.startswith("counselor_request"):
+        topic = last_command.split("=")[-1]
+        handle_counselor_request_yes(update, context, topic)
     elif last_command.startswith("cr_yes"):
         message_id = int(last_command.split("=")[-1])
         text = update.message.text
@@ -174,7 +190,7 @@ def handle_message_response(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["feedback_done"]
         )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+        set_user_last_command(chat_id, None)
     elif last_command.startswith("transfer_req"):
         counselor_transfer_msg_handler(update, context)
 
@@ -187,21 +203,10 @@ def cb_handle(update, context):
     if q_head[0] == "map":
         # TODO: refactor map location handling
         pass
+    elif q_head[0] == "update":
+        handle_find_user_callback(update, context)
     elif q_head[0] == "counsel":
-        # TODO: Handle this callback properly
-        if q_head[1] == "more":
-            counseling_topics = get_all_counseling_topics()
-            updated_buttons = handle_view_more(
-                callback, counseling_topics, "counsel", 5, 1
-            )
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["counseling_start"],
-                reply_markup=updated_buttons,
-            )
-            set_user_last_command(chat_id, None)
-        else:
-            handle_counseling(update, context)
+        handle_counseling(update, context)
     elif q_head[0] == "qa_or_c":
         handle_ask_question_or_request_counselor(update, context)
     elif q_head[0] == "bc-to":
@@ -224,57 +229,25 @@ def cb_handle(update, context):
             reply_markup=InlineKeyboardMarkup(button),
         )
     elif q_head[0] == "loc":
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"location": q[4:]}})
-        bot.send_message(
-            chat_id=chat_id, text=config["messages"]["lc_confirm"].format(q[4:])
-        )
+        church_location_callback_handler(update, context)
     elif q_head[0] == "bd":
         if len(q_head) == 2:
-            buttons = [
-                [
-                    InlineKeyboardButton(str(i), callback_data=q + "=" + str(i))
-                    for i in range(1, 8)
-                ],
-                [
-                    InlineKeyboardButton(str(i), callback_data=q + "=" + str(i))
-                    for i in range(8, 15)
-                ],
-                [
-                    InlineKeyboardButton(str(i), callback_data=q + "=" + str(i))
-                    for i in range(15, 22)
-                ],
-                [
-                    InlineKeyboardButton(str(i), callback_data=q + "=" + str(i))
-                    for i in range(22, 29)
-                ],
-            ]
-
-            if q.split("=")[1] in ["9", "4", "6", "11"]:
-                buttons.append(
-                    [
-                        InlineKeyboardButton(str(i), callback_data=q + "=" + str(i))
-                        for i in range(29, 31)
-                    ]
-                )
-            elif q.split("=")[1] == "2":
-                buttons.append(
-                    [
-                        InlineKeyboardButton(str(i), callback_data=q + "=" + str(i))
-                        for i in range(29, 30)
-                    ]
-                )
+            month = q_head[1]
+            if month in ["9", "4", "6", "11"]:
+                last_day = 30
+            elif month in ["2"]:
+                last_day = 29
             else:
-                buttons.append(
-                    [
-                        InlineKeyboardButton(str(i), callback_data=q + "=" + str(i))
-                        for i in range(29, 32)
-                    ]
-                )
+                last_day = 31
+
+            total_days = range(1, last_day + 1)
+
+            days_buttons = create_buttons_from_data(total_days, q, 3, 10, 1)
 
             context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_day"],
-                reply_markup=InlineKeyboardMarkup(buttons),
+                reply_markup=InlineKeyboardMarkup(days_buttons),
             )
         else:
             db.users.update_one(
@@ -292,9 +265,7 @@ def cb_handle(update, context):
             context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["get_sermon_1"]
             )
-            db.users.update_one(
-                {"chat_id": chat_id}, {"$set": {"last_command": "get_sermon"}}
-            )
+            set_user_last_command(chat_id, "get_sermon")
         else:
             buttons = []
             context.bot.send_message(
@@ -302,143 +273,21 @@ def cb_handle(update, context):
                 text=config["messages"]["get_sermon_2"],
                 reply_markup=InlineKeyboardMarkup(buttons),
             )
-    elif q_head[0] == "cr":
-        if q_head[1] == "yes":
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["cr_choose_category"],
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "Spiritual Growth",
-                                callback_data="cr-cat=spiritual growth=" + q_head[2],
-                            ),
-                            InlineKeyboardButton(
-                                "Relationships",
-                                callback_data="cr-cat=relationships=" + q_head[2],
-                            ),
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                "Career", callback_data="cr-cat=career=" + q_head[2]
-                            ),
-                            InlineKeyboardButton(
-                                "Mental Wellbeing",
-                                callback_data="cr-cat=mental wellbeing=" + q_head[2],
-                            ),
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                "Habits and Addictions",
-                                callback_data="cr-cat=habits and addictions="
-                                + q_head[2],
-                            ),
-                            InlineKeyboardButton(
-                                "Marriage and Family",
-                                callback_data="cr-cat=marriage and family=" + q_head[2],
-                            ),
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                "Other", callback_data="cr-cat=other=" + q_head[2]
-                            )
-                        ],
-                    ]
-                ),
-            )
-        else:
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["counselor_request_invalid_info"],
-            )
-            db.counseling_requests.delete_one({"request_message_id": int(q_head[2])})
-            db.users.update_one(
-                {"chat_id": chat_id},
-                {"$set": {"last_command": "counselor_request_yes"}},
-            )
-    elif q_head[0] == "cr-cat":
-        db.counseling_requests.update_one(
-            {"request_message_id": int(q_head[-1])}, {"$set": {"topic": q_head[-2]}}
-        )
-        user_location = db.users.find_one({"chat_id": chat_id})["location"]
-        counseling_location_buttons = [
-            [
-                InlineKeyboardButton(
-                    "Lagos - Ikeja", callback_data="cr-loc=Ikeja=" + q_head[-1]
-                ),
-                InlineKeyboardButton(
-                    "Lagos - Lekki", callback_data="cr-loc=Lekki=" + q_head[-1]
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    "Lagos - Yaba", callback_data="cr-loc=Yaba=" + q_head[-1]
-                ),
-                InlineKeyboardButton(
-                    "Ile-Ife", callback_data="cr-loc=Ile-ife=" + q_head[-1]
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    "Ibadan", callback_data="cr-loc=Ibadan=" + q_head[-1]
-                ),
-                InlineKeyboardButton(
-                    "Port-Harcourt", callback_data="cr-loc=PH=" + q_head[-1]
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    "Canada", callback_data="cr-loc=Canada=" + q_head[-1]
-                ),
-                InlineKeyboardButton(
-                    "Abuja", callback_data="cr-loc=Abuja=" + q_head[-1]
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    "United Kingdom(UK)", callback_data="cr-loc=UK=" + q_head[-1]
-                )
-            ],
-        ]
-        if user_location not in ["None", "Online"]:
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["cr_confirm_location"].format(user_location),
-                reply_markup=InlineKeyboardMarkup(counseling_location_buttons),
-            )
-        else:
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["cr_choose_location"],
-                reply_markup=InlineKeyboardMarkup(counseling_location_buttons),
-            )
-    elif q_head[0] == "cr-loc":
-        db.counseling_requests.update_one(
-            {"request_message_id": int(q_head[-1])}, {"$set": {"location": q_head[-2]}}
-        )
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"location": q_head[-2]}})
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["cr_yes"],
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "Add Note", callback_data="cr-yes=" + q_head[2]
-                        )
-                    ]
-                ],
-                resize_keyboard=True,
-            ),
-        )
+    elif q_head[0] == "confirm_info":
+        handle_counseling_info_confirm(update, context)
+    elif q_head[0] == "confirm_loc":
+        handle_counseling_location_confirm(update, context)
     elif q_head[0] == "cr-yes":
+        user_local_church = db.users.find_one({"chat_id": chat_id}).get("location")
+        print(user_local_church)
+        db.counseling_requests.update_one(
+            {"request_message_id": int(q_head[1])},
+            {"$set": {"location": user_local_church}},
+        )
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cr_yes_confirm"]
         )
-        db.users.update_one(
-            {"chat_id": chat_id}, {"$set": {"last_command": "cr_yes=" + q_head[1]}}
-        )
+        set_user_last_command(chat_id, "cr_yes=" + q_head[1])
     elif q_head[0] == "conv":
         handle_initial_conversation_cb(update, context)
     elif q_head[0] == "end_conv":
@@ -466,7 +315,7 @@ def main(deploy: bool = False) -> None:
     dp.add_handler(CommandHandler("cancel", cancel))
     dp.add_handler(CommandHandler("menu", menu))
     dp.add_handler(CommandHandler("blog", blog_posts))
-    dp.add_handler(CommandHandler("campuses", campuses))
+    dp.add_handler(CommandHandler("campuses", set_church_location))
     dp.add_handler(CommandHandler("feedback", feedback))
     dp.add_handler(CommandHandler("membership", membership_school))
     dp.add_handler(CommandHandler("transfer", counselor_transfer))

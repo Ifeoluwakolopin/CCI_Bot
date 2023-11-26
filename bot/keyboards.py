@@ -12,9 +12,15 @@ buttons1 = [
     KeyboardButton("help"),
 ]
 
+buttons2 = [
+    KeyboardButton("location"),
+    KeyboardButton("counseling"),
+]
+
 buttons3 = [
     KeyboardButton("statistics"),
     KeyboardButton("broadcast"),
+    KeyboardButton("find user"),
 ]
 
 bc_buttons = [
@@ -32,61 +38,8 @@ counselor_keyboard2 = [
     KeyboardButton("/transfer"),
 ]
 
-counseling_buttons = [
-    KeyboardButton("counseling"),
-]
 
-categories_keyboard = [
-    [
-        InlineKeyboardButton("Spiritual Growth", callback_data="cat=" + "sg"),
-        InlineKeyboardButton("Relationships", callback_data="cat=" + "r"),
-    ],
-    [
-        InlineKeyboardButton("Career", callback_data="cat=" + "car"),
-        InlineKeyboardButton("Mental Wellbeing", callback_data="cat=" + "mw"),
-    ],
-    [
-        InlineKeyboardButton("Habits and Addictions", callback_data="cat=" + "ha"),
-        InlineKeyboardButton("Marriage and Family", callback_data="cat=" + "mf"),
-    ],
-]
-
-month_buttons = [
-    [
-        InlineKeyboardButton("January", callback_data="bd=1"),
-        InlineKeyboardButton("February", callback_data="bd=2"),
-        InlineKeyboardButton("March", callback_data="bd=3"),
-    ],
-    [
-        InlineKeyboardButton("April", callback_data="bd=4"),
-        InlineKeyboardButton("May", callback_data="bd=5"),
-        InlineKeyboardButton("June", callback_data="bd=6"),
-    ],
-    [
-        InlineKeyboardButton("July", callback_data="bd=7"),
-        InlineKeyboardButton("August", callback_data="bd=8"),
-        InlineKeyboardButton("September", callback_data="bd=9"),
-    ],
-    [
-        InlineKeyboardButton("October", callback_data="bd=10"),
-        InlineKeyboardButton("November", callback_data="bd=11"),
-        InlineKeyboardButton("December", callback_data="bd=12"),
-    ],
-]
-ask_question_or_counseling_keyboard = InlineKeyboardMarkup(
-    [
-        [InlineKeyboardButton("Ask a question", callback_data="qa_or_c=" + str(0))],
-        [
-            InlineKeyboardButton(
-                "Speak to a Counselor", callback_data="qa_or_c=" + str(1)
-            )
-        ],
-    ],
-    resize_keyboard=True,
-)
-location_buttons = []
-
-normal_keyboard = [sermon_buttons, buttons1 + counseling_buttons]
+normal_keyboard = [sermon_buttons, buttons1 + buttons2]
 pastor_keyboard = normal_keyboard + [counselor_keyboard, counselor_keyboard2]
 admin_keyboard = pastor_keyboard + [buttons3]
 
@@ -118,3 +71,48 @@ def validate_user_keyboard(chat_id) -> list:
         return pastor_keyboard
     else:
         return normal_keyboard
+
+
+def get_counseling_feedback_keyboard(user_chat_id, pastor_chat_id):
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "1",
+                    callback_data="counseling_feedback=1="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+                InlineKeyboardButton(
+                    "2",
+                    callback_data="counseling_feedback=2="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+                InlineKeyboardButton(
+                    "3",
+                    callback_data="counseling_feedback=3="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+                InlineKeyboardButton(
+                    "4",
+                    callback_data="counseling_feedback=4="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+                InlineKeyboardButton(
+                    "5",
+                    callback_data="counseling_feedback=5="
+                    + str(user_chat_id)
+                    + "="
+                    + str(pastor_chat_id),
+                ),
+            ]
+        ],
+        resize_keyboard=True,
+    )
