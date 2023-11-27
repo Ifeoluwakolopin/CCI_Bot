@@ -26,6 +26,7 @@ from .commands import (
     find_user,
     church_location_callback_handler,
     handle_find_user_callback,
+    handle_branch_selection_callback,
     handle_update_user,
     find_user_message_handler,
 )
@@ -230,6 +231,8 @@ def cb_handle(update, context):
         )
     elif q_head[0] == "loc":
         church_location_callback_handler(update, context)
+    elif q_head[0] == "br":
+        handle_branch_selection_callback(update, context)
     elif q_head[0] == "bd":
         if len(q_head) == 2:
             month = q_head[1]

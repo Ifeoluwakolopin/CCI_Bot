@@ -1,6 +1,6 @@
 from . import db, bot, config
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .database import set_user_active, get_church_locations
+from .database import set_user_active, get_countries
 from telegram import InlineKeyboardMarkup, CallbackQuery, InlineKeyboardButton
 
 
@@ -132,10 +132,9 @@ class PromptHelper:
         chat_id -- identifies a specific user
         Return: None
         """
-        church_locations = get_church_locations()
-        countries = [location["locationName"] for location in church_locations]
+        countries = get_countries()
 
-        rows, cols = 3, 2
+        rows, cols = 4, 1
         buttons = create_buttons_from_data(countries, "loc", rows, cols)
 
         try:

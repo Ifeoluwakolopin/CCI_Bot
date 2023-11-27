@@ -14,6 +14,7 @@ from .database import (
     set_user_active,
     set_user_last_command,
     get_user_last_command,
+    get_countries,
     get_church_locations,
 )
 from datetime import date, datetime
@@ -175,12 +176,13 @@ def handle_find_user_callback(update, context):
     user = db.users.find_one({"chat_id": int(user_id)})
     if query_data[1] == "loc":
         action = "location"
-        church_locations = get_church_locations()
-        branches = [location["locationName"] for location in church_locations]
+        church_locations = list(db.church_locations.find({}, {"_id": 0}))
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["update_user_location"].format(
-                user["first_name"], user["last_name"], branches
+                user["first_name"],
+                user["last_name"],
+                json.dumps(church_locations, indent=2),
             ),
         )
     elif query_data[1] == "rm_loc":
@@ -591,7 +593,7 @@ def notify_new_sermon(chat_id, sermons):
             reply_markup=InlineKeyboardMarkup(buttons),
         )
     except:
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"active": False}})
+        set_user_active(chat_id, False)
 
 
 def unknown(update, context):
@@ -625,12 +627,11 @@ def set_church_location(update, context):
     This function sets the church location for a user
     """
     chat_id = update.effective_chat.id
-    church_locations = get_church_locations()
-    branches = [location["locationName"] for location in church_locations]
+    countries = get_countries()
 
     user = db.users.find_one({"chat_id": chat_id})
-    rows, cols = 3, 2
-    buttons = create_buttons_from_data(branches, "loc", rows, cols)
+    rows, cols = 4, 1
+    buttons = create_buttons_from_data(countries, "loc", rows, cols)
 
     context.bot.send_message(
         chat_id=chat_id,
@@ -645,11 +646,10 @@ def church_location_callback_handler(update, context):
     """
     chat_id = update.effective_chat.id
     query_data = update.callback_query.data.split("=")
-    church_locations = get_church_locations()
-    countries = [location["locationName"] for location in church_locations]
-    rows, cols = 3, 2
 
     if query_data[1] == "more":
+        countries = get_countries()
+        rows, cols = 4, 1
         updated_buttons = handle_view_more(
             update.callback_query,
             countries,
@@ -664,16 +664,51 @@ def church_location_callback_handler(update, context):
             reply_markup=updated_buttons,
         )
     else:
-        location = find_text_for_callback(update.callback_query).lower()
-        db.users.update_one({"chat_id": chat_id}, {"$set": {"location": location}})
-        if db.users.find_one({"chat_id": chat_id, "role": "pastor"}):
-            db.users.update_one(
-                {"chat_id": chat_id}, {"$addToSet": {"locations": location}}
-            )
+        country = find_text_for_callback(update.callback_query)
+        church_locations = get_church_locations(country)
+
+        buttons = create_buttons_from_data(church_locations, f"br={country}", 4, 2)
 
         context.bot.send_message(
             chat_id=chat_id,
-            text=config["messages"]["lc_done"].format(location),
+            text=config["messages"]["lc_country"].format(country),
+            reply_markup=buttons,
+        )
+
+
+def handle_branch_selection_callback(update, context):
+    """
+    This function handles the callback from the church location prompt
+    """
+    chat_id = update.effective_chat.id
+    query_data = update.callback_query.data.split("=")
+
+    if query_data[2] == "more":
+        country = query_data[1]
+        church_locations = get_church_locations(country)
+        updated_buttons = handle_view_more(
+            update.callback_query,
+            church_locations,
+            f"br={country}",
+            4,
+            2,
+        )
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["lc_other"],
+            reply_markup=updated_buttons,
+        )
+    else:
+        branch = find_text_for_callback(update.callback_query)
+
+        if db.users.find_one({"chat_id": chat_id, "role": "pastor"}):
+            db.users.update_one(
+                {"chat_id": chat_id}, {"$addToSet": {"locations": branch}}
+            )
+        db.users.update_one({"chat_id": chat_id}, {"$set": {"location": branch}})
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["lc_done"].format(branch),
         )
 
 
