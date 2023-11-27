@@ -123,7 +123,7 @@ def add_note(update, context, msg: str, request_message_id: int):
 
 class PromptHelper:
     @staticmethod
-    def location_prompt(chat_id: int, msg: str) -> None:
+    def location_prompt(chat_id: int, msg: str) -> bool:
         """
         This functions takes in a chat id, and sends a message
         to request for the user's physical church location.
@@ -143,8 +143,10 @@ class PromptHelper:
                 text=msg,
                 reply_markup=buttons,
             )
+            return True
         except:
             set_user_active(chat_id, False)
+            return False
 
     @staticmethod
     def birthday_prompt(chat_id):
