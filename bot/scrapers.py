@@ -105,8 +105,6 @@ class WebScrapers:
                 )
         return sermons
 
-    # DEPRECATED - Website no longer functional
-    # devotionals have been moved to app.
     @staticmethod
     def t30() -> dict:
         """
@@ -122,7 +120,7 @@ class WebScrapers:
             "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
         }
 
-        base = "http://triumph30.org"
+        base = "http://t30.org"
         r = requests.get(base, headers=headers)
         soup = BeautifulSoup(r.text, "html.parser")
 
@@ -145,3 +143,100 @@ class WebScrapers:
         }
 
         return d
+
+    @staticmethod
+    def church_locations():
+        headers = {
+            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)"
+        }
+        base_url = "https://ccing.org/campus/"
+        r = requests.get(base_url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        titles_spans = soup.find_all("span", {"class": "elementskit-tab-title"})
+        locations = {}
+        for span in titles_spans:
+            locations[span.get_text()] = []
+
+        return locations
+
+
+def extract_campus_names(text):
+    # Split the text into lines, remove 'CCI' and 'View Campus', and filter out empty lines
+    campus_names = [
+        line.replace("CCI", "").strip()
+        for line in text.split("\n")
+        if "View Campus" not in line and line.strip() != ""
+    ]
+    return campus_names
+
+
+text = """
+CCI Ikeja
+
+View Campus
+CCI Lagos Island
+
+View Campus
+CCI Yaba
+
+View Campus
+CCI Ago
+
+View Campus
+CCI Lokogoma
+
+View Campus
+CCI Utako
+
+View Campus
+CCI Mararaba
+
+View Campus
+CCI Ife
+
+View Campus
+CCI Port Harcourt
+
+View Campus
+CCI Ibadan
+
+View Campus
+CCI Abeokuta
+
+View Campus
+CCI Uyo
+
+View Campus
+CCI Ajah
+
+View Campus
+CCI Akure
+
+View Campus
+CCI Ilorin
+
+View Campus
+"""
+
+nigeria = extract_campus_names(text)
+canada = ["Toronto", "Ottawa"]
+uk = [
+    "South East London",
+    "West London",
+    "Manchester",
+    "Birmingham",
+    "Glasgow",
+    "Dublin",
+]
+usa = ["Dallas", "DMV"]
+
+locations = WebScrapers.church_locations()
+
+locations["Nigeria"] = nigeria
+locations["Canada"] = canada
+locations["United Kingdom"] = uk
+locations["United States of America"] = usa
+
+
+branches = [{"country": k, "branches": v} for k, v in locations.items()]

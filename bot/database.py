@@ -131,34 +131,36 @@ def update_counseling_topics(topic: str):
         db.counseling_topics.update_one({"topic": topic}, {"$inc": {"count": 1}})
 
 
-def get_church_locations() -> list:
+def get_countries() -> list:
     """
-    This function returns a list of church locations from the database
+    This function returns a list of countries from the database
 
     Keyword arguments:
     None
 
-    Return: list of church locations
+    Return: list of countries
     """
-    pipeline = [
-        {"$project": {"states": {"$objectToArray": "$states"}}},
-        {"$unwind": "$states"},
-        {
-            "$project": {
-                "locationName": "$states.k",
-                "locations": {"$objectToArray": "$states.v"},
-            }
-        },
-        {"$unwind": "$locations"},
-        {
-            "$project": {
-                "locationName": "$locations.k",
-                "name": "$locations.v.name",
-                "link": "$locations.v.link",
-            }
-        },
-    ]
-    return list(db.church_locations.aggregate(pipeline))
+
+    query = db.church_locations.find({})
+
+    return [document["country"] for document in query]
+
+
+def get_church_locations(country_name: str) -> list:
+    """
+    This function returns a list of church locations for a specified country from the database.
+
+    Parameters:
+    country_name (str): The name of the country for which to fetch church locations.
+
+    Returns:
+    list: A list of church locations.
+    """
+
+    # Fetch the document containing the campuses for the specified country
+    campuses = db.church_locations.find_one({"country": country_name})["branches"]
+
+    return campuses
 
 
 def get_map_locations() -> list:
