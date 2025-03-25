@@ -1,0 +1,66 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /home/ifeoluwakolopin/projects/CCI_Bot
+
+    steps:
+      - name: Ensure Repository Directory Exists
+        run: |
+          sudo mkdir -p /home/ifeoluwakolopin/projects/CCI_Bot
+          sudo chown -R ifeoluwakolopin:ifeoluwakolopin /home/ifeoluwakolopin/projects/CCI_Bot
+
+      - name: Mark Repository as Safe for Git
+        run: git config --global --add safe.directory "/home/ifeoluwakolopin/projects/CCI_Bot"
+
+      - name: Update Repository
+        env:
+          DEPLOY_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || 'main' }}
+        run: |
+          echo "Deploying branch: ${DEPLOY_BRANCH}"
+          if [ ! -d ".git" ]; then
+            echo "Repository not found. Cloning branch ${DEPLOY_BRANCH}..."
+            git clone -b "${DEPLOY_BRANCH}" https://github.com/Ifeoluwakolopin/CCI_Bot.git .
+          else
+            echo "Repository exists. Updating branch ${DEPLOY_BRANCH}..."
+            git reset --hard
+            git checkout "${DEPLOY_BRANCH}"
+            git pull origin "${DEPLOY_BRANCH}" --force
+          fi
+
+      - name: Build and Deploy Docker Containers
+        run: |
+          echo "🔨 Building and deploying Docker containers..."
+          sudo docker compose down
+          sudo docker compose build --no-cache
+          sudo docker compose up -d
+          echo "✅ Deployment completed"
+
+      - name: Verify Deployment Status
+        run: |
+          echo "📊 Verifying deployment status..."
+          
+          # Check if required containers are running
+          if sudo docker ps | grep -q "cci_bot.*bot" && sudo docker ps | grep -q "cci_bot.*scheduler"; then
+            echo "✅ All containers are running - deployment successful"
+          else
+            echo "⚠️ Some containers are not running - deployment may have issues"
+            
+            # Show logs if there are issues
+            echo "=== BOT LOGS ==="
+            sudo docker logs $(sudo docker ps -qf "name=cci_bot.*bot") --tail 20 2>/dev/null || echo "Bot container not found"
+            
+            echo "=== SCHEDULER LOGS ==="
+            sudo docker logs $(sudo docker ps -qf "name=cci_bot.*scheduler") --tail 20 2>/dev/null || echo "Scheduler container not found"
+          fi
