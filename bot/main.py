@@ -326,11 +326,12 @@ def main(deploy: bool = False) -> None:
     dp.add_handler(cb_handler)
 
     if deploy:
+        URL = "https://cci-bot.herokuapp.com/"
         updater.start_webhook(
             listen="0.0.0.0", port=int(PORT), url_path=os.getenv("BOT_TOKEN")
         )
         updater.bot.setWebhook(
-            "https://cci-bot.herokuapp.com/" + os.getenv("BOT_TOKEN")
+            URL + os.getenv("BOT_TOKEN")
         )
     else:
         updater.start_polling()
