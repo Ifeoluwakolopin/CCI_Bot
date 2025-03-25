@@ -1,0 +1,40 @@
+services:
+  bot:
+    build: .
+    restart: always
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - EVENT_TOKEN=${EVENT_TOKEN}
+      - MONGO_URI=${MONGO_URI}
+      - DB_NAME=${DB_NAME}
+      - PYTHONUNBUFFERED=1
+    command: >
+      bash -c "mkdir -p /app/logs && python3 app.py > >(tee /app/logs/bot.log) 2> >(tee /app/logs/bot-error.log >&2)"
+    volumes:
+      - ./logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    tty: true
+
+  scheduler:
+    build: .
+    restart: always
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - EVENT_TOKEN=${EVENT_TOKEN}
+      - MONGO_URI=${MONGO_URI}
+      - DB_NAME=${DB_NAME}
+      - PYTHONUNBUFFERED=1
+    command: >
+      bash -c "mkdir -p /app/logs && python3 jobs.py > >(tee /app/logs/scheduler.log) 2> >(tee /app/logs/scheduler-error.log >&2)"
+    volumes:
+      - ./logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    tty: true

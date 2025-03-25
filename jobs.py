@@ -167,33 +167,6 @@ def send_devotional():
     logger.info(f"DEVOTIONAL: Sent devotional to {u} users")
 
 
-# @sched.scheduled_job('cron', day_of_week='wed', hour=12)
-def ticket_task():
-    """
-    This runs the ticket notifier function and logs results.
-
-    Keyword arguments:
-    argument -- None
-
-    Return: None
-    """
-    notify_tickets()
-    u = db.users.count_documents({"mute": False, "active": True})
-    logger.info(f"TICKET: Notified {u} users")
-
-
-@sched.scheduled_job("interval", minutes=29)
-def wake():
-    """
-    This sends a request to the bot server to allow it maintain activity
-
-    Keyword arguments:
-    argument -- None
-
-    Return: None
-    """
-    requests.get("https://cci-bot.herokuapp.com/")
-
 
 if __name__ == "__main__":
     sched.start()
