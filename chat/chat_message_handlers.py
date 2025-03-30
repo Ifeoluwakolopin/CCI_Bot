@@ -1,3 +1,4 @@
+import re
 import time
 from datetime import datetime
 from bot import db, config
@@ -141,12 +142,41 @@ def handle_ask_question_or_request_counselor(update, context):
 def handle_counselor_request_yes(update, context, topic):
     chat_id = update.effective_chat.id
     message = update.message
+
     try:
         contact_info = message.text.split("\n")
+
+        if len(contact_info) < 3:
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=config["messages"]["counselor_request_invalid_info"]
+                + "\nPlease provide your name, email, and phone number, each on a separate line.",
+            )
+            return
+
         name = contact_info[0].strip()
-        email = contact_info[1].strip()  # regex email validation
-        phone = contact_info[2].strip()  # regex validate phone number
+        email = contact_info[1].strip()
+        phone = contact_info[2].strip()
         message_id = message.message_id
+
+        # Email validation regex
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if not re.match(email_pattern, email):
+            context.bot.send_message(
+                chat_id=chat_id,
+                text="Invalid email format. Please provide a valid email address.",
+            )
+            return
+
+        # Phone validation regex - accepts various formats with optional country code
+        # Examples: +1234567890, 123-456-7890, (123) 456-7890, 1234567890
+        phone_pattern = r"^(\+\d{1,3})?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$"
+        if not re.match(phone_pattern, phone):
+            context.bot.send_message(
+                chat_id=chat_id,
+                text="Invalid phone number format. Please provide a valid phone number.",
+            )
+            return
 
         # temporarily add request to db queue
         add_request_to_queue(
@@ -186,9 +216,12 @@ def handle_counselor_request_yes(update, context, topic):
                 resize_keyboard=True,
             ),
         )
-    except:
+    except Exception as e:
+        # More detailed error handling
+        error_msg = config["messages"]["counselor_request_invalid_info"]
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counselor_request_invalid_info"]
+            chat_id=chat_id,
+            text=f"{error_msg}\nPlease provide your information in the following format:\nName\nEmail\nPhone Number",
         )
 
 

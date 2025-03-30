@@ -80,12 +80,11 @@ def trigger_additional_prompts(chat_id):
     Args:
         chat_id (int): The chat ID of the user.
     """
-    # TODO: uncomment when location prompt is ready
     user = db.users.find_one({"chat_id": chat_id})
     PromptHelper.location_prompt(
         chat_id, config["messages"]["lc"].format(user["first_name"])
     )
-    # PromptHelper.birthday_prompt(chat_id)
+    PromptHelper.birthday_prompt(chat_id)
 
 
 def bc_setup(update, context):

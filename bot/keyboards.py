@@ -10,10 +10,10 @@ buttons1 = [
     # TODO: Uncomment when MAP is properly fixed
     # KeyboardButton("map"),
     KeyboardButton("help"),
+    KeyboardButton("location"),
 ]
 
-buttons2 = [
-    KeyboardButton("location"),
+counseling_button = [
     KeyboardButton("counseling"),
 ]
 
@@ -39,8 +39,10 @@ counselor_keyboard2 = [
 ]
 
 
-normal_keyboard = [sermon_buttons, buttons1 + buttons2]
-pastor_keyboard = normal_keyboard + [counselor_keyboard, counselor_keyboard2]
+normal_keyboard = [sermon_buttons, buttons1]
+pastor_keyboard = (
+    [counseling_button] + normal_keyboard + [counselor_keyboard, counselor_keyboard2]
+)
 admin_keyboard = pastor_keyboard + [buttons3]
 
 keyboard_commands = [

@@ -21,8 +21,14 @@ def show_active_requests(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "pastor"})
     if user:
+        if user["global"] == True:
+            topics = locations = []
+        else:
+            topics = user["topics"]
+            locations = user["locations"]
         active_requests = get_active_counseling_requests(
-            user["topics"], user["locations"]
+            topics=topics,
+            locations=locations,
         )
 
         reqs = len(active_requests)

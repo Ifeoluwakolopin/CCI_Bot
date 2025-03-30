@@ -206,15 +206,21 @@ def add_request_to_queue(counseling_request: dict) -> None:
     )
 
 
-def get_active_counseling_requests(topics: list, locations: list):
-    requests = db.counseling_requests.find(
-        {
-            "active": True,
-            "status": "pending",
-            "topic": {"$in": topics},
-            "location": {"$in": locations},
-        }
-    ).sort("created", 1)
+def get_active_counseling_requests(topics: list = None, locations: list = None):
+    # Base query to find active pending requests
+    query = {"active": True, "status": "pending"}
+
+    # Add topic filter only if topics list is provided and not empty
+    if topics and len(topics) > 0:
+        query["topic"] = {"$in": topics}
+
+    # Add location filter only if locations list is provided and not empty
+    if locations and len(locations) > 0:
+        query["location"] = {"$in": locations}
+
+    # Execute the query, sorting by creation time (oldest first)
+    requests = db.counseling_requests.find(query).sort("created", 1)
+
     return list(requests)
 
 
