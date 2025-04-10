@@ -16,19 +16,16 @@ from bot.database import (
 )
 
 
-# function to displays all active requests to pastors : button
 def show_active_requests(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "pastor"})
     if user:
-        if user["global"] == True:
-            topics = locations = []
+        if user.get("global") == True:
+            topics = []
         else:
             topics = user["topics"]
-            locations = user["locations"]
         active_requests = get_active_counseling_requests(
             topics=topics,
-            locations=locations,
         )
 
         reqs = len(active_requests)
@@ -83,7 +80,6 @@ def notify_pastors(counseling_request):
         {
             "role": "pastor",
             "topics": counseling_request["topic"],
-            "location": counseling_request["location"],
             "chat_id": {"$ne": counseling_request["user_chat_id"]},
         }
     )

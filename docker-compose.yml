@@ -12,6 +12,7 @@ services:
       bash -c "mkdir -p /app/logs && python3 app.py > >(tee /app/logs/bot.log) 2> >(tee /app/logs/bot-error.log >&2)"
     volumes:
       - ./logs:/app/logs
+      - ./:/app # Mount the entire project directory
     logging:
       driver: "json-file"
       options:
@@ -32,6 +33,7 @@ services:
       bash -c "mkdir -p /app/logs && python3 jobs.py > >(tee /app/logs/scheduler.log) 2> >(tee /app/logs/scheduler-error.log >&2)"
     volumes:
       - ./logs:/app/logs
+      - ./:/app # Mount the entire project directory
     logging:
       driver: "json-file"
       options:

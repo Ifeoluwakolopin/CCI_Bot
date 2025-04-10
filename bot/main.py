@@ -250,7 +250,7 @@ def cb_handle(update, context):
             context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_day"],
-                reply_markup=InlineKeyboardMarkup(days_buttons),
+                reply_markup=days_buttons,
             )
         else:
             db.users.update_one(

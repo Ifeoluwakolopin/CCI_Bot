@@ -96,12 +96,6 @@ def ask_question_or_request_counselor(update, context, topic):
         [
             [
                 InlineKeyboardButton(
-                    config["messages"]["ask_question_text"],
-                    callback_data=f"qa_or_c={topic}=" + str(0),
-                )
-            ],
-            [
-                InlineKeyboardButton(
                     config["messages"]["ask_for_a_counselor_text"],
                     callback_data=f"qa_or_c={topic}=" + str(1),
                 )
@@ -131,12 +125,6 @@ def handle_ask_question_or_request_counselor(update, context):
             text=config["messages"]["counselor_request_yes"],
         )
         set_user_last_command(chat_id, f"counselor_request={topic}")
-    else:
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["ask_question"],
-        )
-        set_user_last_command(chat_id, f"new_question={topic}")
 
 
 def handle_counselor_request_yes(update, context, topic):
@@ -362,17 +350,6 @@ def handle_get_faq_callback(update, context):
             chat_id=chat_id,
             text=answer,
         )
-
-
-def handle_ask_question(update, context):
-    chat_id = update.effective_chat.id
-    message = update.message.text.strip().lower()
-
-    db.new_questions.insert_one({"chat_id": chat_id, "question": message})
-    context.bot.send_message(
-        chat_id=chat_id, text=config["messages"]["ask_question_success"]
-    )
-    set_user_last_command(chat_id, None)
 
 
 def add_request_to_queue(counseling_request: dict):

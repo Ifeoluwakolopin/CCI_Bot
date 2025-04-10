@@ -174,9 +174,10 @@ class PromptHelper:
             "December",
         ]
         buttons = create_buttons_from_data(
-            months, callback_info="bd", rows=3, cols=4, start_index=1
+            months, callback_info="bd", rows=3, cols=4, start_index=0
         )
         try:
+            print("Sending birthday prompt to user")
             bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_prompt"].format(user["first_name"]),
@@ -278,6 +279,7 @@ class BroadcastHandlers:
         *args -- additional arguments required by the send_function
         """
 
+        print(users)
         def worker(chat_id):
             try:
                 return send_function(chat_id, content, *args), None
@@ -288,7 +290,7 @@ class BroadcastHandlers:
         with ThreadPoolExecutor(max_workers=10) as executor:
             # Map of future to user chat_id
             future_to_chat_id = {
-                executor.submit(worker, user["chat_id"]): user["chat_id"]
+                executor.submit(worker, user): user
                 for user in users
             }
             for future in as_completed(future_to_chat_id):
