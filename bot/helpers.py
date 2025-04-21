@@ -159,7 +159,10 @@ class PromptHelper:
         Return: None
         """
         user = db.users.find_one({"chat_id": chat_id})
-        months = [
+        # Use month numbers instead of names to match callback handler's expectations
+        months = [str(i) for i in range(1, 13)]  # "1" through "12"
+        # Use month names as display text but month numbers in the data
+        month_display = [
             "January",
             "February",
             "March",
@@ -173,9 +176,28 @@ class PromptHelper:
             "November",
             "December",
         ]
-        buttons = create_buttons_from_data(
-            months, callback_info="bd", rows=3, cols=4, start_index=0
-        )
+
+        # Create a custom function to build buttons with correct callback data
+        def create_month_buttons():
+            inline_buttons = []
+            rows = 3
+            cols = 4
+            for i in range(0, len(months), cols):
+                row = []
+                for j in range(cols):
+                    if i + j < len(months):
+                        month_num = months[i + j]
+                        month_name = month_display[i + j]
+                        row.append(
+                            InlineKeyboardButton(
+                                month_name, callback_data=f"bd={month_num}"
+                            )
+                        )
+                inline_buttons.append(row)
+            return InlineKeyboardMarkup(inline_buttons)
+
+        buttons = create_month_buttons()
+
         try:
             print("Sending birthday prompt to user")
             bot.send_message(
@@ -280,6 +302,7 @@ class BroadcastHandlers:
         """
 
         print(users)
+
         def worker(chat_id):
             try:
                 return send_function(chat_id, content, *args), None
@@ -289,10 +312,7 @@ class BroadcastHandlers:
 
         with ThreadPoolExecutor(max_workers=10) as executor:
             # Map of future to user chat_id
-            future_to_chat_id = {
-                executor.submit(worker, user): user
-                for user in users
-            }
+            future_to_chat_id = {executor.submit(worker, user): user for user in users}
             for future in as_completed(future_to_chat_id):
                 chat_id = future_to_chat_id[future]
                 success, error = future.result()

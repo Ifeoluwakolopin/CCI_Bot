@@ -245,12 +245,25 @@ def cb_handle(update, context):
 
             total_days = range(1, last_day + 1)
 
-            days_buttons = create_buttons_from_data(total_days, q, 3, 10, 1)
+            day_buttons = []
+            rows = 3
+            cols = 10
+            for i in range(0, len(total_days), cols):
+                row = []
+                for j in range(cols):
+                    if i + j < len(total_days):
+                        day_num = total_days[i + j]
+                        row.append(
+                            InlineKeyboardButton(
+                                str(day_num), callback_data=f"bd={month}={day_num}"
+                            )
+                        )
+                day_buttons.append(row)
 
             context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_day"],
-                reply_markup=days_buttons,
+                reply_markup=InlineKeyboardMarkup(day_buttons),
             )
         else:
             db.users.update_one(
@@ -330,9 +343,7 @@ def main(deploy: bool = False) -> None:
         updater.start_webhook(
             listen="0.0.0.0", port=int(PORT), url_path=os.getenv("BOT_TOKEN")
         )
-        updater.bot.setWebhook(
-            URL + os.getenv("BOT_TOKEN")
-        )
+        updater.bot.setWebhook(URL + os.getenv("BOT_TOKEN"))
     else:
         updater.start_polling()
 
