@@ -1,7 +1,6 @@
 import os
 from . import dp, updater, PORT, db, config, bot
 from .database import search_db_title, set_user_last_command
-from .helpers import create_buttons_from_data
 from .commands import (
     get_devotional,
     latest_sermon,
@@ -29,6 +28,7 @@ from .commands import (
     handle_branch_selection_callback,
     handle_update_user,
     find_user_message_handler,
+    handle_broadcast,
 )
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
@@ -155,10 +155,8 @@ def handle_message_response(update, context):
                         reply_markup=InlineKeyboardMarkup(button),
                     )
         menu(update, context)
-    elif last_command.startswith("bc_to"):
-        # TODO: fix broadcast handling
-
-        pass
+    elif last_command.startswith("broadcast"):
+        handle_broadcast(update, context)
 
     elif last_command == "map":
         context.bot.send_message(
@@ -210,9 +208,13 @@ def cb_handle(update, context):
         handle_counseling(update, context)
     elif q_head[0] == "qa_or_c":
         handle_ask_question_or_request_counselor(update, context)
-    elif q_head[0] == "bc-to":
-        # TODO: refactor broadcast handling
-        pass
+    elif q_head[0] == "bc":
+        if q_head[1] == "all":
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=config["messages"]["bc_prompt"],
+            )
+            set_user_last_command(chat_id, "broadcast")
     # Search db for sermons
     elif q_head[0] == "s":
         sermon = search_db_title(q[2:])[0]

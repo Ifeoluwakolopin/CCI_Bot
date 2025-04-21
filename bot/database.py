@@ -3,7 +3,7 @@ from .models import BotUser
 from .bot_types import Result
 
 
-def set_user_last_command(chat_id: int, last_command: str | None) -> bool:
+def set_user_last_command(chat_id: int, last_command=None) -> bool:
     """
     This sets the last_command field of a user to the current time.
 

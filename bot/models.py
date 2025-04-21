@@ -90,7 +90,7 @@ class Conversation:
     def __init__(
         self,
         id: str,
-        start_time: datetime.now(),
+        start_time=datetime.now(),
         status: str = "active",
         ongoing: bool = True,
         messages: list = [],

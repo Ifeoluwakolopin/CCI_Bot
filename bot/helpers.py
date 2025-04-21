@@ -301,20 +301,35 @@ class BroadcastHandlers:
         *args -- additional arguments required by the send_function
         """
 
-        print(users)
+        # Add counters for success/failure stats
+        success_count = 0
+        failure_count = 0
 
         def worker(chat_id):
             try:
-                return send_function(chat_id, content, *args), None
+                result = send_function(chat_id, content, *args)
+                return result, None
             except Exception as e:
                 set_user_active(chat_id, False)
                 return False, e
 
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        # Use more workers for larger broadcasts
+        max_workers = min(20, len(users))
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Map of future to user chat_id
             future_to_chat_id = {executor.submit(worker, user): user for user in users}
             for future in as_completed(future_to_chat_id):
                 chat_id = future_to_chat_id[future]
                 success, error = future.result()
                 if error:
+                    failure_count += 1
                     print(f"Error sending message to {chat_id}: {str(error)}")
+                else:
+                    success_count += 1
+
+        # Return statistics about the broadcast
+        print(
+            f"Broadcast completed: {success_count} successes, {failure_count} failures"
+        )
+        return {"total": len(users), "success": success_count, "failure": failure_count}

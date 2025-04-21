@@ -237,7 +237,7 @@ def handle_update_user(update, context):
     set_user_last_command(chat_id, None)
 
 
-def handle_broadcast(update):
+def handle_broadcast(update, context):
     """
     Handles the broadcast action based on the admin's response.
     """
@@ -247,8 +247,16 @@ def handle_broadcast(update):
     if not user or user.get("last_command") != "broadcast":
         return
 
+    # Reset last_command after broadcast
+    set_user_last_command(chat_id, None)
+
     # Fetch all users to broadcast to
-    users = db.users.find({"active": True})
+    users = db.users.distinct("chat_id", {"active": True})
+
+    print(f"FOund {len(users)} users to broadcast to")
+    print("Sample user id", users[0])
+
+    print("Message:", message)
 
     if message.text:
         BroadcastHandlers.broadcast_message(
@@ -272,9 +280,6 @@ def handle_broadcast(update):
         BroadcastHandlers.broadcast_message(
             users, animation, MessageHelper.send_animation, caption
         )
-
-    # Reset last_command after broadcast
-    set_user_last_command(chat_id, None)
 
 
 def blog_posts(update, context):
@@ -307,11 +312,6 @@ def broadcast_message_handler(update, context):
             reply_markup=InlineKeyboardMarkup(
                 [
                     [InlineKeyboardButton("Send to all users", callback_data="bc=all")],
-                    [
-                        InlineKeyboardButton(
-                            "Send to specific users", callback_data="bc=specific"
-                        )
-                    ],
                 ],
             ),
         )
