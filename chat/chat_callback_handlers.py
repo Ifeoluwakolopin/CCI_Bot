@@ -43,6 +43,10 @@ def show_active_requests(update, context):
                 top_reqs = active_requests
 
             for request in top_reqs:
+
+                created_date = request["created"]
+                formatted_date = created_date.strftime("%A, %B %d, %Y")
+
                 context.bot.send_message(
                     chat_id=chat_id,
                     text=config["messages"]["active_request"].format(
@@ -51,7 +55,8 @@ def show_active_requests(update, context):
                         request["phone"],
                         request["topic"],
                         request["note"],
-                    ),
+                    )
+                    + f"\nRequested on: {formatted_date}",
                     reply_markup=InlineKeyboardMarkup(
                         [
                             [

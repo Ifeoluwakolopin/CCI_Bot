@@ -156,16 +156,6 @@ def handle_counselor_request_yes(update, context, topic):
             )
             return
 
-        # Phone validation regex - accepts various formats with optional country code
-        # Examples: +1234567890, 123-456-7890, (123) 456-7890, 1234567890
-        phone_pattern = r"^(\+\d{1,3})?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$"
-        if not re.match(phone_pattern, phone):
-            context.bot.send_message(
-                chat_id=chat_id,
-                text="Invalid phone number format. Please provide a valid phone number.",
-            )
-            return
-
         # temporarily add request to db queue
         add_request_to_queue(
             {

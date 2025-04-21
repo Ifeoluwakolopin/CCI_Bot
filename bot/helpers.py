@@ -19,7 +19,9 @@ def find_text_for_callback(callback_query: CallbackQuery) -> str | None:
     Returns:
         str | None: The text of the button that matches the callback_data, or None if no match is found.
     """
+    print(f"Callback query: {callback_query}")
     callback_data = callback_query.data
+    print(f"Callback data: {callback_data}")
     inline_keyboard = callback_query.message.reply_markup.inline_keyboard
 
     for row in inline_keyboard:
