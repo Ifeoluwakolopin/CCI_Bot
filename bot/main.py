@@ -56,6 +56,7 @@ from chat.chat_callback_handlers import (
     counselor_transfer,
 )
 from dotenv import dotenv_values, load_dotenv
+from bot.helpers import create_day_buttons
 
 load_dotenv()
 
@@ -240,27 +241,30 @@ def cb_handle(update, context):
             month = q_head[1]
             if month in ["9", "4", "6", "11"]:
                 last_day = 30
-            elif month in ["2"]:
-                last_day = 29
+            elif month == "2":
+                last_day = 29  # Assuming leap year to be safe
             else:
                 last_day = 31
 
-            total_days = range(1, last_day + 1)
-
+            # Create a proper grid of day buttons (7 days per row)
             day_buttons = []
-            rows = 3
-            cols = 10
-            for i in range(0, len(total_days), cols):
-                row = []
-                for j in range(cols):
-                    if i + j < len(total_days):
-                        day_num = total_days[i + j]
-                        row.append(
-                            InlineKeyboardButton(
-                                str(day_num), callback_data=f"bd={month}={day_num}"
-                            )
-                        )
-                day_buttons.append(row)
+            cols = 7  # 7 columns for days (like a calendar)
+
+            # Generate buttons for each day
+            current_row = []
+            for day in range(1, last_day + 1):
+                current_row.append(
+                    InlineKeyboardButton(str(day), callback_data=f"bd={month}={day}")
+                )
+
+                # Start a new row after reaching the column limit
+                if len(current_row) == cols:
+                    day_buttons.append(current_row)
+                    current_row = []
+
+            # Add any remaining buttons in the last row
+            if current_row:
+                day_buttons.append(current_row)
 
             context.bot.send_message(
                 chat_id=chat_id,
@@ -278,6 +282,7 @@ def cb_handle(update, context):
                     q.split("=")[1] + "/" + q.split("=")[2]
                 ),
             )
+            set_user_last_command(chat_id, None)
     elif q_head[0] == "get-sermon":
         if q_head[1] == "yes":
             context.bot.send_message(

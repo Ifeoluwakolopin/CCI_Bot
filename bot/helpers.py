@@ -4,6 +4,43 @@ from .database import set_user_active, get_countries
 from telegram import InlineKeyboardMarkup, CallbackQuery, InlineKeyboardButton
 
 
+def create_day_buttons(month, last_day):
+    """
+    Creates a properly formatted grid of day buttons for the given month.
+
+    Args:
+        month (str): The selected month number as a string
+        last_day (int): The last day of the month
+
+    Returns:
+        list: A nested list of InlineKeyboardButton objects properly arranged in rows and columns
+    """
+
+    # Define the grid dimensions
+    cols = 7  # 7 days per row is more intuitive (like a calendar)
+
+    # Initialize the button matrix
+    day_buttons = []
+    current_row = []
+
+    # Generate buttons for each day
+    for day in range(1, last_day + 1):
+        current_row.append(
+            InlineKeyboardButton(str(day), callback_data=f"bd={month}={day}")
+        )
+
+        # Start a new row after reaching the column limit
+        if len(current_row) == cols:
+            day_buttons.append(current_row)
+            current_row = []
+
+    # Add any remaining buttons in the last row
+    if current_row:
+        day_buttons.append(current_row)
+
+    return day_buttons
+
+
 def find_text_for_callback(callback_query: CallbackQuery) -> str | None:
     """
     Searches for the text associated with the callback_data within a callback_query object.
@@ -19,9 +56,7 @@ def find_text_for_callback(callback_query: CallbackQuery) -> str | None:
     Returns:
         str | None: The text of the button that matches the callback_data, or None if no match is found.
     """
-    print(f"Callback query: {callback_query}")
     callback_data = callback_query.data
-    print(f"Callback data: {callback_data}")
     inline_keyboard = callback_query.message.reply_markup.inline_keyboard
 
     for row in inline_keyboard:

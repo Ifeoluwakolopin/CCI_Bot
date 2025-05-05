@@ -35,9 +35,10 @@ def start(update, context):
     chat_id = update.effective_chat.id
     first_name = update.message.chat.first_name
     last_name = update.message.chat.last_name
+    username = update.message.chat.username
 
     # Create and add user to database
-    user = BotUser(chat_id, first_name, last_name)
+    user = BotUser(chat_id, first_name, last_name, username)
     add_user_to_db(user)
 
     # Set user as active
@@ -223,7 +224,7 @@ def handle_update_user(update, context):
     elif last_command[1] == "remove location":
         update = {"$pull": {"locations": msg}}
     elif last_command[1] == "location" and db.users.find_one(
-        {"chat_id": int(user_id), "role": "pastor"}
+        {"chat_id": int(user_id), "role": "counselor"}
     ):
         update = {"$addToSet": {"locations": msg}, "$set": {"location": msg}}
     else:
@@ -700,7 +701,7 @@ def handle_branch_selection_callback(update, context):
     else:
         branch = find_text_for_callback(update.callback_query)
 
-        if db.users.find_one({"chat_id": chat_id, "role": "pastor"}):
+        if db.users.find_one({"chat_id": chat_id, "role": "counselor"}):
             db.users.update_one(
                 {"chat_id": chat_id}, {"$addToSet": {"locations": branch}}
             )

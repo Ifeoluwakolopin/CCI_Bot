@@ -4,7 +4,11 @@ from datetime import datetime
 
 class BotUser:
     def __init__(
-        self, chat_id: int, first_name: str | None, last_name: str | None
+        self,
+        chat_id: int,
+        first_name: str | None,
+        last_name: str | None,
+        username: str | None = None,
     ) -> None:
         self.chat_id = chat_id
         self.first_name = first_name
@@ -18,6 +22,7 @@ class BotUser:
         self.birthday = "None"
         self.role = "user"
         self.location = None
+        self.username = username
 
     def to_dict(self):
         return {
@@ -33,6 +38,7 @@ class BotUser:
             "birthday": self.birthday,
             "role": self.role,
             "location": self.location,
+            "username": self.username,
         }
 
 

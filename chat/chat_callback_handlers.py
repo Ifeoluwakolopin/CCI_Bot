@@ -18,7 +18,7 @@ from bot.database import (
 
 def show_active_requests(update, context):
     chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id": chat_id, "role": "pastor"})
+    user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
     if user:
         if user.get("global") == True:
             topics = []
@@ -83,7 +83,7 @@ def show_active_requests(update, context):
 def notify_pastors(counseling_request):
     pastors = db.users.find(
         {
-            "role": "pastor",
+            "role": "counselor",
             "topics": counseling_request["topic"],
             "chat_id": {"$ne": counseling_request["user_chat_id"]},
         }
@@ -421,7 +421,11 @@ def counselor_transfer(update, context):
                 {"request_message_id": int(user["last_command"].split("=")[-1])}
             )
             pastors = db.users.find(
-                {"role": "pastor", "locations": req["location"], "topics": req["topic"]}
+                {
+                    "role": "counselor",
+                    "locations": req["location"],
+                    "topics": req["topic"],
+                }
             )
             last_command = user["last_command"]
             set_user_last_command(chat_id, f"transfer_req={last_command}")
@@ -611,7 +615,7 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
             location = db.counseling_requests.find_one(
                 {"request_message_id": int(user["last_command"].split("=")[-1])}
             )["location"]
-            pastors = db.users.find({"role": "pastor", "location": location})
+            pastors = db.users.find({"role": "counselor", "location": location})
             last_command = "=".join(user["last_command"].split("=")[-4:])
             set_user_last_command(chat_id, f"transfer_req={last_command}")
             context.bot.send_message(

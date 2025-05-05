@@ -50,8 +50,11 @@ def handle_counseling(update, context):
             reply_markup=updated_buttons,
         )
     else:
-        topic = find_text_for_callback(update.callback_query).lower()
-        topic_data = db.counseling_topics.find_one({"topic": topic})
+        topic = find_text_for_callback(update.callback_query).strip()
+
+        topic_data = db.counseling_topics.find_one(
+            {"topic": {"$regex": f"^{topic}$", "$options": "i"}}
+        )
 
         # get FAQs associated with selected topic
         questions = topic_data["faqs"]
