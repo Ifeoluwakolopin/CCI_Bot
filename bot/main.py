@@ -302,7 +302,6 @@ def cb_handle(update, context):
         handle_counseling_location_confirm(update, context)
     elif q_head[0] == "cr-yes":
         user_local_church = db.users.find_one({"chat_id": chat_id}).get("location")
-        print(user_local_church)
         db.counseling_requests.update_one(
             {"request_message_id": int(q_head[1])},
             {"$set": {"location": user_local_church}},

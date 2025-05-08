@@ -332,6 +332,19 @@ def cancel(update, context):
     try:
         if user["last_command"].startswith("in-conversation-with"):
             end_conversation_prompt(update, context)
+        elif user["last_command"].startswith("counselor_request"):
+            latest_request = db.counseling_requests.find_one(
+                {"user_chat_id": chat_id}, sort=[("created", -1)]
+            )
+
+            if latest_request:
+                db.counseling_requests.delete_one({"_id": latest_request["_id"]})
+                context.bot.send_message(
+                    chat_id=chat_id,
+                    text=config["messages"]["counselor_request_cancel"],
+                )
+
+            set_user_last_command(chat_id, None)
         elif user["last_command"].split("=")[0] == "transfer_req":
             # cancel a counseling transfer request
             context.bot.send_message(

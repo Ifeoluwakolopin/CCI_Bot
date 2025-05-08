@@ -31,6 +31,8 @@ def counseling(update: Update, context: CallbackContext):
     context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["counseling_start"],
+        parse_mode="markdown",
+        disable_web_page_preview=True,
         reply_markup=categories_keyboard,
     )
 
@@ -46,54 +48,19 @@ def handle_counseling(update, context):
         )
         context.bot.send_message(
             chat_id=chat_id,
-            text=config["messages"]["counseling_start"],
+            text=config["messages"]["counseling_start_view_more"],
             reply_markup=updated_buttons,
         )
     else:
         topic = find_text_for_callback(update.callback_query).strip()
 
-        topic_data = db.counseling_topics.find_one(
-            {"topic": {"$regex": f"^{topic}$", "$options": "i"}}
-        )
-
-        # get FAQs associated with selected topic
-        questions = topic_data["faqs"]
-
-        # get the ID of each FAQ, and use it as the message
-        ids = [faq["id"] for faq in questions]
-        topic_callback_info = f"faq={topic}"
-        # set the number of rows and columns for the buttons
-        row, cols = 1, 5
-
-        # Create buttons using the sliced FAQs
-        buttons = create_buttons_from_data(ids, topic_callback_info, row, cols)
-
-        # number of questions displayed to user at once
-        num_questions = row * cols
-
-        # Slicing the FAQs to match the number of buttons
-        displayed_faqs = questions[:num_questions]
-
-        # Format the questions for display
-        questions = "\n\n".join(
-            ["{0}. {1}".format(faq["id"], faq["q"]) for faq in displayed_faqs]
-        )
-
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["counseling_topic_reply"].format(
-                topic.capitalize(), questions
-            ),
-            reply_markup=buttons,
-        )
-
         # Add topic to database or update the count.
         update_counseling_topics(topic)
         # Send prompt to user to ask new question or request a counselor
-        ask_question_or_request_counselor(update, context, topic)
+        request_counselor(update, context, topic)
 
 
-def ask_question_or_request_counselor(update, context, topic):
+def request_counselor(update, context, topic):
     chat_id = update.effective_chat.id
     ask_question_or_counseling_keyboard = InlineKeyboardMarkup(
         [
@@ -108,7 +75,10 @@ def ask_question_or_request_counselor(update, context, topic):
     )
     context.bot.send_message(
         chat_id=chat_id,
-        text=config["messages"]["add_question_or_request_counselor"],
+        text=config["messages"]["add_question_or_request_counselor"].format(
+            topic.capitalize()
+        ),
+        parse_mode="markdown",
         reply_markup=ask_question_or_counseling_keyboard,
     )
 
@@ -242,12 +212,6 @@ def handle_counseling_info_confirm(update, context):
         else:
             PromptHelper.location_prompt(
                 chat_id, config["messages"]["lc_prompt_counseling"]
-            )
-            add_note(
-                update,
-                context,
-                config["messages"]["counselor_request_note_after_location"],
-                query[-1],
             )
 
     else:
