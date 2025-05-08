@@ -19,58 +19,8 @@ from bot.database import (
 def show_active_requests(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
-    if user:
-        if user.get("global") == True:
-            topics = []
-        else:
-            topics = user["topics"]
-        active_requests = get_active_counseling_requests(
-            topics=topics,
-        )
 
-        reqs = len(active_requests)
-        if reqs == 0:
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["active_requests_none"]
-            )
-        else:
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["active_requests"].format(reqs)
-            )
-            if reqs > 5:
-                top_reqs = active_requests[0:5]
-            else:
-                top_reqs = active_requests
-
-            for request in top_reqs:
-
-                created_date = request["created"]
-                formatted_date = created_date.strftime("%A, %B %d, %Y")
-
-                context.bot.send_message(
-                    chat_id=chat_id,
-                    text=config["messages"]["active_request"].format(
-                        request["name"],
-                        request["email"],
-                        request["phone"],
-                        request["topic"],
-                        request["note"],
-                    )
-                    + f"\nRequested on: {formatted_date}",
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(
-                                    "Start Conversation",
-                                    callback_data="conv="
-                                    + str(request["request_message_id"]),
-                                )
-                            ]
-                        ],
-                        resize_keyboard=True,
-                    ),
-                )
-    else:
+    if not user:
         keyboard = validate_user_keyboard(chat_id)
         context.bot.send_message(
             chat_id=chat_id,
@@ -78,17 +28,90 @@ def show_active_requests(update, context):
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
         set_user_last_command(chat_id, None)
+        return
+
+    # Step 1: Get topics this counselor is associated with
+    if user.get("global") == True:
+        topics = []  # Global access — allow all topics
+    else:
+        associated_topics = db.counseling_topics.find(
+            {"counselors": chat_id}, {"topic": 1}
+        )
+        topics = [doc["topic"] for doc in associated_topics]
+
+    # Step 2: Get active counseling requests for these topics
+    active_requests = get_active_counseling_requests(topics=topics)
+
+    reqs = len(active_requests)
+    if reqs == 0:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["active_requests_none"]
+        )
+        return
+
+    context.bot.send_message(
+        chat_id=chat_id, text=config["messages"]["active_requests"].format(reqs)
+    )
+
+    # Show top 5 or fewer requests
+    top_reqs = active_requests[:5]
+
+    for request in top_reqs:
+        created_date = request["created"]
+        formatted_date = created_date.strftime("%A, %B %d, %Y")
+
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["active_request"].format(
+                request["name"],
+                request["email"],
+                request["phone"],
+                request["topic"],
+                request["note"],
+            )
+            + f"\nRequested on: {formatted_date}",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "Start Conversation",
+                            callback_data="conv=" + str(request["request_message_id"]),
+                        )
+                    ]
+                ],
+                resize_keyboard=True,
+            ),
+        )
 
 
 def notify_pastors(counseling_request):
+    # Step 1: Get topic document
+    topic_doc = db.counseling_topics.find_one({"topic": counseling_request["topic"]})
+
+    if not topic_doc or "counselors" not in topic_doc:
+        print("No counselors found for this topic.")
+        return
+
+    # Step 2: Filter out requesting user's chat_id
+
+    counselor_ids = [cid for cid in topic_doc["counselors"]]
+
+    if not counselor_ids:
+        print("No eligible counselors to notify.")
+        return
+
+    # Step 3: Get counselors by chat_id
     pastors = db.users.find(
         {
-            "role": "counselor",
-            "topics": counseling_request["topic"],
+            "$or": [
+                {"chat_id": {"$in": counselor_ids}},
+                {"role": "counselor", "global": True},
+            ],
             "chat_id": {"$ne": counseling_request["user_chat_id"]},
         }
     )
 
+    # Step 4: Send notifications
     for pastor in pastors:
         bot.send_message(
             chat_id=pastor["chat_id"], text=config["messages"]["active_request_notify"]
