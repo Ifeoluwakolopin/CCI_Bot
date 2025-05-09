@@ -32,17 +32,17 @@ bc_buttons = [
     [KeyboardButton("How to broadcast")],
 ]
 
-counselor_keyboard = [KeyboardButton("Show Active Counseling Requests")]
-
-counselor_keyboard2 = [
-    KeyboardButton("/transfer"),
-]
+counselor_keyboard = (
+    [KeyboardButton("View Active Requests")]
+    + [KeyboardButton("Counselor Dashboard")]
+    + [
+        KeyboardButton("/transfer"),
+    ]
+)
 
 
 normal_keyboard = [sermon_buttons, buttons1]
-pastor_keyboard = (
-    [counseling_button] + normal_keyboard + [counselor_keyboard, counselor_keyboard2]
-)
+pastor_keyboard = [counseling_button] + normal_keyboard + [counselor_keyboard]
 admin_keyboard = pastor_keyboard + [buttons3]
 
 keyboard_commands = [
@@ -53,8 +53,8 @@ keyboard_commands = [
     "reboot camp",
     "statistics",
     "broadcast",
-    "show active counseling requests",
-    "counseling",
+    "view active requests",
+    "counselor dashboard" "counseling",
 ]
 
 

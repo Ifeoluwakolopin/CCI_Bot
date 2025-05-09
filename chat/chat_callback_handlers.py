@@ -438,8 +438,13 @@ def handle_counseling_feedback_cb(update, context):
 def counselor_transfer(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
-    if user["role"] == "pastor":
-        if user["last_command"].startswith("in-conversation-with"):
+    if user["role"] == "counselor":
+        if user["last_command"] is None:
+            context.bot.send_message(
+                chat_id=chat_id, text=config["messages"]["counselor_transfer_invalid"]
+            )
+            return
+        elif user["last_command"].startswith("in-conversation-with"):
             req = db.counseling_requests.find_one(
                 {"request_message_id": int(user["last_command"].split("=")[-1])}
             )
@@ -459,7 +464,7 @@ def counselor_transfer(update, context):
                     [
                         [
                             InlineKeyboardButton(
-                                "Pastor {}".format(pastor["first_name"]),
+                                "Counselor {}".format(pastor["first_name"]),
                                 callback_data="transfer=" + str(pastor["chat_id"]),
                             )
                         ]
@@ -468,10 +473,6 @@ def counselor_transfer(update, context):
                     ],
                     resize_keyboard=True,
                 ),
-            )
-        else:
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["counselor_transfer_invalid"]
             )
     else:
         keyboard = validate_user_keyboard(chat_id)

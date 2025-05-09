@@ -29,6 +29,10 @@ from .commands import (
     handle_update_user,
     find_user_message_handler,
     handle_broadcast,
+    counselor_dashboard,
+    handle_counselor_verification,
+    handle_counselor_topic_update,
+    handle_topic_selection,
 )
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
@@ -97,8 +101,10 @@ def handle_message_commands(update, context):
         reboot_about(update, context)
     elif title == "counseling":
         counseling(update, context)
-    elif title == "show active counseling requests":
+    elif title == "view active requests":
         show_active_requests(update, context)
+    elif title == "counselor dashboard":
+        counselor_dashboard(update, context)
     elif title == "location":
         set_church_location(update, context)
     else:
@@ -119,6 +125,10 @@ def handle_message_response(update, context):
         conversation_handler(update, context)
     elif last_command == "find_user":
         find_user_message_handler(update, context)
+    elif last_command == "select_topics":
+        handle_topic_selection(update, context)
+    elif last_command == "verify_counselor":
+        handle_counselor_verification(update, context)
     elif last_command.startswith("update_user"):
         handle_update_user(update, context)
     elif last_command == "get_sermon":
@@ -324,6 +334,8 @@ def cb_handle(update, context):
         counselor_transfer_callback_handler(update, context)
     elif q_head[0] == "transfer_req_confirm":
         counselor_transfer_msg_confirm_cb_handler(update, context)
+    elif q_head[0] == "update_topics":
+        handle_counselor_topic_update(update, context)
 
 
 msg_handler = MessageHandler(Filters.all & (~Filters.command), handle_message_response)

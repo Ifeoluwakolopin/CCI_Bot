@@ -1,3 +1,4 @@
+import os
 import json
 from . import bot, db, config
 from .models import BotUser
@@ -18,6 +19,7 @@ from .database import (
     get_church_locations,
 )
 from datetime import date, datetime
+from bson.int64 import Int64
 from chat.chat_callback_handlers import end_conversation_prompt
 from .scrapers import WebScrapers
 from .keyboards import validate_user_keyboard
@@ -328,8 +330,9 @@ def cancel(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
     keyboard = validate_user_keyboard(chat_id)
+    print("User last command:", user["last_command"])
 
-    try:
+    if user["last_command"] is not None:
         if user["last_command"].startswith("in-conversation-with"):
             end_conversation_prompt(update, context)
         elif user["last_command"].startswith("counselor_request"):
@@ -361,17 +364,7 @@ def cancel(update, context):
                     }
                 },
             )
-        else:
-            # cancel any other action
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["cancel"],
-                parse_mode="Markdown",
-                disable_web_page_preview="True",
-                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-            )
-            set_user_last_command(chat_id, None)
-    except:
+    else:
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["cancel"],
@@ -796,4 +789,179 @@ def notify_in_conversation(chat_id):
         chat_id=chat_id,
         text=config["messages"]["in_conversation"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+    )
+
+
+def counselor_dashboard(update, context):
+    """
+    Displays the counselor's dashboard or prompts for counselor verification.
+    """
+    chat_id = Int64(update.effective_chat.id)
+    user = db.users.find_one({"chat_id": chat_id})
+
+    if not user or user.get("role") != "counselor":
+        # Prompt for counselor verification
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["not_counselor_prompt"],
+        )
+        # Optionally store a temporary state if you’re tracking command flows
+        db.users.update_one(
+            {"chat_id": chat_id}, {"$set": {"last_command": "verify_counselor"}}
+        )
+        return
+
+    # Count requests handled
+    requests_answered = db.counseling_requests.count_documents(
+        {"counselor_chat_id": chat_id}
+    )
+
+    # Topics assigned
+    if user.get("global"):
+        topic_docs = db.counseling_topics.find({}, {"topic": 1})
+    else:
+        topic_docs = db.counseling_topics.find({"counselors": chat_id}, {"topic": 1})
+
+    topics = [doc["topic"] for doc in topic_docs]
+
+    # Use message template from config
+    dashboard_message = config["messages"]["counselor_dashboard"].format(
+        name=f"{user.get('first_name', '')} {user.get('last_name', '')}".strip(),
+        requests=requests_answered,
+        access="Global Access" if user.get("global") else "Assigned",
+        topics=(
+            "\n".join([f"• {t}" for t in topics]) if topics else "_No topics assigned._"
+        ),
+    )
+
+    update_topic_keyboard = [
+        [
+            InlineKeyboardButton(
+                "Update Topics",
+                callback_data="update_topics=" + str(chat_id),
+            )
+        ]
+    ]
+
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=dashboard_message,
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(update_topic_keyboard),
+    )
+
+
+def handle_counselor_verification(update, context):
+    """
+    Handles the verification of a counselor.
+    """
+    chat_id = Int64(update.effective_chat.id)
+    password = update.message.text.strip()
+    if password == os.getenv("COUNSELOR_PASSWORD"):
+        keyboard = validate_user_keyboard(chat_id)
+        db.users.update_one({"chat_id": chat_id}, {"$set": {"role": "counselor"}})
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["counselor_verified"],
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        )
+        set_user_last_command(chat_id, None)
+    else:
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["counselor_verification_failed"],
+        )
+
+
+def handle_counselor_topic_update(update, context):
+    """
+    Handles the update of counseling topics for a counselor.
+    """
+    chat_id = Int64(update.effective_chat.id)
+    user = db.users.find_one({"chat_id": chat_id})
+
+    if not user or user.get("role") != "counselor":
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["not_counselor_prompt"],
+        )
+        db.users.update_one(
+            {"chat_id": chat_id}, {"$set": {"last_command": "verify_counselor"}}
+        )
+        return
+
+    # Fetch and display all topics
+    topics = list(db.counseling_topics.find({}, {"topic": 1}))
+    context.user_data["available_topics"] = topics  # Store temporarily
+
+    message = config["messages"]["update_topics_prompt"] + "\n\n"
+    for idx, topic in enumerate(topics, start=1):
+        message += f"{idx}. {topic['topic']}\n"
+
+    message += "\n" + config["messages"]["topic_selection_instruction"]
+
+    db.users.update_one(
+        {"chat_id": chat_id}, {"$set": {"last_command": "select_topics"}}
+    )
+
+    context.bot.send_message(chat_id=chat_id, text=message)
+
+
+def handle_topic_selection(update, context):
+    """
+    Processes the counselor's selected topics and updates their assignments.
+    """
+    chat_id = Int64(update.effective_chat.id)
+    user = db.users.find_one({"chat_id": chat_id})
+
+    if not user or user.get("role") != "counselor":
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["not_counselor_prompt"]
+        )
+        return
+
+    text = update.message.text.strip()
+    selected_indexes = text.split(",")
+
+    try:
+        indexes = [int(i.strip()) for i in selected_indexes]
+    except ValueError:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["invalid_topic_input"]
+        )
+        return
+
+    topics = context.user_data.get("available_topics", [])
+    selected_topics = []
+
+    for i in indexes:
+        if 1 <= i <= len(topics):
+            selected_topics.append(topics[i - 1]["topic"])
+
+    if not selected_topics:
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["no_valid_topics"]
+        )
+        return
+
+    # Update counselor assignments: Add to selected topics, remove from all others
+    all_topic_docs = list(db.counseling_topics.find({}, {"topic": 1}))
+    all_topic_names = [t["topic"] for t in all_topic_docs]
+
+    for topic_name in all_topic_names:
+        if topic_name in selected_topics:
+            db.counseling_topics.update_one(
+                {"topic": topic_name}, {"$addToSet": {"counselors": chat_id}}
+            )
+        else:
+            db.counseling_topics.update_one(
+                {"topic": topic_name}, {"$pull": {"counselors": chat_id}}
+            )
+
+    db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["topics_updated_confirmation"].format(
+            topics=", ".join(selected_topics)
+        ),
     )
