@@ -1,49 +1,40 @@
 from . import db
 from telegram import KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
-sermon_buttons = [
-    KeyboardButton("latest sermon"),
-    KeyboardButton("get sermon"),
-]
+from telegram import KeyboardButton
+
+# Buttons grouped by rows
+sermon_buttons = [[KeyboardButton("latest sermon"), KeyboardButton("get sermon")]]
 
 buttons1 = [
-    # TODO: Uncomment when MAP is properly fixed
-    # KeyboardButton("map"),
-    KeyboardButton("help"),
-    KeyboardButton("location"),
+    [KeyboardButton("help"), KeyboardButton("location")],
+    # [KeyboardButton("map")]  # Uncomment when ready
 ]
 
-counseling_button = [
-    KeyboardButton("counseling"),
-]
+counseling_button = [[KeyboardButton("counseling")]]
 
 buttons3 = [
-    KeyboardButton("statistics"),
-    KeyboardButton("broadcast"),
-    KeyboardButton("find user"),
+    [KeyboardButton("statistics"), KeyboardButton("broadcast")],
+    [KeyboardButton("find user")],
 ]
 
 bc_buttons = [
-    [
-        KeyboardButton("text"),
-        KeyboardButton("video"),
-    ],
+    [KeyboardButton("text"), KeyboardButton("video")],
     [KeyboardButton("photo"), KeyboardButton("animation")],
     [KeyboardButton("How to broadcast")],
 ]
 
-counselor_keyboard = (
-    [KeyboardButton("View Active Requests")]
-    + [KeyboardButton("Counselor Dashboard")]
-    + [
-        KeyboardButton("/transfer"),
-    ]
-)
+counselor_keyboard = [
+    [KeyboardButton("View Active Requests")],
+    [KeyboardButton("Counselor Dashboard")],
+    [KeyboardButton("/transfer")],
+]
 
+# Combine keypads by rows
+normal_keyboard = counseling_button + sermon_buttons + buttons1
+pastor_keyboard = normal_keyboard + counselor_keyboard
+admin_keyboard = pastor_keyboard + buttons3
 
-normal_keyboard = [sermon_buttons, buttons1]
-pastor_keyboard = [counseling_button] + normal_keyboard + [counselor_keyboard]
-admin_keyboard = pastor_keyboard + [buttons3]
 
 keyboard_commands = [
     "latest sermon",
@@ -54,7 +45,8 @@ keyboard_commands = [
     "statistics",
     "broadcast",
     "view active requests",
-    "counselor dashboard" "counseling",
+    "counselor dashboard",
+    "counseling",
 ]
 
 

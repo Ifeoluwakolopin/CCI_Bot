@@ -330,7 +330,6 @@ def cancel(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
     keyboard = validate_user_keyboard(chat_id)
-    print("User last command:", user["last_command"])
 
     if user["last_command"] is not None:
         if user["last_command"].startswith("in-conversation-with"):
@@ -858,8 +857,8 @@ def handle_counselor_verification(update, context):
     chat_id = Int64(update.effective_chat.id)
     password = update.message.text.strip()
     if password == os.getenv("COUNSELOR_PASSWORD"):
-        keyboard = validate_user_keyboard(chat_id)
         db.users.update_one({"chat_id": chat_id}, {"$set": {"role": "counselor"}})
+        keyboard = validate_user_keyboard(chat_id)
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_verified"],

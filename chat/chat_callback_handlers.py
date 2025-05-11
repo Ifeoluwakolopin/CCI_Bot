@@ -8,6 +8,7 @@ from bot.keyboards import (
     normal_keyboard,
     pastor_keyboard,
 )
+from bson import Int64
 from bot.database import (
     set_user_last_command,
     get_user_last_command,
@@ -315,45 +316,58 @@ def set_conversation_status(counselor_id, user_id, active):
 
 
 def end_conversation_cb_handler(update, context):
-    chat_id = update.effective_chat.id
+    chat_id = Int64(update.effective_chat.id)
     q = update.callback_query.data
     q_head = q.split("=")
-    user = db.users.find_one({"chat_id": chat_id})
 
-    if user["role"] == "pastor":
-        keyboard1, keyboard2 = pastor_keyboard, normal_keyboard
-        pastor_id = chat_id
-        user_id = int(q_head[3])
-        other = "pastor"
+    user = db.users.find_one({"chat_id": chat_id})
+    last_command = user.get("last_command", "")
+
+    # Parse from "in-conversation-with={other_id}=user|pastor={request_message_id}"
+    try:
+        _, other_id_str, role_str, msg_id_str = last_command.split("=")
+        other_id = Int64(other_id_str)
+        request_message_id = int(msg_id_str)
+        role = "counselor" if role_str == "pastor" else "user"
+    except (ValueError, IndexError):
+        context.bot.send_message(
+            chat_id=chat_id, text="⚠️ Could not parse conversation context."
+        )
+        return
+
+    # Set roles accordingly
+    if role == "counselor":
+        actor_role = "user"
+        actor_keyboard = normal_keyboard
+        other_keyboard = pastor_keyboard
+        user_id, counselor_id = chat_id, other_id
     else:
-        keyboard1, keyboard2 = normal_keyboard, pastor_keyboard
-        user_id = chat_id
-        pastor_id = int(q_head[3])
-        other = "user"
+        actor_role = "counselor"
+        actor_keyboard = pastor_keyboard
+        other_keyboard = normal_keyboard
+        user_id, counselor_id = other_id, chat_id
 
     if q_head[1] == "yes":
+        # Confirm to actor
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["conversation_end_confirm"],
-            reply_markup=ReplyKeyboardMarkup(keyboard1, resize_keyboard=True),
+            reply_markup=ReplyKeyboardMarkup(actor_keyboard, resize_keyboard=True),
         )
+        # Notify the other participant
         context.bot.send_message(
-            chat_id=pastor_id,
-            text=config["messages"]["conversation_end_notify"].format(other),
-            reply_markup=ReplyKeyboardMarkup(keyboard2, resize_keyboard=True),
+            chat_id=other_id,
+            text=config["messages"]["conversation_end_notify"].format(actor_role),
+            reply_markup=ReplyKeyboardMarkup(other_keyboard, resize_keyboard=True),
         )
-        # update counseling_request status to completed
-        set_counseling_request_status(
-            int(user["last_command"].split("=")[-1]), "completed"
-        )
-        # update conversation status to completed
-        set_conversation_status(user_id, pastor_id, False)
 
-        # update user last_command to None
+        set_counseling_request_status(request_message_id, "completed")
+        set_conversation_status(user_id, counselor_id, False)
         set_user_last_command(chat_id, None)
-        set_user_last_command(pastor_id, None)
-        # Ask user to provide feedback on their conversation.
-        request_counseling_feedback_from_user(user_id, pastor_id)
+        set_user_last_command(other_id, None)
+
+        # Trigger feedback from the user about the counselor
+        request_counseling_feedback_from_user(user_id, counselor_id)
     else:
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["conversation_end_cancel"]
@@ -435,46 +449,15 @@ def handle_counseling_feedback_cb(update, context):
     set_user_last_command(chat_id, None)
 
 
+from bson.int64 import Int64
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
+
+
 def counselor_transfer(update, context):
-    chat_id = update.effective_chat.id
+    chat_id = Int64(update.effective_chat.id)
     user = db.users.find_one({"chat_id": chat_id})
-    if user["role"] == "counselor":
-        if user["last_command"] is None:
-            context.bot.send_message(
-                chat_id=chat_id, text=config["messages"]["counselor_transfer_invalid"]
-            )
-            return
-        elif user["last_command"].startswith("in-conversation-with"):
-            req = db.counseling_requests.find_one(
-                {"request_message_id": int(user["last_command"].split("=")[-1])}
-            )
-            pastors = db.users.find(
-                {
-                    "role": "counselor",
-                    "locations": req["location"],
-                    "topics": req["topic"],
-                }
-            )
-            last_command = user["last_command"]
-            set_user_last_command(chat_id, f"transfer_req={last_command}")
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["counselor_transfer_prompt"],
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "Counselor {}".format(pastor["first_name"]),
-                                callback_data="transfer=" + str(pastor["chat_id"]),
-                            )
-                        ]
-                        for pastor in pastors
-                        if pastor is not user
-                    ],
-                    resize_keyboard=True,
-                ),
-            )
-    else:
+
+    if user.get("role") != "counselor":
         keyboard = validate_user_keyboard(chat_id)
         context.bot.send_message(
             chat_id=chat_id,
@@ -482,36 +465,115 @@ def counselor_transfer(update, context):
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
         set_user_last_command(chat_id, None)
+        return
+
+    last_command = user.get("last_command")
+    if not last_command or not last_command.startswith("in-conversation-with"):
+        context.bot.send_message(
+            chat_id=chat_id, text=config["messages"]["counselor_transfer_invalid"]
+        )
+        return
+
+    try:
+        request_msg_id = int(last_command.split("=")[-1])
+    except (IndexError, ValueError):
+        context.bot.send_message(
+            chat_id=chat_id,
+            text="Could not extract request ID from your current session.",
+        )
+        return
+
+    req = db.counseling_requests.find_one({"request_message_id": request_msg_id})
+    if not req:
+        context.bot.send_message(chat_id=chat_id, text="Counseling request not found.")
+        return
+
+    topic = req["topic"]
+    user_chat_id = Int64(req["user_chat_id"])
+
+    # Step 1: Get counselors from the topic
+    topic_doc = db.counseling_topics.find_one({"topic": topic})
+    topic_counselors = topic_doc.get("counselors", []) if topic_doc else []
+
+    # Step 2: Get global counselors
+    global_counselors_cursor = db.users.find(
+        {"role": "counselor", "global": True}, {"chat_id": 1}
+    )
+    global_counselors = [Int64(p["chat_id"]) for p in global_counselors_cursor]
+
+    # Step 3: Combine and deduplicate
+    eligible_ids = list(set(topic_counselors + global_counselors))
+
+    # Step 4: Filter out current counselor and the user
+    eligible_ids = [
+        cid for cid in eligible_ids if cid != chat_id and cid != user_chat_id
+    ]
+
+    # Step 5: Query user info
+    pastors = db.users.find({"chat_id": {"$in": eligible_ids}})
+
+    # Save transfer state
+    set_user_last_command(chat_id, f"transfer_req={last_command}")
+
+    # Create buttons
+    buttons = [
+        [
+            InlineKeyboardButton(
+                f"Counselor {pastor.get('first_name', '')}",
+                callback_data=f"transfer={pastor['chat_id']}",
+            )
+        ]
+        for pastor in pastors
+    ]
+
+    if not buttons:
+        context.bot.send_message(
+            chat_id=chat_id, text="No eligible counselors found for transfer."
+        )
+        return
+
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["counselor_transfer_prompt"],
+        reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True),
+    )
 
 
 def counselor_transfer_callback_handler(update, context):
-    chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id": chat_id})
+    chat_id = Int64(update.effective_chat.id)
     q = update.callback_query.data
     q_head = q.split("=")
-    pastor = db.users.find_one({"chat_id": int(q_head[1])})
+    new_counselor_id = Int64(q_head[1])
+
+    user = db.users.find_one({"chat_id": chat_id})
+    new_pastor = db.users.find_one({"chat_id": new_counselor_id})
+
     context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["counselor_transfer_details"].format(
-            pastor["first_name"]
+            new_pastor["first_name"]
         ),
     )
+
     last_command = "=".join(user["last_command"].split("=")[-4:])
-    set_user_last_command(chat_id, f"transfer_req={q_head[1]}={last_command}")
+    set_user_last_command(chat_id, f"transfer_req={new_counselor_id}={last_command}")
 
 
 def counselor_transfer_msg_handler(update, context):
-    chat_id = update.effective_chat.id
+    chat_id = Int64(update.effective_chat.id)
     user = db.users.find_one({"chat_id": chat_id})
     msg = update.message.text.strip()
+
     try:
-        id = int(user["last_command"].split("=")[1])
-        user_id = int(user["last_command"].split("=")[-3])
+        parts = user["last_command"].split("=")
+        new_counselor_id = Int64(parts[1])
+        user_id = Int64(parts[-3])
 
         db.conversations.update_one(
             {"counselor_id": chat_id, "user_chat_id": user_id, "active": True},
             {"$set": {"counselor_transfer_msg": msg}},
         )
+
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_transfer_msg_confirm"],
@@ -520,149 +582,174 @@ def counselor_transfer_msg_handler(update, context):
                     [
                         InlineKeyboardButton(
                             "Complete Transfer",
-                            callback_data="transfer_req_confirm=true=" + str(id),
+                            callback_data=f"transfer_req_confirm=true={new_counselor_id}",
                         )
                     ],
                     [
                         InlineKeyboardButton(
                             "Edit",
-                            callback_data="transfer_req_confirm=false=" + str(id),
+                            callback_data=f"transfer_req_confirm=false={new_counselor_id}",
                         )
                     ],
-                ],
-                resize_keyboard=True,
+                ]
             ),
         )
-    except:
-        last_command = user["last_command"].split("=")[2:]
-        set_user_last_command(chat_id, f"transfer_req={'='.join(last_command)}")
+
+    except Exception:
+        # Retry by re-setting the last_command
+        last_command = "=".join(user["last_command"].split("=")[2:])
+        set_user_last_command(chat_id, f"transfer_req={last_command}")
         context.bot.send_message(
-            chat_id=chat_id,
-            text=config["messages"]["counselor_transfer_msg_prompt"],
+            chat_id=chat_id, text=config["messages"]["counselor_transfer_msg_prompt"]
         )
+
+
+from bson.int64 import Int64
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 
 
 def counselor_transfer_msg_confirm_cb_handler(update, context):
-    chat_id = update.effective_chat.id
+    chat_id = Int64(update.effective_chat.id)
     user = db.users.find_one({"chat_id": chat_id})
-    q = update.callback_query.data
-    q_head = q.split("=")
-    new_pastor = db.users.find_one({"chat_id": int(q_head[2])})
-    if user["last_command"] is not None:
-        last_commands = user["last_command"].split("=")
-        if q_head[1] == "true":
-            # send confirmation
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["counselor_transfer_confirm"].format(
-                    new_pastor["first_name"]
-                ),
-            )
-            # update counseling request to set the new pastor as the counselor for this request
-            db.counseling_requests.update_one(
-                {"request_message_id": int(last_commands[-1])},
-                {
-                    "$set": {
-                        "counselor_chat_id": new_pastor["chat_id"],
-                        "transfer_from": chat_id,
-                        "status": "pending",
-                    }
-                },
-            )
+    callback_data = update.callback_query.data
+    q_head = callback_data.split("=")
+    new_counselor_id = Int64(q_head[2])
+    new_pastor = db.users.find_one({"chat_id": new_counselor_id})
 
-            counseling_request = db.counseling_requests.find_one(
-                {"request_message_id": int(last_commands[-1])}
-            )
-
-            # update the conversation to set the new pastor as the counselor for this conversation
-            db.conversations.update_one(
-                {
-                    "counselor_id": chat_id,
-                    "user_chat_id": int(last_commands[-3]),
-                    "active": True,
-                },
-                {
-                    "$set": {
-                        "counselor_id": new_pastor["chat_id"],
-                        "transfer_from": chat_id,
-                    }
-                },
-            )
-            conv = db.conversations.find_one(
-                {
-                    "counselor_id": new_pastor["chat_id"],
-                    "transfer_from": chat_id,
-                    "active": True,
-                }
-            )
-
-            # notify new pastor of transfer
-            context.bot.send_message(
-                chat_id=new_pastor["chat_id"],
-                text=config["messages"]["counselor_transfer_notify"].format(
-                    user["first_name"],
-                    counseling_request["name"],
-                    counseling_request["email"],
-                    counseling_request["phone"],
-                    counseling_request["topic"],
-                    counseling_request["note"],
-                    user["first_name"],
-                    conv["counselor_transfer_msg"],
-                ),
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "Continue Conversation",
-                                callback_data="conv="
-                                + str(counseling_request["request_message_id"]),
-                            )
-                        ]
-                    ],
-                    resize_keyboard=True,
-                ),
-            )
-            user_chat_id = int(user["last_command"].split("=")[-3])
-            # notify user of transfer
-
-            feedback_keyboard = get_counseling_feedback_keyboard(user_chat_id, chat_id)
-            context.bot.send_message(
-                chat_id=user_chat_id,
-                text=config["messages"]["counselor_transfer_notify_user"].format(
-                    new_pastor["first_name"], user["first_name"]
-                ),
-                reply_markup=feedback_keyboard,
-            )
-            set_user_last_command(user_chat_id, None)
-            set_user_last_command(chat_id, None)
-        else:
-            location = db.counseling_requests.find_one(
-                {"request_message_id": int(user["last_command"].split("=")[-1])}
-            )["location"]
-            pastors = db.users.find({"role": "counselor", "location": location})
-            last_command = "=".join(user["last_command"].split("=")[-4:])
-            set_user_last_command(chat_id, f"transfer_req={last_command}")
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["counselor_transfer_edit"],
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "Pastor {}".format(pastor["first_name"]),
-                                callback_data="transfer=" + str(pastor["chat_id"]),
-                            )
-                        ]
-                        for pastor in pastors
-                    ],
-                    resize_keyboard=True,
-                ),
-            )
-    else:
+    if not user or not user.get("last_command"):
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counseling_request_transferred"],
             reply_markup=ReplyKeyboardMarkup(
                 validate_user_keyboard(chat_id), resize_keyboard=True
+            ),
+        )
+        return
+
+    parts = user["last_command"].split("=")
+    transfer_confirmed = q_head[1] == "true"
+    original_request_msg_id = int(parts[-1])
+    original_user_chat_id = Int64(parts[-3])
+
+    if transfer_confirmed:
+        # ✅ Step 1: Confirm transfer to user
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["counselor_transfer_confirm"].format(
+                new_pastor["first_name"]
+            ),
+        )
+
+        # ✅ Step 2: Update the counseling request
+        db.counseling_requests.update_one(
+            {"request_message_id": original_request_msg_id},
+            {
+                "$set": {
+                    "counselor_chat_id": new_counselor_id,
+                    "transfer_from": chat_id,
+                    "status": "pending",
+                }
+            },
+        )
+        counseling_request = db.counseling_requests.find_one(
+            {"request_message_id": original_request_msg_id}
+        )
+
+        # ✅ Step 3: Update the conversation
+        db.conversations.update_one(
+            {
+                "counselor_id": chat_id,
+                "user_chat_id": original_user_chat_id,
+                "active": True,
+            },
+            {"$set": {"counselor_id": new_counselor_id, "transfer_from": chat_id}},
+        )
+        conv = db.conversations.find_one(
+            {"counselor_id": new_counselor_id, "transfer_from": chat_id, "active": True}
+        )
+
+        # ✅ Step 4: Notify the new counselor
+        context.bot.send_message(
+            chat_id=new_counselor_id,
+            text=config["messages"]["counselor_transfer_notify"].format(
+                user["first_name"],
+                counseling_request["name"],
+                counseling_request["email"],
+                counseling_request["phone"],
+                counseling_request["topic"],
+                counseling_request["note"],
+                user["first_name"],
+                conv.get("counselor_transfer_msg", "No message provided."),
+            ),
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "Continue Conversation",
+                            callback_data=f"conv={original_request_msg_id}",
+                        )
+                    ]
+                ],
+                resize_keyboard=True,
+            ),
+        )
+
+        # ✅ Step 5: Notify the user (who made the request)
+        feedback_keyboard = get_counseling_feedback_keyboard(
+            original_user_chat_id, chat_id
+        )
+        context.bot.send_message(
+            chat_id=original_user_chat_id,
+            text=config["messages"]["counselor_transfer_notify_user"].format(
+                new_pastor["first_name"], user["first_name"]
+            ),
+            reply_markup=feedback_keyboard,
+        )
+
+        # ✅ Step 6: Reset states
+        set_user_last_command(original_user_chat_id, None)
+        set_user_last_command(chat_id, None)
+
+    else:
+        # ❌ Transfer was not confirmed – show alternative counselors again
+
+        request_doc = db.counseling_requests.find_one(
+            {"request_message_id": original_request_msg_id}
+        )
+        topic = request_doc["topic"]
+        user_chat_id = request_doc["user_chat_id"]
+
+        topic_doc = db.counseling_topics.find_one({"topic": topic})
+        topic_ids = topic_doc.get("counselors", []) if topic_doc else []
+
+        global_cursor = db.users.find(
+            {"role": "counselor", "global": True}, {"chat_id": 1}
+        )
+        global_ids = [Int64(p["chat_id"]) for p in global_cursor]
+
+        eligible_ids = list(set(topic_ids + global_ids))
+        eligible_ids = [
+            cid for cid in eligible_ids if cid != chat_id and cid != user_chat_id
+        ]
+
+        pastors = db.users.find({"chat_id": {"$in": eligible_ids}})
+
+        last_command = "=".join(user["last_command"].split("=")[-4:])
+        set_user_last_command(chat_id, f"transfer_req={last_command}")
+
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["counselor_transfer_edit"],
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            f"Counselor {pastor.get('first_name', '')}",
+                            callback_data=f"transfer={pastor['chat_id']}",
+                        )
+                    ]
+                    for pastor in pastors
+                ],
+                resize_keyboard=True,
             ),
         )
