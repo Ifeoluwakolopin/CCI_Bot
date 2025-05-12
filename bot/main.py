@@ -99,11 +99,11 @@ def handle_message_commands(update, context):
         cancel(update, context)
     elif title == "reboot camp":
         reboot_about(update, context)
-    elif title == "counseling" or "counselling":
+    elif title == "counseling":
         counseling(update, context)
     elif title == "view active requests":
         show_active_requests(update, context)
-    elif title == "counselor dashboard" or "counsellor dashboard":
+    elif title == "counselor dashboard":
         counselor_dashboard(update, context)
     elif title == "location":
         set_church_location(update, context)
