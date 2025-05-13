@@ -908,7 +908,7 @@ def handle_counselor_topic_update(update, context):
 
 def handle_topic_selection(update, context):
     """
-    Processes the counselor's selected topics and updates their assignments.
+    Adds selected topics to the counselor's current assignments.
     """
     chat_id = Int64(update.effective_chat.id)
     user = db.users.find_one({"chat_id": chat_id})
@@ -943,19 +943,11 @@ def handle_topic_selection(update, context):
         )
         return
 
-    # Update counselor assignments: Add to selected topics, remove from all others
-    all_topic_docs = list(db.counseling_topics.find({}, {"topic": 1}))
-    all_topic_names = [t["topic"] for t in all_topic_docs]
-
-    for topic_name in all_topic_names:
-        if topic_name in selected_topics:
-            db.counseling_topics.update_one(
-                {"topic": topic_name}, {"$addToSet": {"counselors": chat_id}}
-            )
-        else:
-            db.counseling_topics.update_one(
-                {"topic": topic_name}, {"$pull": {"counselors": chat_id}}
-            )
+    # ✅ Add to each selected topic (no removal)
+    for topic_name in selected_topics:
+        db.counseling_topics.update_one(
+            {"topic": topic_name}, {"$addToSet": {"counselors": chat_id}}
+        )
 
     db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
     context.bot.send_message(
