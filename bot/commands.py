@@ -363,6 +363,13 @@ def cancel(update, context):
                     }
                 },
             )
+        elif user["last_command"] == "verify_counselor":
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=config["messages"].get("cancel", "Action cancelled."),
+                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            )
+            set_user_last_command(chat_id, None)
     else:
         context.bot.send_message(
             chat_id=chat_id,
