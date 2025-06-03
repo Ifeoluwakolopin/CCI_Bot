@@ -7,7 +7,7 @@
     "add_question_or_request_counselor": "You want to speak to a counselor about {0}.\n\nTap the button below to confirm, and get started.\n\nUse /cancel to cancel operation at any time.",
     "ask_for_a_counselor_text": "Speak to a Counselor",
     "ask_question_text": "Ask a Question",
-    "ask_question": "Please type in the question you would like to ask.\nYou will be notified when your question has been answered.\nYou cna also suggest a new category of questions in your feedback.\n\nUse /cancel to cancel operation otherwise.",
+    "ask_question": "Please type in the question you would like to ask.\nYou will be notified when your question has been answered.\nYou can also suggest a new category of questions in your feedback.\n\nUse /cancel to cancel operation otherwise.",
     "ask_question_success": "Your question has been sent to the CCI Counseling team.\n\nYou will be notified when a response is posted.\n\nUse /menu to go back to the main menu.",
     "bc": "Enter {} you want to broadcast:\n\nUse /cancel to cancel operation.",
     "bc_prompt": "How to use broadcast types. You can send the following kind of messages as broadcasts\n\n👉 text - Send written text broadcast to all users\n👉 photo - Send a photo with/without caption as broadcast.\n👉 video - Send a video clip (must be less than 50mb) as broadcast with/without caption\n👉 animation - Send short animated gif as broadcast with/without caption.\n\nTo proceed, type in the message you would like to broadcast in the tab below. Note that once you hit send, your message (text/image/audio) will be sent to ALL users on this platform so be cautious!\n\nUse /cancel to cancel operation.",
