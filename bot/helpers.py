@@ -236,7 +236,6 @@ class PromptHelper:
         buttons = create_month_buttons()
 
         try:
-            print("Sending birthday prompt to user")
             bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_prompt"].format(user["first_name"]),

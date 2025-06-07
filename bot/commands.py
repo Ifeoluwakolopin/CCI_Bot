@@ -49,8 +49,9 @@ def start(update, context):
     # Send welcome message
     send_welcome_message(chat_id, first_name, context.bot)
 
-    # Trigger birthday prompt
-    PromptHelper.birthday_prompt(update, context)
+    db.users.update_one(
+        {"chat_id": chat_id}, {"$set": {"last_command": "first_time_location_set"}}
+    )
 
 
 def send_welcome_message(chat_id, first_name, bot):
@@ -75,6 +76,30 @@ def send_welcome_message(chat_id, first_name, bot):
         parse_mode="Markdown",
         disable_web_page_preview="True",
         reply_markup=buttons,
+    )
+
+
+def handle_location_not_set_first_time(update, context):
+    """
+    Handles the case where a user has not set their location for the first time.
+    Prompts the user to set their church location.
+    """
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["location_not_set_first_time"],
+    )
+
+
+def handle_birthday_not_set(update, context):
+    """
+    Handles the case where a user has not set their birthday.
+    Prompts the user to set their birthday.
+    """
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["birthday_not_set"],
     )
 
 
@@ -711,6 +736,15 @@ def handle_branch_selection_callback(update, context):
             text=config["messages"]["lc_done"].format(branch),
         )
 
+        if db.user.find_one(
+            {"chat_id": chat_id, "last_command": "first_time_location_set"}
+        ):
+            PromptHelper.birthday_prompt(chat_id)
+            db.users.update_one(
+                {"chat_id": chat_id},
+                {"$set": {"last_command": "first_time_birthday_set"}},
+            )
+
 
 def stats(update, context):
     """
@@ -799,7 +833,6 @@ def counselor_dashboard(update, context):
             chat_id=chat_id,
             text=config["messages"]["not_counselor_prompt"],
         )
-        # Optionally store a temporary state if you’re tracking command flows
         db.users.update_one(
             {"chat_id": chat_id}, {"$set": {"last_command": "verify_counselor"}}
         )

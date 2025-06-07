@@ -33,6 +33,8 @@ from .commands import (
     handle_counselor_verification,
     handle_counselor_topic_update,
     handle_topic_selection,
+    handle_location_not_set_first_time,
+    handle_birthday_not_set,
 )
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
@@ -121,6 +123,10 @@ def handle_message_response(update, context):
 
     if last_command == None:
         handle_message_commands(update, context)
+    elif last_command == "first_time_location_set":
+        handle_location_not_set_first_time(update, context)
+    elif last_command == "first_time_birthday_set":
+        handle_birthday_not_set(update, context)
     elif last_command.startswith("in-conversation-with"):
         conversation_handler(update, context)
     elif last_command == "find_user":
