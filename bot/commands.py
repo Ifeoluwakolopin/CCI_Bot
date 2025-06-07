@@ -383,6 +383,16 @@ def cancel(update, context):
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             )
             set_user_last_command(chat_id, None)
+        else:
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=config["messages"]["cancel"],
+                parse_mode="Markdown",
+                disable_web_page_preview="True",
+                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            )
+            set_user_last_command(chat_id, None)
+
     else:
         context.bot.send_message(
             chat_id=chat_id,
@@ -736,9 +746,8 @@ def handle_branch_selection_callback(update, context):
             text=config["messages"]["lc_done"].format(branch),
         )
 
-        if db.user.find_one(
-            {"chat_id": chat_id, "last_command": "first_time_location_set"}
-        ):
+        user = db.users.find_one({"chat_id": chat_id})
+        if user["last_command"] == "first_time_location_set":
             PromptHelper.birthday_prompt(chat_id)
             db.users.update_one(
                 {"chat_id": chat_id},
