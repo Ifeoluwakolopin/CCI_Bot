@@ -3,12 +3,8 @@ from telegram import KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 from telegram import KeyboardButton
 
-# Buttons grouped by rows
-sermon_buttons = [[KeyboardButton("latest sermon"), KeyboardButton("get sermon")]]
-
 buttons1 = [
-    [KeyboardButton("help"), KeyboardButton("location")],
-    # [KeyboardButton("map")]  # Uncomment when ready
+    [KeyboardButton("help"), KeyboardButton("location"), KeyboardButton("get sermon")],
 ]
 
 counseling_button = [[KeyboardButton("counseling")]]
@@ -31,14 +27,12 @@ counselor_keyboard = [
 ]
 
 # Combine keypads by rows
-normal_keyboard = counseling_button + sermon_buttons + buttons1
+normal_keyboard = counseling_button + buttons1
 pastor_keyboard = normal_keyboard + counselor_keyboard
 admin_keyboard = pastor_keyboard + buttons3
 
 
 keyboard_commands = [
-    "latest sermon",
-    "get sermon",
     "map",
     "help",
     "reboot camp",

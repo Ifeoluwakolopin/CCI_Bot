@@ -46,17 +46,14 @@ def start(update, context):
     # Set user as active
     set_user_active(chat_id, True)
 
-    # Determine keyboard based on user status
-    keyboard = validate_user_keyboard(chat_id)
-
     # Send welcome message
-    send_welcome_message(chat_id, first_name, context.bot, keyboard)
+    send_welcome_message(chat_id, first_name, context.bot)
 
-    # Trigger additional prompts
-    trigger_additional_prompts(chat_id)
+    # Trigger birthday prompt
+    PromptHelper.birthday_prompt(update, context)
 
 
-def send_welcome_message(chat_id, first_name, bot, keyboard):
+def send_welcome_message(chat_id, first_name, bot):
     """
     Sends a welcome message to the user.
 
@@ -64,30 +61,21 @@ def send_welcome_message(chat_id, first_name, bot, keyboard):
         chat_id (int): The chat ID of the user.
         first_name (str): The first name of the user.
         bot (Bot): The bot instance.
-        keyboard (list): The keyboard to be sent with the message.
     """
     welcome_message = config["messages"]["start"].format(first_name)
+
+    countries = get_countries()
+
+    rows, cols = 4, 1
+    buttons = create_buttons_from_data(countries, "loc", rows, cols)
+
     bot.send_message(
         chat_id=chat_id,
         text=welcome_message,
         parse_mode="Markdown",
         disable_web_page_preview="True",
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        reply_markup=buttons,
     )
-
-
-def trigger_additional_prompts(chat_id):
-    """
-    Triggers additional prompts for the user.
-
-    Args:
-        chat_id (int): The chat ID of the user.
-    """
-    user = db.users.find_one({"chat_id": chat_id})
-    PromptHelper.location_prompt(
-        chat_id, config["messages"]["lc"].format(user["first_name"])
-    )
-    PromptHelper.birthday_prompt(chat_id)
 
 
 def bc_setup(update, context):
