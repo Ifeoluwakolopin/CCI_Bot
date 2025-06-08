@@ -177,18 +177,6 @@ def handle_counseling_info_confirm(update, context):
     query = update.callback_query.data.split("=")
 
     if query[1] == "yes":
-        last_command = db.users.find_one(
-            {"chat_id": chat_id}, {"last_command": 1, "_id": 0}
-        )[last_command]
-        db.counseling_requests.update_one(
-            {"request_message_id": int(query[2])},
-            {
-                "$set": {
-                    "topic": last_command.split("=")[1],
-                },
-            },
-        )
-        set_user_last_command(chat_id, None)
         user_local_church = db.users.find_one(
             {"chat_id": chat_id}, {"location": 1, "_id": 0}
         ).get("location")
