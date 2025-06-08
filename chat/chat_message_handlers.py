@@ -185,29 +185,30 @@ def handle_counseling_info_confirm(update, context):
             branch = user_local_church.capitalize()
         else:
             branch = "Not specified"
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=config["messages"]["counselor_request_location_confirm"].format(
-                    branch
-                ),
-                reply_markup=InlineKeyboardMarkup(
+
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["counselor_request_location_confirm"].format(
+                branch
+            ),
+            reply_markup=InlineKeyboardMarkup(
+                [
                     [
-                        [
-                            InlineKeyboardButton(
-                                "Yes, this is correct",
-                                callback_data="confirm_loc=yes=" + str(query[-1]),
-                            )
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                "No, I want to make a change",
-                                callback_data="confirm_loc=no=" + str(query[-1]),
-                            )
-                        ],
+                        InlineKeyboardButton(
+                            "Yes, this is correct",
+                            callback_data="confirm_loc=yes=" + str(query[-1]),
+                        )
                     ],
-                    resize_keyboard=True,
-                ),
-            )
+                    [
+                        InlineKeyboardButton(
+                            "No, I want to make a change",
+                            callback_data="confirm_loc=no=" + str(query[-1]),
+                        )
+                    ],
+                ],
+                resize_keyboard=True,
+            ),
+        )
 
     else:
         context.bot.send_message(

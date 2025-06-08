@@ -1,6 +1,7 @@
 from datetime import datetime
 from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from bot import db, bot, config
+from bson.int64 import Int64
 from bot.keyboards import (
     validate_user_keyboard,
     get_counseling_feedback_keyboard,
@@ -602,10 +603,6 @@ def counselor_transfer_msg_handler(update, context):
         context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_transfer_msg_prompt"]
         )
-
-
-from bson.int64 import Int64
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 
 
 def counselor_transfer_msg_confirm_cb_handler(update, context):
