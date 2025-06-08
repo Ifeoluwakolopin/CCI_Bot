@@ -230,6 +230,10 @@ def handle_counseling_location_confirm(update, context):
         PromptHelper.location_prompt(
             chat_id, config["messages"]["lc_prompt_counseling"]
         )
+        db.users.update_one(
+            {"chat_id": chat_id},
+            {"$set": {"last_command": "location_counseling=" + str(query[-1])}},
+        )
 
 
 def handle_get_faq_callback(update, context):

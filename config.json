@@ -89,6 +89,7 @@
     "location3": "To join a MAP center in {0}.{1}",
     "location4": "\n\nContact {} on {}.\n\nUse /cancel to end your search.",
     "location_not_set_first_time":"It seems you have not yet a default CCI branch near you.\n\nPlease set your location using the prompt above, otherwise tap /cancel to ignore this message.",
+    "location_not_set_for_counseling":"It seems you're still in the middle of setting your location for a counseling request. Click the buttons from the prompt above to do that, otherwise tap /cancel to cancel this action.",
     "map": "Meet and Pray(MAP)\n\nMAP is a platform where members residing around the same geographical location gather to pray and break bread.\n\n",
     "map_feedback": "Can't find a MAP centre close to you😔?\n\nSend us a mail: celebrationnigeria@gmail.com",
     "menu": "Here you go.",

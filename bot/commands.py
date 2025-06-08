@@ -92,6 +92,18 @@ def handle_location_not_set_first_time(update, context):
     )
 
 
+def handle_location_not_set_for_counseling(update, context):
+    """
+    Handles the case where a user has not set their location for counseling.
+    Prompts the user to set their church location.
+    """
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=config["messages"]["location_not_set_for_counseling"],
+    )
+
+
 def handle_birthday_not_set(update, context):
     """
     Handles the case where a user has not set their birthday.
@@ -348,11 +360,12 @@ def cancel(update, context):
     if user["last_command"] is not None:
         if user["last_command"].startswith("in-conversation-with"):
             end_conversation_prompt(update, context)
-        elif user["last_command"].startswith("counselor_request"):
+        elif user["last_command"].startswith("counselor_request") or user[
+            "last_command"
+        ].startswith("location_counseling"):
             latest_request = db.counseling_requests.find_one(
                 {"user_chat_id": chat_id}, sort=[("created", -1)]
             )
-
             if latest_request:
                 db.counseling_requests.delete_one({"_id": latest_request["_id"]})
                 context.bot.send_message(
