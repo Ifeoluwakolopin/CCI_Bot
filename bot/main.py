@@ -62,7 +62,6 @@ from chat.chat_callback_handlers import (
     counselor_transfer,
 )
 from dotenv import dotenv_values, load_dotenv
-from bot.helpers import create_day_buttons
 
 load_dotenv()
 
@@ -103,6 +102,8 @@ def handle_message_commands(update, context):
         reboot_about(update, context)
     elif title == "counseling":
         counseling(update, context)
+    elif title == "menu":
+        menu(update, context)
     elif title == "view active requests":
         show_active_requests(update, context)
     elif title == "counselor dashboard":
@@ -353,11 +354,7 @@ def main(deploy: bool = False) -> None:
     dp.add_handler(CommandHandler("mute", mute))
     dp.add_handler(CommandHandler("unmute", unmute))
     dp.add_handler(CommandHandler("cancel", cancel))
-    dp.add_handler(CommandHandler("menu", menu))
-    dp.add_handler(CommandHandler("blog", blog_posts))
-    dp.add_handler(CommandHandler("campuses", set_church_location))
     dp.add_handler(CommandHandler("feedback", feedback))
-    dp.add_handler(CommandHandler("membership", membership_school))
     dp.add_handler(CommandHandler("transfer", counselor_transfer))
     dp.add_handler(msg_handler)
     dp.add_handler(cb_handler)

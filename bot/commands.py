@@ -9,6 +9,7 @@ from .helpers import (
     create_buttons_from_data,
     handle_view_more,
     find_text_for_callback,
+    add_note,
 )
 from .database import (
     add_user_to_db,
@@ -735,11 +736,6 @@ def handle_branch_selection_callback(update, context):
         )
     else:
         branch = find_text_for_callback(update.callback_query)
-
-        if db.users.find_one({"chat_id": chat_id, "role": "counselor"}):
-            db.users.update_one(
-                {"chat_id": chat_id}, {"$addToSet": {"locations": branch}}
-            )
         db.users.update_one({"chat_id": chat_id}, {"$set": {"location": branch}})
         context.bot.send_message(
             chat_id=chat_id,
@@ -752,6 +748,15 @@ def handle_branch_selection_callback(update, context):
             db.users.update_one(
                 {"chat_id": chat_id},
                 {"$set": {"last_command": "first_time_birthday_set"}},
+            )
+        if user["last_command"].startswith("location_counseling"):
+            msg_id = user["last_command"].split("=")[-1]
+            set_user_last_command(chat_id, None)
+            add_note(
+                update,
+                context,
+                config["messages"]["counselor_request_note"],
+                msg_id,
             )
 
 

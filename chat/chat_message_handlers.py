@@ -90,10 +90,6 @@ def handle_ask_question_or_request_counselor(update, context):
 
     if user_request == config["messages"]["ask_for_a_counselor_text"]:
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["counselor_request_start"]
-        )
-        time.sleep(1)
-        context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_request_yes"],
         )
@@ -186,10 +182,13 @@ def handle_counseling_info_confirm(update, context):
         ).get("location")
 
         if user_local_church:
+            branch = user_local_church.capitalize()
+        else:
+            branch = "Not specified"
             context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["counselor_request_location_confirm"].format(
-                    user_local_church.capitalize()
+                    branch
                 ),
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -209,10 +208,6 @@ def handle_counseling_info_confirm(update, context):
                     resize_keyboard=True,
                 ),
             )
-        else:
-            PromptHelper.location_prompt(
-                chat_id, config["messages"]["lc_prompt_counseling"]
-            )
 
     else:
         context.bot.send_message(
@@ -220,7 +215,6 @@ def handle_counseling_info_confirm(update, context):
             text=config["messages"]["counselor_request_invalid_info"],
         )
         db.counseling_requests.delete_one({"request_message_id": int(query[2])})
-        print("deleted")
 
 
 def handle_counseling_location_confirm(update, context):
@@ -234,12 +228,6 @@ def handle_counseling_location_confirm(update, context):
     else:
         PromptHelper.location_prompt(
             chat_id, config["messages"]["lc_prompt_counseling"]
-        )
-        add_note(
-            update,
-            context,
-            config["messages"]["counselor_request_note_after_location"],
-            query[-1],
         )
 
 
@@ -281,12 +269,6 @@ def handle_get_faq_callback(update, context):
         if num_questions == len(questions):
             ask_question_or_counseling_keyboard = InlineKeyboardMarkup(
                 [
-                    [
-                        InlineKeyboardButton(
-                            config["messages"]["ask_question_text"],
-                            callback_data=f"qa_or_c={topic}=" + str(0),
-                        )
-                    ],
                     [
                         InlineKeyboardButton(
                             config["messages"]["ask_for_a_counselor_text"],

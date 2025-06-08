@@ -72,7 +72,17 @@ def add_user_to_db(user: BotUser) -> Result:
             db.users.insert_one(user.__dict__)
             return Result.SUCCESS
         else:
-            db.users.update_one({"chat_id": user.chat_id}, {"$set": user.__dict__})
+            db.users.update_one(
+                {"chat_id": user.chat_id},
+                {
+                    "$set": {
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "username": user.username,
+                    }
+                },
+            )
+
             return Result.SKIPPED
     except Exception as e:
         return Result.ERROR(e.__str__())

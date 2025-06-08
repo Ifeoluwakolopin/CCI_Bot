@@ -4,7 +4,11 @@ from telegram import KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import KeyboardButton
 
 buttons1 = [
-    [KeyboardButton("help"), KeyboardButton("location"), KeyboardButton("get sermon")],
+    [
+        KeyboardButton("help"),
+        KeyboardButton("location"),
+    ],
+    [KeyboardButton("get sermon"), KeyboardButton("menu")],
 ]
 
 counseling_button = [[KeyboardButton("counseling")]]
@@ -35,6 +39,7 @@ admin_keyboard = pastor_keyboard + buttons3
 keyboard_commands = [
     "map",
     "help",
+    "menu",
     "reboot camp",
     "statistics",
     "broadcast",
