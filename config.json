@@ -84,6 +84,7 @@
     "lc_confirm": "Thank you for your feedback! ☺️\nYour response will help us give you better updates.🤩",
     "lc_country": "Please select the specific branch in {} you attend",
     "lc_done": "Great, you have now set your location to {}.\n\nYou can change your location at any time by typing the word 'location'.",
+    "lc_prompt_counseling": "Please select the CCI branch you would like to set as your default location for counseling requests.\n\nThis will help us provide you with the best counseling experience.\n\nTap /cancel to cancel operation.",
     "location": "📍Find MAP locations closest to you.\n\nUse the buttons to make selections.\n\nTap /cancel to cancel action.",
     "location2": "Where in {} do you want to find a MAP centre?",
     "location3": "To join a MAP center in {0}.{1}",
