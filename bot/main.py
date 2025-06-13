@@ -363,7 +363,7 @@ def main(deploy: bool = False) -> None:
     dp.add_handler(cb_handler)
 
     if deploy:
-        URL = "https://cci-bot.herokuapp.com/"
+        URL = "https://cci-bot-be313a646eb4.herokuapp.com/"
         updater.start_webhook(
             listen="0.0.0.0", port=int(PORT), url_path=os.getenv("BOT_TOKEN")
         )
