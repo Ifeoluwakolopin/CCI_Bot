@@ -865,6 +865,10 @@ def counselor_dashboard(update, context):
         )
         return
 
+    total_pending_requests = db.counseling_requests.count_documents(
+        {"status": "pending"}
+    )
+    total_counselors = db.users.count_documents({"role": "counselor"})
     # Count requests handled
     requests_answered = db.counseling_requests.count_documents(
         {"counselor_chat_id": chat_id}
@@ -881,6 +885,8 @@ def counselor_dashboard(update, context):
     # Use message template from config
     dashboard_message = config["messages"]["counselor_dashboard"].format(
         name=f"{user.get('first_name', '')} {user.get('last_name', '')}".strip(),
+        pending=total_pending_requests,
+        c_avail=total_counselors,
         requests=requests_answered,
         access="Global Access" if user.get("global") else "Assigned",
         topics=(
