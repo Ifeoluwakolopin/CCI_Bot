@@ -115,6 +115,8 @@ def notify_pastors(counseling_request):
 
     # Step 4: Send notifications
     for pastor in pastors:
+        if str(pastor.get("last_command", "")).startswith("in-conversation-with"):
+            continue
         bot.send_message(
             chat_id=pastor["chat_id"], text=config["messages"]["active_request_notify"]
         )
