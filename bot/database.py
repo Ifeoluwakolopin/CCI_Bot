@@ -220,7 +220,7 @@ def add_request_to_queue(counseling_request: dict) -> None:
 
 def get_active_counseling_requests(topics: list = None, locations: list = None):
     # Base query to find active pending requests
-    query = {"active": True, "status": "pending"}
+    query = {"active": True, "status": "pending", "counselor_chat_id": None}
 
     # Add topic filter only if topics list is provided and not empty
     if topics and len(topics) > 0:
@@ -234,12 +234,6 @@ def get_active_counseling_requests(topics: list = None, locations: list = None):
     requests = db.counseling_requests.find(query).sort("created", 1)
 
     return list(requests)
-
-
-def set_counseling_request_activity(request_id: str):
-    db.counseling_requests.update_one(
-        {"request_message_id": request_id}, {"$set": {"active": False}}
-    )
 
 
 def set_counseling_request_status(request_id: str, status: str):

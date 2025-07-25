@@ -24,7 +24,7 @@
     "broadcast_type": "Choose broadcast type📣📣\nYou can check out how to use broadcast by clicking the 'How to broadcast' button below.\n\nTap /cancel to cancel operation.",
     "cancel": "You have successfully cancelled action.",
     "church": "{}📍\n[{}]({})",
-    "conversation_already_started": "Sorry, this counseling request has already been picked up by another Counselor and is currently being attended to.\n\nPlease select another request from the ones above or use the button below to get unattended counseling requests.\n\nThank you.",
+    "conversation_already_started": "Sorry, this counseling request has already been picked up by  Counselor {} and is currently being attended to.\n\nPlease check in with this counselor or select another request from the ones above or use the button below to get unattended counseling requests.\n\nThank you.",
     "conversation_end_prompt": "Are you sure you want to end this conversation?\n\nThe {} you are currently speaking to will be notified when you end the conversation.",
     "conversation_end_cancel": "Okay! Keep sending messages to continue your counseling session.",
     "conversation_end_confirm": "You have successfully ended this conversation. Thank you for your time.",

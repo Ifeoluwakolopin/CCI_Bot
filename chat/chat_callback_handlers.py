@@ -202,8 +202,13 @@ def handle_initial_conversation_cb(update, context):
         start_conversation(chat_id, req)
         set_counseling_request_status(req["request_message_id"], "ongoing")
     else:
+        counselor_chat_id = req.get("counselor_chat_id")
+        counselor_name = db.users.find_one({"chat_id": counselor_chat_id})["first_name"]
         context.bot.send_message(
-            chat_id=chat_id, text=config["messages"]["conversation_already_started"]
+            chat_id=chat_id,
+            text=config["messages"]["conversation_already_started"].format(
+                counselor_name
+            ),
         )
 
 
