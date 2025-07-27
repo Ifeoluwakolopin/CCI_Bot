@@ -17,9 +17,7 @@ from .commands import (
     unmute,
     menu,
     done,
-    blog_posts,
     feedback,
-    membership_school,
     feedback_cb_handler,
     set_church_location,
     find_user,
@@ -52,6 +50,7 @@ from chat.chat_message_handlers import (
 )
 from chat.chat_callback_handlers import (
     show_active_requests,
+    show_new_requests,
     conversation_handler,
     counselor_transfer_msg_confirm_cb_handler,
     counselor_transfer_msg_handler,
@@ -59,6 +58,7 @@ from chat.chat_callback_handlers import (
     handle_initial_conversation_cb,
     end_conversation_cb_handler,
     handle_counseling_feedback_cb,
+    mark_request_completed_cb,
     counselor_transfer_callback_handler,
     counselor_transfer,
 )
@@ -107,6 +107,8 @@ def handle_message_commands(update, context):
         menu(update, context)
     elif title == "view active requests":
         show_active_requests(update, context)
+    elif title == "view new requests":
+        show_new_requests(update, context)
     elif title == "counselor dashboard":
         counselor_dashboard(update, context)
     elif title == "location":

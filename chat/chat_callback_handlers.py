@@ -14,11 +14,83 @@ from bot.database import (
     set_user_last_command,
     get_user_last_command,
     get_active_counseling_requests,
+    get_ongoing_counseling_requests,
     set_counseling_request_status,
 )
 
 
 def show_active_requests(update, context):
+    chat_id = update.effective_chat.id
+    user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
+
+    if not user:
+        keyboard = validate_user_keyboard(chat_id)
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["unknown"],
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        )
+        set_user_last_command(chat_id, None)
+        return
+
+    # Get all ongoing counseling requests (no filtering by topic/location)
+    ongoing_requests = get_ongoing_counseling_requests()
+
+    reqs = len(ongoing_requests)
+    if reqs == 0:
+        context.bot.send_message(
+            chat_id=chat_id,
+            text="There are no ongoing counseling requests at the moment.",
+        )
+        return
+
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=f"There are currently {reqs} ongoing counseling requests.\n\nHere are the ongoing sessions (oldest first):",
+    )
+
+    # Show all ongoing requests (up to 20)
+    for request in ongoing_requests:
+        # Get counselor name
+        counselor = db.users.find_one({"chat_id": request["counselor_chat_id"]})
+        counselor_name = (
+            counselor.get("first_name", "Unknown") if counselor else "Unknown"
+        )
+
+        # Truncate note to first 20 characters
+        note_preview = (
+            request["note"][:20] + "..."
+            if len(request["note"]) > 20
+            else request["note"]
+        )
+
+        created_date = request["created"]
+        formatted_date = created_date.strftime("%A, %B %d, %Y")
+
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=f"📋 *Ongoing Session*\n\n"
+                 f"👤 *Name:* {request['name']}\n"
+                 f"📧 *Email:* {request['email']}\n"
+                 f"📞 *Phone:* {request['phone']}\n"
+                 f"🏷️ *Category:* {request['topic']}\n"
+                 f"👨‍💼 *Counselor:* {counselor_name}\n"
+                 f"💬 *Note Preview:* {note_preview}\n"
+                 f"📅 *Started:* {formatted_date}",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "Mark as Completed",
+                            callback_data=f"mark_complete={request['request_message_id']}",
+                        )
+                    ]
+                ],
+                resize_keyboard=True,
+            ),
+        )
+def show_new_requests(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
 
@@ -455,6 +527,84 @@ def handle_counseling_feedback_cb(update, context):
         )
 
     set_user_last_command(chat_id, None)
+
+
+def mark_request_completed_cb(update, context):
+    chat_id = update.effective_chat.id
+    user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
+    
+    if not user:
+        keyboard = validate_user_keyboard(chat_id)
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=config["messages"]["unknown"],
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        )
+        return
+
+    q = update.callback_query.data
+    q_head = q.split("=")
+    request_message_id = int(q_head[1])
+    
+    # Get the counseling request
+    request = db.counseling_requests.find_one({"request_message_id": request_message_id})
+    
+    if not request:
+        context.bot.send_message(
+            chat_id=chat_id,
+            text="❌ Counseling request not found."
+        )
+        return
+    
+    if request.get("status") == "completed":
+        context.bot.send_message(
+            chat_id=chat_id,
+            text="✅ This counseling request has already been marked as completed."
+        )
+        return
+    
+    # Mark the request as completed
+    set_counseling_request_status(request_message_id, "completed")
+    
+    # Mark any active conversation as inactive
+    db.conversations.update_one(
+        {"from": request_message_id, "active": True},
+        {"$set": {"active": False, "completed_at": datetime.now()}}
+    )
+    
+    # Clear user last commands if they are in conversation
+    user_chat_id = request["user_chat_id"]
+    counselor_chat_id = request.get("counselor_chat_id")
+    
+    # Clear states for both users
+    set_user_last_command(user_chat_id, None)
+    if counselor_chat_id:
+        set_user_last_command(counselor_chat_id, None)
+    
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=f"✅ Counseling request for *{request['name']}* has been marked as completed.\n\n"
+             f"Both the user and counselor have been notified that the session has ended.",
+        parse_mode="Markdown"
+    )
+    
+    # Notify the user that the session has been completed
+    context.bot.send_message(
+        chat_id=user_chat_id,
+        text="✅ Your counseling session has been marked as completed by a counselor.\n\n"
+             "Thank you for using our counseling service. If you need further assistance, "
+             "please feel free to request another session.",
+        reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True),
+    )
+    
+    # Notify the assigned counselor if different from the one marking it complete
+    if counselor_chat_id and counselor_chat_id != chat_id:
+        context.bot.send_message(
+            chat_id=counselor_chat_id,
+            text=f"ℹ️ The counseling session with *{request['name']}* has been marked as completed by another counselor.",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardMarkup(pastor_keyboard, resize_keyboard=True),
+        )
 
 
 from bson.int64 import Int64

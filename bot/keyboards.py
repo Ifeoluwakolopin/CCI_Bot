@@ -26,6 +26,7 @@ bc_buttons = [
 
 counselor_keyboard = [
     [KeyboardButton("View Active Requests")],
+    [KeyboardButton("View New Requests")],
     [KeyboardButton("Counselor Dashboard")],
     [KeyboardButton("/transfer")],
 ]
@@ -44,6 +45,7 @@ keyboard_commands = [
     "statistics",
     "broadcast",
     "view active requests",
+    "view new requests",
     "counselor dashboard",
     "counseling",
 ]

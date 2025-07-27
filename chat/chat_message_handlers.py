@@ -1,5 +1,4 @@
 import re
-import time
 from datetime import datetime
 from bot import db, config
 from bot.helpers import (

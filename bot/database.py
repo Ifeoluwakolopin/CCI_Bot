@@ -236,6 +236,16 @@ def get_active_counseling_requests(topics: list = None, locations: list = None):
     return list(requests)
 
 
+def get_ongoing_counseling_requests():
+    # Query to find all ongoing requests (status = "ongoing" and has counselor assigned)
+    query = {"active": True, "status": "ongoing", "counselor_chat_id": {"$ne": None}}
+
+    # Execute the query, sorting by creation time (oldest first), limit to 20
+    requests = db.counseling_requests.find(query).sort("created", 1).limit(20)
+
+    return list(requests)
+
+
 def set_counseling_request_status(request_id: str, status: str):
     db.counseling_requests.update_one(
         {"request_message_id": request_id}, {"$set": {"status": status}}
