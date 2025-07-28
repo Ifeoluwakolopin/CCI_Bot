@@ -57,10 +57,15 @@ from chat.chat_callback_handlers import (
     notify_pastors,
     handle_initial_conversation_cb,
     end_conversation_cb_handler,
+    end_conversation_quick_cb_handler,
     handle_counseling_feedback_cb,
     mark_request_completed_cb,
     counselor_transfer_callback_handler,
     counselor_transfer,
+    follow_up_request_cb,
+    continue_conversation_cb,
+    cancel_follow_up_cb,
+    handle_active_requests_verification,
 )
 from dotenv import dotenv_values, load_dotenv
 
@@ -141,6 +146,8 @@ def handle_message_response(update, context):
         handle_topic_selection(update, context)
     elif last_command == "verify_counselor":
         handle_counselor_verification(update, context)
+    elif last_command == "verify_active_requests":
+        handle_active_requests_verification(update, context)
     elif last_command.startswith("update_user"):
         handle_update_user(update, context)
     elif last_command == "get_sermon":
@@ -334,8 +341,18 @@ def cb_handle(update, context):
         set_user_last_command(chat_id, "cr_yes=" + q_head[1])
     elif q_head[0] == "conv":
         handle_initial_conversation_cb(update, context)
+    elif q_head[0] == "mark_complete":
+        mark_request_completed_cb(update, context)
+    elif q_head[0] == "follow_up":
+        follow_up_request_cb(update, context)
+    elif q_head[0] == "continue_conv":
+        continue_conversation_cb(update, context)
+    elif q_head[0] == "cancel_follow_up":
+        cancel_follow_up_cb(update, context)
     elif q_head[0] == "end_conv":
         end_conversation_cb_handler(update, context)
+    elif q_head[0] == "end_conv_quick":
+        end_conversation_quick_cb_handler(update, context)
     elif q_head[0] == "faq":
         handle_get_faq_callback(update, context)
     elif q_head[0] == "feedback":

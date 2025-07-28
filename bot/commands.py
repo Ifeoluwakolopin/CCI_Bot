@@ -397,6 +397,13 @@ def cancel(update, context):
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             )
             set_user_last_command(chat_id, None)
+        elif user["last_command"] == "verify_active_requests":
+            context.bot.send_message(
+                chat_id=chat_id,
+                text="🚫 Active requests verification cancelled.",
+                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            )
+            set_user_last_command(chat_id, None)
         else:
             context.bot.send_message(
                 chat_id=chat_id,
@@ -762,7 +769,7 @@ def handle_branch_selection_callback(update, context):
                 {"chat_id": chat_id},
                 {"$set": {"last_command": "first_time_birthday_set"}},
             )
-        if user["last_command"].startswith("location_counseling"):
+        if user["last_command"] and user["last_command"].startswith("location_counseling"):
             msg_id = user["last_command"].split("=")[-1]
             set_user_last_command(chat_id, None)
             add_note(
