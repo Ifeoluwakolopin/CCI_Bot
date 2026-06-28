@@ -1,12 +1,13 @@
-import requests
 from datetime import datetime, timedelta
-from bot import bot, db, config, logger
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+
 from apscheduler.schedulers.blocking import BlockingScheduler
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+from bot import bot, config, db, logger
 from bot.commands import notify_new_sermon
 from bot.database import insert_sermon
+from bot.helpers import BroadcastHandlers, MessageHelper
 from bot.scrapers import WebScrapers
-from bot.helpers import MessageHelper, BroadcastHandlers
 
 sched = BlockingScheduler()
 
@@ -106,7 +107,7 @@ def notify_tickets():
     buttons = [
         [
             InlineKeyboardButton(
-                "Register for {} service".format(numbers[ticket.index(service) + 1]),
+                f"Register for {numbers[ticket.index(service) + 1]} service",
                 url=service["link"],
             )
         ]
@@ -128,8 +129,10 @@ def notify_tickets():
                 caption=config["messages"]["tickets"],
                 reply_markup=InlineKeyboardMarkup(buttons),
             )
-        except Exception as e:
-            pass
+        except Exception:
+            logger.exception(
+                "Failed to send ticket notification to chat_id=%s", user.get("chat_id")
+            )
 
 
 # @sched.scheduled_job('cron', day_of_week='mon-sat', hour=5)
@@ -161,11 +164,12 @@ def send_devotional():
                 db.users.update_one(
                     {"chat_id": user["chat_id"]}, {"$set": {"active": False}}
                 )
-            pass
+            logger.exception(
+                "Failed to send devotional to chat_id=%s", user.get("chat_id")
+            )
     u = db.users.count_documents({"mute": False, "active": True})
     db.devotionals.insert_one(d)
     logger.info(f"DEVOTIONAL: Sent devotional to {u} users")
-
 
 
 if __name__ == "__main__":

@@ -1,30 +1,35 @@
-import os
 import json
-from . import bot, db, config
-from .models import BotUser
+import os
+from datetime import date, datetime
+
+from bson.int64 import Int64
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
+
+from chat.chat_callback_handlers import end_conversation_prompt
+
+from . import bot, config, db, logger
+from .database import (
+    add_user_to_db,
+    get_church_locations,
+    get_countries,
+    get_map_locations,
+    get_user_last_command,
+    set_user_active,
+    set_user_last_command,
+)
 from .helpers import (
     BroadcastHandlers,
     MessageHelper,
     PromptHelper,
-    create_buttons_from_data,
-    handle_view_more,
-    find_text_for_callback,
     add_note,
+    create_buttons_from_data,
+    find_text_for_callback,
+    handle_view_more,
 )
-from .database import (
-    add_user_to_db,
-    set_user_active,
-    set_user_last_command,
-    get_user_last_command,
-    get_countries,
-    get_church_locations,
-)
-from datetime import date, datetime
-from bson.int64 import Int64
-from chat.chat_callback_handlers import end_conversation_prompt
-from .scrapers import WebScrapers
 from .keyboards import validate_user_keyboard
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
+from .map_utils import chunk_text, format_map_locations
+from .models import BotUser
+from .scrapers import WebScrapers
 
 
 def start(update, context):
@@ -282,10 +287,11 @@ def handle_broadcast(update, context):
     # Fetch all users to broadcast to
     users = db.users.distinct("chat_id", {"active": True})
 
-    print(f"FOund {len(users)} users to broadcast to")
-    print("Sample user id", users[0])
-
-    print("Message:", message)
+    logger.info(
+        "Preparing broadcast",
+        extra={"user_count": len(users), "sample_user_id": users[0] if users else None},
+    )
+    logger.debug("Broadcast message payload=%s", message)
 
     if message.text:
         BroadcastHandlers.broadcast_message(
@@ -572,8 +578,16 @@ def map_loc(update, context):
     """
     This handles requests for map locations.
     """
-    # TODO: redo map location prompt
-    pass
+    chat_id = update.effective_chat.id
+    locations = get_map_locations()
+    if locations:
+        message = f"{config['messages']['map']}{format_map_locations(locations)}"
+    else:
+        message = config["messages"]["map_feedback"]
+
+    for chunk in chunk_text(message):
+        context.bot.send_message(chat_id=chat_id, text=chunk)
+    set_user_last_command(chat_id, None)
 
 
 def menu(update, context):
@@ -639,7 +653,7 @@ def notify_new_sermon(chat_id, sermons):
             [InlineKeyboardButton(i, callback_data="s=" + i.split("-")[2])]
             for i in sermons
         ]
-    except:
+    except (IndexError, AttributeError):
         buttons = [[InlineKeyboardButton(i, callback_data="s=" + i)] for i in sermons]
     user = db.users.find_one({"chat_id": chat_id})
     try:
@@ -648,7 +662,8 @@ def notify_new_sermon(chat_id, sermons):
             text=config["messages"]["new_sermon"].format(user["first_name"]),
             reply_markup=InlineKeyboardMarkup(buttons),
         )
-    except:
+    except Exception:
+        logger.exception("Failed to notify user chat_id=%s about new sermon", chat_id)
         set_user_active(chat_id, False)
 
 
@@ -657,7 +672,6 @@ def unknown(update, context):
     This handles unrecognized commands.
     """
     chat_id = update.effective_chat.id
-    user = db.users.find_one({"chat_id": chat_id})
     keyboard = validate_user_keyboard(chat_id)
     context.bot.send_message(
         chat_id=chat_id,

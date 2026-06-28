@@ -1,10 +1,11 @@
-import requests
-import json
+import os
+from datetime import date as datetime
+
 import requests
 from bs4 import BeautifulSoup
-from datetime import date as datetime
 from dotenv import load_dotenv
-import os
+
+from bot import logger
 
 load_dotenv()
 
@@ -29,7 +30,8 @@ class WebScrapers:
                 {"image": event["logo"]["url"], "link": event["url"]}
                 for event in r.json()["events"]
             ]
-        except:
+        except (KeyError, TypeError, ValueError):
+            logger.exception("Failed to parse Eventbrite service tickets")
             return []
 
     @staticmethod
@@ -56,6 +58,7 @@ class WebScrapers:
         sermons = []
 
         for sermon in sermons_section:
+            image = title = link = download = None
             try:
                 image = sermon.find("img").get("src")
                 title = (
@@ -93,7 +96,11 @@ class WebScrapers:
                         "image": image,
                     }
                 )
-            except:
+            except AttributeError:
+                if not all([title, download, link, image]):
+                    logger.exception("Skipping malformed sermon card")
+                    continue
+                logger.info("Sermon video metadata missing for title=%s", title)
                 sermons.append(
                     {
                         "title": title,

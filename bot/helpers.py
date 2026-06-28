@@ -1,7 +1,10 @@
-from . import db, bot, config
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .database import set_user_active, get_countries
-from telegram import InlineKeyboardMarkup, CallbackQuery, InlineKeyboardButton
+
+from telegram import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+
+from . import bot, config, db, logger
+from .database import get_countries, set_user_active
+from .pagination import paginate_items
 
 
 def create_day_buttons(month, last_day):
@@ -83,28 +86,18 @@ def create_buttons_from_data(
     Returns:
         InlineKeyboardMarkup: The InlineKeyboardMarkup object with the created buttons.
     """
-    buttons = []
-    total_buttons = rows * cols
-    end_index = start_index + total_buttons
-    data_len = len(data)
-
-    # Limit end_index to the length of the data
-    end_index = min(end_index, data_len)
-
-    for idx, item in enumerate(data[start_index:end_index], start=start_index):
-        row_idx = (idx - start_index) // cols
-        if len(buttons) <= row_idx:
-            buttons.append([])
-
-        button_text = str(item)
-        callback_data = f"{callback_info}={idx}"
-        buttons[row_idx].append(
-            InlineKeyboardButton(button_text, callback_data=callback_data)
-        )
+    item_rows, next_index = paginate_items(data, rows, cols, start_index)
+    buttons = [
+        [
+            InlineKeyboardButton(str(item), callback_data=f"{callback_info}={idx}")
+            for idx, item in row
+        ]
+        for row in item_rows
+    ]
 
     # Add 'View More' button if there are more items to display
-    if data_len > end_index:
-        view_more_callback_data = f"{callback_info}=more={end_index}"
+    if next_index is not None:
+        view_more_callback_data = f"{callback_info}=more={next_index}"
         buttons.append(
             [InlineKeyboardButton("View More", callback_data=view_more_callback_data)]
         )
@@ -181,7 +174,8 @@ class PromptHelper:
                 reply_markup=buttons,
             )
             return True
-        except:
+        except Exception:
+            logger.exception("Failed to send location prompt to chat_id=%s", chat_id)
             set_user_active(chat_id, False)
             return False
 
@@ -217,7 +211,6 @@ class PromptHelper:
         # Create a custom function to build buttons with correct callback data
         def create_month_buttons():
             inline_buttons = []
-            rows = 3
             cols = 4
             for i in range(0, len(months), cols):
                 row = []
@@ -241,7 +234,8 @@ class PromptHelper:
                 text=config["messages"]["birthday_prompt"].format(user["first_name"]),
                 reply_markup=buttons,
             )
-        except:
+        except Exception:
+            logger.exception("Failed to send birthday prompt to chat_id=%s", chat_id)
             set_user_active(chat_id, False)
 
 
@@ -263,7 +257,8 @@ class MessageHelper:
                 chat_id=chat_id, text=message, disable_web_page_preview="True"
             )
             return True
-        except:
+        except Exception:
+            logger.exception("Failed to send text message to chat_id=%s", chat_id)
             return False
 
     @staticmethod
@@ -282,7 +277,8 @@ class MessageHelper:
         try:
             bot.send_photo(chat_id=chat_id, photo=photo, caption=caption)
             return True
-        except:
+        except Exception:
+            logger.exception("Failed to send photo to chat_id=%s", chat_id)
             return False
 
     @staticmethod
@@ -301,7 +297,8 @@ class MessageHelper:
         try:
             bot.send_animation(chat_id=chat_id, animation=animation, caption=caption)
             return True
-        except:
+        except Exception:
+            logger.exception("Failed to send animation to chat_id=%s", chat_id)
             return False
 
     @staticmethod
@@ -320,7 +317,8 @@ class MessageHelper:
         try:
             bot.send_video(chat_id=chat_id, video=video, caption=caption)
             return True
-        except:
+        except Exception:
+            logger.exception("Failed to send video to chat_id=%s", chat_id)
             return False
 
 
@@ -360,12 +358,21 @@ class BroadcastHandlers:
                 success, error = future.result()
                 if error:
                     failure_count += 1
-                    print(f"Error sending message to {chat_id}: {str(error)}")
+                    logger.error(
+                        "Error sending broadcast message to chat_id=%s",
+                        chat_id,
+                        exc_info=(type(error), error, error.__traceback__),
+                    )
                 else:
                     success_count += 1
 
         # Return statistics about the broadcast
-        print(
-            f"Broadcast completed: {success_count} successes, {failure_count} failures"
+        logger.info(
+            "Broadcast completed",
+            extra={
+                "total": len(users),
+                "success": success_count,
+                "failure": failure_count,
+            },
         )
         return {"total": len(users), "success": success_count, "failure": failure_count}

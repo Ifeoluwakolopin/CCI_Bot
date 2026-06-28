@@ -11,12 +11,13 @@ CCI Bot is a Python Telegram bot for Celebration Church International. It helps 
 - APScheduler for scheduled jobs in `jobs.py`
 - Requests + Beautiful Soup for web scraping sermon, devotional, location, and Eventbrite data
 - Docker and Docker Compose for containerized bot/scheduler processes
+- Pytest for pure-logic tests; Ruff and Black for incremental lint/format checks
 - Heroku-style `Procfile` and a self-hosted GitHub Actions deployment workflow
 
 ## Project structure
 
 ```text
-app.py                 # Starts the Telegram bot and blocking scheduler
+app.py                 # Starts the Telegram bot process
 jobs.py                # APScheduler jobs for birthdays, sermons, tickets, and devotionals
 bot/                   # Bot setup, commands, database helpers, keyboards, scrapers
 chat/                  # Counseling chat message and callback handlers
@@ -74,13 +75,13 @@ source .venv/bin/activate
 python app.py
 ```
 
-`python app.py` starts the bot in polling mode and then starts the blocking scheduler. For webhook deploy mode, use:
+`python app.py` starts the bot in polling mode. For webhook deploy mode, use:
 
 ```bash
 python app.py --deploy
 ```
 
-The scheduler can also be run directly:
+The scheduler runs as a separate process:
 
 ```bash
 python jobs.py
@@ -88,14 +89,16 @@ python jobs.py
 
 ## Validation
 
-There is no automated test suite in this repository yet. Use Python compilation as the current safety gate:
+Use the smallest validation gate that covers the files you changed:
 
 ```bash
 source .venv/bin/activate
+pytest
+ruff check bot/map_utils.py bot/pagination.py tests
 python -m compileall -q .
 ```
 
-Importing `app.py` is not used as a routine gate because module import initializes Telegram and MongoDB clients from environment variables.
+Importing `app.py` is not used as a routine gate because module import initializes Telegram and MongoDB clients from environment variables. Tests that need initialization should mock Telegram and MongoDB.
 
 ## Docker
 
@@ -117,4 +120,6 @@ The compose file starts separate `bot` and `scheduler` services and writes logs 
 
 ## Status and notes
 
-The bot is operational code with deployment assets, but maintainability tooling is light: there are no tests, linting, type checking, or formatter configuration yet. Several handlers catch broad exceptions and sometimes swallow errors, so changes should be validated carefully and logging should be improved when touching those paths.
+The bot is operational code with deployment assets. Maintainability work is now tracked in `PLAN.md`; keep changes small because handlers are coupled through shared `last_command` state.
+
+`python-telegram-bot` remains pinned to 12.8 for now. A v20+ async migration should be handled as a dedicated project after more tests are in place because it affects handlers, scheduling, and counseling conversation routing.

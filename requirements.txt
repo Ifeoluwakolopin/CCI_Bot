@@ -1,6 +1,7 @@
 APScheduler==3.9.1
 beautifulsoup4==4.9.2
-certifi==2020.6.20
+black==24.10.0
+certifi==2024.8.30
 cffi==1.16.0
 chardet==3.0.4
 charset-normalizer==3.3.2
@@ -11,6 +12,7 @@ dnspython==2.0.0
 idna==3.11
 pycparser==2.23
 pymongo==3.11.0
+pytest==8.3.4
 python-dotenv==0.20.0
 python-telegram-bot==12.8
 pytz==2023.3.post1
@@ -20,3 +22,4 @@ soupsieve==2.8
 tornado==6.0.4
 tzlocal==5.2
 urllib3==2.6.0
+ruff==0.8.4

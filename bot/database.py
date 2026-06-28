@@ -1,6 +1,6 @@
 from . import db, logger
-from .models import BotUser
 from .bot_types import Result
+from .models import BotUser
 
 
 def set_user_last_command(chat_id: int, last_command=None) -> bool:
@@ -21,7 +21,8 @@ def set_user_last_command(chat_id: int, last_command=None) -> bool:
                 {"chat_id": chat_id}, {"$set": {"last_command": last_command}}
             )
         return True
-    except:
+    except Exception:
+        logger.exception("Failed to set last_command for chat_id=%s", chat_id)
         return False
 
 
@@ -37,7 +38,8 @@ def get_user_last_command(chat_id: int) -> str | None:
     try:
         user = db.users.find_one({"chat_id": chat_id})
         return user["last_command"]
-    except:
+    except Exception:
+        logger.exception("Failed to get last_command for chat_id=%s", chat_id)
         return None
 
 
@@ -55,6 +57,7 @@ def set_user_active(chat_id: int, active: bool) -> Result:
         db.users.update_one({"chat_id": chat_id}, {"$set": {"active": active}})
         return Result.SUCCESS
     except Exception as e:
+        logger.exception("Failed to set active=%s for chat_id=%s", active, chat_id)
         return Result.ERROR(e.__str__())
 
 
@@ -85,6 +88,7 @@ def add_user_to_db(user: BotUser) -> Result:
 
             return Result.SKIPPED
     except Exception as e:
+        logger.exception("Failed to add/update user chat_id=%s", user.chat_id)
         return Result.ERROR(e.__str__())
 
 
@@ -103,7 +107,8 @@ def search_db_title(title: str) -> list:
         }  # Case-insensitive regex search
         result = list(db.sermons.find(query))
         return result
-    except:
+    except Exception:
+        logger.exception("Sermon title search failed for title=%r", title)
         return []
 
 
@@ -122,7 +127,7 @@ def insert_sermon(sermon: dict) -> bool:
         return False
     else:
         db.sermons.insert_one(sermon)
-        logger.info("SERMON: Inserted new sermon '{0}' to db".format(sermon["title"]))
+        logger.info("SERMON: Inserted new sermon '{}' to db".format(sermon["title"]))
         return True
 
 

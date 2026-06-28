@@ -1,22 +1,24 @@
-from datetime import datetime
 import os
-from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
-from bot import db, bot, config
-from bson.int64 import Int64
+from datetime import datetime
+
+from bson import Int64
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
+
+from bot import bot, config, db, logger
+from bot.conversation_manager import ConversationManager
+from bot.database import (
+    get_active_counseling_requests,
+    get_ongoing_counseling_requests,
+    get_user_last_command,
+    set_counseling_request_status,
+    set_user_last_command,
+)
 from bot.keyboards import (
-    validate_user_keyboard,
     get_counseling_feedback_keyboard,
     keyboard_commands,
     normal_keyboard,
     pastor_keyboard,
-)
-from bson import Int64
-from bot.database import (
-    set_user_last_command,
-    get_user_last_command,
-    get_active_counseling_requests,
-    get_ongoing_counseling_requests,
-    set_counseling_request_status,
+    validate_user_keyboard,
 )
 
 
@@ -193,7 +195,7 @@ def show_new_requests(update, context):
         return
 
     # Step 1: Get topics this counselor is associated with
-    if user.get("global") == True:
+    if user.get("global"):
         topics = []  # Global access — allow all topics
     else:
         associated_topics = db.counseling_topics.find(
@@ -251,7 +253,10 @@ def notify_pastors(counseling_request):
     topic_doc = db.counseling_topics.find_one({"topic": counseling_request["topic"]})
 
     if not topic_doc or "counselors" not in topic_doc:
-        print("No counselors found for this topic.")
+        logger.info(
+            "No counselors found for counseling topic=%s",
+            counseling_request.get("topic"),
+        )
         return
 
     # Step 2: Filter out requesting user's chat_id
@@ -259,7 +264,10 @@ def notify_pastors(counseling_request):
     counselor_ids = [cid for cid in topic_doc["counselors"]]
 
     if not counselor_ids:
-        print("No eligible counselors to notify.")
+        logger.info(
+            "No eligible counselors to notify for topic=%s",
+            counseling_request.get("topic"),
+        )
         return
 
     # Step 3: Get counselors by chat_id
@@ -496,10 +504,8 @@ def end_conversation_prompt(update, context):
     )
 
 
-def set_conversation_status(counselor_id, user_id, active):
-    db.conversations.update_one(
-        {"counselor_id": counselor_id, "user_id": user_id}, {"$set": {"active": active}}
-    )
+def set_conversation_status(counselor_id, user_chat_id, active):
+    ConversationManager.set_conversation_status(counselor_id, user_chat_id, active)
 
 
 def end_conversation_cb_handler(update, context):
@@ -549,7 +555,7 @@ def end_conversation_cb_handler(update, context):
         )
 
         set_counseling_request_status(request_message_id, "completed")
-        set_conversation_status(user_id, counselor_id, False)
+        set_conversation_status(counselor_id, user_id, False)
         set_user_last_command(chat_id, None)
         set_user_last_command(other_id, None)
 
@@ -564,8 +570,6 @@ def end_conversation_cb_handler(update, context):
 def end_conversation_quick_cb_handler(update, context):
     """Handle the quick 'End Conversation' button attached to messages"""
     chat_id = update.effective_chat.id
-    q = update.callback_query.data
-    q_head = q.split("=")
 
     # Verify this user is actually in a conversation
     user = db.users.find_one({"chat_id": chat_id})
@@ -579,9 +583,8 @@ def end_conversation_quick_cb_handler(update, context):
 
     # Parse the conversation context from last_command
     try:
-        _, other_id_str, role_str, msg_id_str = last_command.split("=")
+        _, other_id_str, role_str, _msg_id_str = last_command.split("=")
         other_id = int(other_id_str)
-        request_message_id = int(msg_id_str)
         role = "counselor" if role_str == "pastor" else "user"
     except (ValueError, IndexError):
         context.bot.send_message(
@@ -612,27 +615,11 @@ def end_conversation_quick_cb_handler(update, context):
 
 
 def start_conversation(chat_id, counseling_request):
-    if not db.conversations.find_one(
-        {"from": counseling_request["request_message_id"], "active": True}
-    ):
-        db.conversations.insert_one(
-            {
-                "counselor_id": chat_id,
-                "user_chat_id": counseling_request["user_chat_id"],
-                "messages": [],
-                "created": datetime.now(),
-                "from": counseling_request["request_message_id"],
-                "last_updated": datetime.now(),
-                "active": True,
-            }
-        )
+    ConversationManager.start_conversation(chat_id, counseling_request)
 
 
 def update_conversation(msg, counselor_id, user_id):
-    db.conversations.update_one(
-        {"counselor_id": counselor_id, "user_chat_id": user_id, "active": True},
-        {"$push": {"messages": msg}, "$set": {"last_updated": datetime.now()}},
-    )
+    ConversationManager.update_conversation(msg, counselor_id, user_id)
 
 
 def request_counseling_feedback_from_user(user_chat_id, pastor_chat_id):
@@ -725,15 +712,12 @@ def follow_up_request_cb(update, context):
 
     # Get counselor and user names
     original_counselor = db.users.find_one({"chat_id": conversation["counselor_id"]})
-    user_info = db.users.find_one({"chat_id": conversation["user_chat_id"]})
 
     counselor_name = "Unknown"
     if original_counselor:
         first_name = original_counselor.get("first_name", "")
         last_name = original_counselor.get("last_name", "")
         counselor_name = f"{first_name} {last_name}".strip() or "Unknown"
-
-    user_name = user_info.get("first_name", "Unknown") if user_info else "Unknown"
 
     # Format conversation history
     messages = conversation.get("messages", [])
@@ -779,8 +763,8 @@ def follow_up_request_cb(update, context):
         f"📅 *Started:* {conversation['created'].strftime('%A, %B %d, %Y')}\n"
         f"💬 *Note:* {request['note']}"
         + conversation_text
-        + f"\n\n❓ *Do you want to continue this conversation?*\n"
-        f"If you continue, you'll take over this session and the user will be notified.",
+        + "\n\n❓ *Do you want to continue this conversation?*\n"
+        "If you continue, you'll take over this session and the user will be notified.",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -984,10 +968,6 @@ def mark_request_completed_cb(update, context):
         )
 
 
-from bson.int64 import Int64
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
-
-
 def counselor_transfer(update, context):
     chat_id = Int64(update.effective_chat.id)
     user = db.users.find_one({"chat_id": chat_id})
@@ -1131,6 +1111,7 @@ def counselor_transfer_msg_handler(update, context):
         )
 
     except Exception:
+        logger.exception("Failed to collect counselor transfer message")
         # Retry by re-setting the last_command
         last_command = "=".join(user["last_command"].split("=")[2:])
         set_user_last_command(chat_id, f"transfer_req={last_command}")

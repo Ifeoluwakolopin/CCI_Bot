@@ -1,17 +1,18 @@
-import os
-import certifi
 import json
 import logging
+import os
+
+import certifi
 import telegram
+from dotenv import load_dotenv
 from pymongo import MongoClient
 from telegram.ext import Updater
-from dotenv import dotenv_values, load_dotenv
+
+from .logging_config import configure_logging
 
 load_dotenv()
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+configure_logging()
 logger = logging.getLogger(__name__)
 
 config = json.load(open("config.json", encoding="utf-8"))
