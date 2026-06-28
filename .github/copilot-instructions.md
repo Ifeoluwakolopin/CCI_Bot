@@ -1,0 +1,36 @@
+# Copilot instructions for CCI Bot
+
+- This repository contains CCI Bot, a Python Telegram bot for Celebration Church International.
+- Primary user-facing features include onboarding, sermon lookup, devotionals, church/MAP locations, broadcasts, feedback, and counseling requests.
+- Use Python 3.11; the pinned runtime is in `runtime.txt` and dependencies are in `requirements.txt`.
+- The Telegram framework is `python-telegram-bot==12.8`, so prefer v12 APIs and `Updater`/dispatcher patterns.
+- MongoDB access is via `pymongo` using shared objects initialized in `bot/__init__.py`.
+- Scheduled work uses APScheduler's `BlockingScheduler` in `jobs.py`.
+- Scrapers in `bot/scrapers.py` use `requests` and Beautiful Soup for CCI media, Eventbrite tickets, and devotional/location data.
+- `app.py` starts `bot.main.main()` and then starts the blocking scheduler.
+- `bot/main.py` wires command, message, and callback handlers.
+- `bot/commands.py` contains most command handlers and administrative flows.
+- `chat/` contains counseling request, conversation, transfer, feedback, and callback handling.
+- `bot/database.py`, `bot/helpers.py`, and `bot/keyboards.py` hold shared helpers.
+- `bot/conversation_manager.py` manages multi-conversation state for counselors.
+- `config.json` contains message templates; prefer updating copy there instead of hard-coding repeated text.
+- Static assets live under `img/` and are referenced by scheduled jobs and broadcasts.
+- Local secrets come from `.env` via `python-dotenv`; never read, print, stage, or commit `.env`.
+- Keep `.env.example` limited to variable names with empty values.
+- Expected environment variables are `BOT_TOKEN`, `MONGO_URI`, `DB_NAME`, `EVENT_TOKEN`, `COUNSELOR_PASSWORD`, `COUNSELOR_REQUEST_PASSWORD`, and optional `PORT`.
+- Do not start the live bot or scheduler during routine validation unless explicitly asked and secrets/network access are confirmed.
+- The safe validation gate is `python -m compileall -q .`; activate `.venv` first when it exists.
+- Importing `app.py` can initialize Telegram and MongoDB clients, so rely on compileall if import side effects are risky.
+- Run locally with `python app.py` for polling mode after secrets are configured.
+- Run deploy webhook mode with `python app.py --deploy` or `python app.py -d`.
+- Run scheduler-only mode with `python jobs.py`.
+- Docker Compose defines separate `bot` and `scheduler` services and mounts `./logs`.
+- The Heroku-style `Procfile` runs `python3 app.py -d`.
+- The GitHub Actions deployment workflow targets `main` on a self-hosted Raspberry Pi runner.
+- There is no committed automated test suite, linter, formatter, or type checker configuration yet.
+- Prefer small, behavior-preserving changes because handlers are coupled through shared `last_command` state.
+- Be careful with MongoDB field names such as `chat_id`, `last_command`, `role`, `conversations`, and counseling request IDs.
+- Several code paths catch broad exceptions and some swallow errors; avoid adding more silent failures and add logging when practical.
+- Preserve existing Telegram callback data formats because users may interact with already-sent inline keyboards.
+- Avoid changing deployment files unless the runtime behavior or required environment changes.
+- Keep documentation accurate when environment variables, run commands, or deployment behavior changes.

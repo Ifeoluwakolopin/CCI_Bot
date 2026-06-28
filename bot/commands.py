@@ -769,7 +769,9 @@ def handle_branch_selection_callback(update, context):
                 {"chat_id": chat_id},
                 {"$set": {"last_command": "first_time_birthday_set"}},
             )
-        if user["last_command"] and user["last_command"].startswith("location_counseling"):
+        if user["last_command"] and user["last_command"].startswith(
+            "location_counseling"
+        ):
             msg_id = user["last_command"].split("=")[-1]
             set_user_last_command(chat_id, None)
             add_note(
