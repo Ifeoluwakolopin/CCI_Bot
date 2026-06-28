@@ -85,13 +85,13 @@ def show_active_requests(update, context):
         context.bot.send_message(
             chat_id=chat_id,
             text=f"📋 *Ongoing Session*\n\n"
-                 f"👤 *Name:* {request['name']}\n"
-                 f"📧 *Email:* {request['email']}\n"
-                 f"📞 *Phone:* {request['phone']}\n"
-                 f"🏷️ *Category:* {request['topic']}\n"
-                 f"👨‍💼 *Counselor:* {counselor_name}\n"
-                 f"💬 *Note Preview:* {note_preview}\n"
-                 f"📅 *Started:* {formatted_date}",
+            f"👤 *Name:* {request['name']}\n"
+            f"📧 *Email:* {request['email']}\n"
+            f"📞 *Phone:* {request['phone']}\n"
+            f"🏷️ *Category:* {request['topic']}\n"
+            f"👨‍💼 *Counselor:* {counselor_name}\n"
+            f"💬 *Note Preview:* {note_preview}\n"
+            f"📅 *Started:* {formatted_date}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -106,7 +106,7 @@ def show_active_requests(update, context):
                             "Follow-Up",
                             callback_data=f"follow_up={request['request_message_id']}",
                         )
-                    ]
+                    ],
                 ],
                 resize_keyboard=True,
             ),
@@ -119,24 +119,26 @@ def handle_active_requests_verification(update, context):
     """
     chat_id = update.effective_chat.id
     password = update.message.text.strip()
-    
+
     if password == os.getenv("COUNSELOR_REQUEST_PASSWORD"):
         # Grant access and mark user as verified for active requests with timestamp
         db.users.update_one(
-            {"chat_id": chat_id}, 
-            {"$set": {
-                "active_requests_verified": True,
-                "active_requests_verified_at": datetime.now()
-            }}
+            {"chat_id": chat_id},
+            {
+                "$set": {
+                    "active_requests_verified": True,
+                    "active_requests_verified_at": datetime.now(),
+                }
+            },
         )
-        
+
         context.bot.send_message(
             chat_id=chat_id,
             text="✅ Access granted! You now have permanent access to view active requests.",
         )
-        
+
         set_user_last_command(chat_id, None)
-        
+
         # Automatically call show_active_requests after successful verification
         show_active_requests(update, context)
     else:
@@ -155,11 +157,8 @@ def reset_active_requests_verification(chat_id):
     This can be called when needed for security purposes or admin actions.
     """
     db.users.update_one(
-        {"chat_id": chat_id}, 
-        {"$unset": {
-            "active_requests_verified": "",
-            "active_requests_verified_at": ""
-        }}
+        {"chat_id": chat_id},
+        {"$unset": {"active_requests_verified": "", "active_requests_verified_at": ""}},
     )
 
 
@@ -169,11 +168,13 @@ def grant_active_requests_access(chat_id):
     This can be called by admins for onboarding or administrative purposes.
     """
     db.users.update_one(
-        {"chat_id": chat_id}, 
-        {"$set": {
-            "active_requests_verified": True,
-            "active_requests_verified_at": datetime.now()
-        }}
+        {"chat_id": chat_id},
+        {
+            "$set": {
+                "active_requests_verified": True,
+                "active_requests_verified_at": datetime.now(),
+            }
+        },
     )
 
 
@@ -373,20 +374,25 @@ def handle_initial_conversation_cb(update, context):
 
 def send_message_handler(msg, to, from_chat_id=None):
     ## Send message to the other user with "End Conversation" button
-    
+
     # Create the "End Conversation" button
-    end_conversation_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🛑 End Conversation", callback_data=f"end_conv_quick={from_chat_id}={to}")]
-    ])
-    
+    end_conversation_keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "🛑 End Conversation",
+                    callback_data=f"end_conv_quick={from_chat_id}={to}",
+                )
+            ]
+        ]
+    )
+
     if msg.text:
         if msg.text in keyboard_commands:
             return "Error"
         else:
             bot.send_message(
-                chat_id=to, 
-                text=msg.text,
-                reply_markup=end_conversation_keyboard
+                chat_id=to, text=msg.text, reply_markup=end_conversation_keyboard
             )
             return msg.text
     elif msg.photo:
@@ -394,7 +400,7 @@ def send_message_handler(msg, to, from_chat_id=None):
             chat_id=to,
             photo=msg.photo[-1].file_id,
             caption=msg.caption or " ",
-            reply_markup=end_conversation_keyboard
+            reply_markup=end_conversation_keyboard,
         )
         return "photo=" + msg.photo[-1].file_id
     elif msg.voice:
@@ -402,7 +408,7 @@ def send_message_handler(msg, to, from_chat_id=None):
             chat_id=to,
             voice=msg.voice.file_id,
             caption=msg.caption or " ",
-            reply_markup=end_conversation_keyboard
+            reply_markup=end_conversation_keyboard,
         )
         return "video=" + msg.voice.file_id
     elif msg.video:
@@ -410,7 +416,7 @@ def send_message_handler(msg, to, from_chat_id=None):
             chat_id=to,
             video=msg.video.file_id,
             caption=msg.caption or " ",
-            reply_markup=end_conversation_keyboard
+            reply_markup=end_conversation_keyboard,
         )
         return msg.video.file_id
     elif msg.animation:
@@ -418,7 +424,7 @@ def send_message_handler(msg, to, from_chat_id=None):
             chat_id=to,
             animation=msg.animation.file_id,
             caption=msg.caption or " ",
-            reply_markup=end_conversation_keyboard
+            reply_markup=end_conversation_keyboard,
         )
         return "animation=" + msg.animation.file_id
 
@@ -560,18 +566,17 @@ def end_conversation_quick_cb_handler(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     q_head = q.split("=")
-    
+
     # Verify this user is actually in a conversation
     user = db.users.find_one({"chat_id": chat_id})
     last_command = user.get("last_command", "") if user else ""
-    
+
     if not last_command or not last_command.startswith("in-conversation-with"):
         context.bot.send_message(
-            chat_id=chat_id,
-            text="❌ You are not currently in an active conversation."
+            chat_id=chat_id, text="❌ You are not currently in an active conversation."
         )
         return
-    
+
     # Parse the conversation context from last_command
     try:
         _, other_id_str, role_str, msg_id_str = last_command.split("=")
@@ -580,11 +585,10 @@ def end_conversation_quick_cb_handler(update, context):
         role = "counselor" if role_str == "pastor" else "user"
     except (ValueError, IndexError):
         context.bot.send_message(
-            chat_id=chat_id, 
-            text="⚠️ Could not parse conversation context."
+            chat_id=chat_id, text="⚠️ Could not parse conversation context."
         )
         return
-    
+
     # Send confirmation prompt (same as /cancel command)
     context.bot.send_message(
         chat_id=chat_id,
@@ -685,7 +689,7 @@ def handle_counseling_feedback_cb(update, context):
 def follow_up_request_cb(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
-    
+
     if not user:
         keyboard = validate_user_keyboard(chat_id)
         context.bot.send_message(
@@ -698,49 +702,53 @@ def follow_up_request_cb(update, context):
     q = update.callback_query.data
     q_head = q.split("=")
     request_message_id = int(q_head[1])
-    
+
     # Get the counseling request
-    request = db.counseling_requests.find_one({"request_message_id": request_message_id})
-    
+    request = db.counseling_requests.find_one(
+        {"request_message_id": request_message_id}
+    )
+
     if not request:
         context.bot.send_message(
-            chat_id=chat_id,
-            text="❌ Counseling request not found."
+            chat_id=chat_id, text="❌ Counseling request not found."
         )
         return
-    
+
     # Get the conversation history
     conversation = db.conversations.find_one({"from": request_message_id})
-    
+
     if not conversation:
         context.bot.send_message(
-            chat_id=chat_id,
-            text="❌ No conversation history found for this request."
+            chat_id=chat_id, text="❌ No conversation history found for this request."
         )
         return
-    
+
     # Get counselor and user names
     original_counselor = db.users.find_one({"chat_id": conversation["counselor_id"]})
     user_info = db.users.find_one({"chat_id": conversation["user_chat_id"]})
-    
+
     counselor_name = "Unknown"
     if original_counselor:
         first_name = original_counselor.get("first_name", "")
         last_name = original_counselor.get("last_name", "")
         counselor_name = f"{first_name} {last_name}".strip() or "Unknown"
-    
+
     user_name = user_info.get("first_name", "Unknown") if user_info else "Unknown"
-    
+
     # Format conversation history
     messages = conversation.get("messages", [])
     conversation_text = ""
-    
+
     if messages:
         conversation_text = "\n\n📝 *Conversation History:*\n"
         for i, msg in enumerate(messages[-10:], 1):  # Show last 10 messages
-            sender = "👨‍💼 Counselor" if msg["from"] == conversation["counselor_id"] else "👤 User"
+            sender = (
+                "👨‍💼 Counselor"
+                if msg["from"] == conversation["counselor_id"]
+                else "👤 User"
+            )
             message_content = msg["message"]
-            
+
             # Handle different message types
             if message_content.startswith("photo="):
                 message_content = "📷 [Photo]"
@@ -748,31 +756,31 @@ def follow_up_request_cb(update, context):
                 message_content = "🎥 [Video]"
             elif message_content.startswith("animation="):
                 message_content = "🎬 [Animation]"
-            
+
             # Truncate long messages
             if len(message_content) > 100:
                 message_content = message_content[:100] + "..."
-                
+
             conversation_text += f"{i}. {sender}: {message_content}\n"
-        
+
         if len(messages) > 10:
             conversation_text += f"\n... and {len(messages) - 10} more messages"
     else:
         conversation_text = "\n\n📝 *No conversation history available*"
-    
+
     # Send follow-up confirmation message
     context.bot.send_message(
         chat_id=chat_id,
         text=f"🔄 *Follow-Up Request*\n\n"
-             f"👤 *User:* {request['name']}\n"
-             f"📧 *Email:* {request['email']}\n"
-             f"🏷️ *Category:* {request['topic']}\n"
-             f"👨‍💼 *Original Counselor:* {counselor_name}\n"
-             f"📅 *Started:* {conversation['created'].strftime('%A, %B %d, %Y')}\n"
-             f"💬 *Note:* {request['note']}"
-             + conversation_text +
-             f"\n\n❓ *Do you want to continue this conversation?*\n"
-             f"If you continue, you'll take over this session and the user will be notified.",
+        f"👤 *User:* {request['name']}\n"
+        f"📧 *Email:* {request['email']}\n"
+        f"🏷️ *Category:* {request['topic']}\n"
+        f"👨‍💼 *Original Counselor:* {counselor_name}\n"
+        f"📅 *Started:* {conversation['created'].strftime('%A, %B %d, %Y')}\n"
+        f"💬 *Note:* {request['note']}"
+        + conversation_text
+        + f"\n\n❓ *Do you want to continue this conversation?*\n"
+        f"If you continue, you'll take over this session and the user will be notified.",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -787,7 +795,7 @@ def follow_up_request_cb(update, context):
                         "❌ Cancel",
                         callback_data=f"cancel_follow_up={request_message_id}",
                     )
-                ]
+                ],
             ],
             resize_keyboard=True,
         ),
@@ -797,45 +805,48 @@ def follow_up_request_cb(update, context):
 def continue_conversation_cb(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
-    
+
     if not user:
         return
 
     q = update.callback_query.data
     q_head = q.split("=")
     request_message_id = int(q_head[1])
-    
+
     # Get the counseling request and conversation
-    request = db.counseling_requests.find_one({"request_message_id": request_message_id})
+    request = db.counseling_requests.find_one(
+        {"request_message_id": request_message_id}
+    )
     conversation = db.conversations.find_one({"from": request_message_id})
-    
+
     if not request or not conversation:
         context.bot.send_message(
-            chat_id=chat_id,
-            text="❌ Request or conversation not found."
+            chat_id=chat_id, text="❌ Request or conversation not found."
         )
         return
-    
+
     user_chat_id = request["user_chat_id"]
-    
+
     # Check if user is already in another conversation
     user_last_command = get_user_last_command(user_chat_id)
     if user_last_command and user_last_command.startswith("in-conversation-with"):
         context.bot.send_message(
             chat_id=chat_id,
-            text="❌ This user is currently in another conversation. Please try again later."
+            text="❌ This user is currently in another conversation. Please try again later.",
         )
         return
-    
+
     # Check if counselor is already in conversation
     counselor_last_command = get_user_last_command(chat_id)
-    if counselor_last_command and counselor_last_command.startswith("in-conversation-with"):
+    if counselor_last_command and counselor_last_command.startswith(
+        "in-conversation-with"
+    ):
         context.bot.send_message(
             chat_id=chat_id,
-            text="❌ You are currently in another conversation. Please end that conversation first."
+            text="❌ You are currently in another conversation. Please end that conversation first.",
         )
         return
-    
+
     # Update the conversation and request
     db.conversations.update_one(
         {"from": request_message_id},
@@ -844,16 +855,16 @@ def continue_conversation_cb(update, context):
                 "counselor_id": chat_id,
                 "active": True,
                 "resumed_at": datetime.now(),
-                "resumed_by": chat_id
+                "resumed_by": chat_id,
             }
-        }
+        },
     )
-    
+
     db.counseling_requests.update_one(
         {"request_message_id": request_message_id},
-        {"$set": {"counselor_chat_id": chat_id, "status": "ongoing"}}
+        {"$set": {"counselor_chat_id": chat_id, "status": "ongoing"}},
     )
-    
+
     # Set conversation states
     set_user_last_command(
         user_chat_id, f"in-conversation-with={chat_id}=pastor={request_message_id}"
@@ -861,25 +872,28 @@ def continue_conversation_cb(update, context):
     set_user_last_command(
         chat_id, f"in-conversation-with={user_chat_id}=user={request_message_id}"
     )
-    
+
     # Get counselor name for notifications
-    counselor_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip() or "a counselor"
-    
+    counselor_name = (
+        f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+        or "a counselor"
+    )
+
     # Notify the counselor
     context.bot.send_message(
         chat_id=chat_id,
         text=f"✅ You have successfully continued the conversation with *{request['name']}*.\n\n"
-             f"Messages you send from now will be delivered to them. You can end the conversation using /cancel.",
-        parse_mode="Markdown"
+        f"Messages you send from now will be delivered to them. You can end the conversation using /cancel.",
+        parse_mode="Markdown",
     )
-    
+
     # Notify the user
     context.bot.send_message(
         chat_id=user_chat_id,
         text=f"🔄 *Your counseling session has been resumed*\n\n"
-             f"Counselor *{counselor_name}* has picked up your conversation and is ready to continue helping you.\n\n"
-             f"Messages you send from now will be delivered to them. You can end the conversation using /cancel.",
-        parse_mode="Markdown"
+        f"Counselor *{counselor_name}* has picked up your conversation and is ready to continue helping you.\n\n"
+        f"Messages you send from now will be delivered to them. You can end the conversation using /cancel.",
+        parse_mode="Markdown",
     )
 
 
@@ -887,14 +901,14 @@ def cancel_follow_up_cb(update, context):
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id,
-        text="❌ Follow-up cancelled. You can view other active requests or perform other actions."
+        text="❌ Follow-up cancelled. You can view other active requests or perform other actions.",
     )
 
 
 def mark_request_completed_cb(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
-    
+
     if not user:
         keyboard = validate_user_keyboard(chat_id)
         context.bot.send_message(
@@ -907,58 +921,59 @@ def mark_request_completed_cb(update, context):
     q = update.callback_query.data
     q_head = q.split("=")
     request_message_id = int(q_head[1])
-    
+
     # Get the counseling request
-    request = db.counseling_requests.find_one({"request_message_id": request_message_id})
-    
+    request = db.counseling_requests.find_one(
+        {"request_message_id": request_message_id}
+    )
+
     if not request:
         context.bot.send_message(
-            chat_id=chat_id,
-            text="❌ Counseling request not found."
+            chat_id=chat_id, text="❌ Counseling request not found."
         )
         return
-    
+
     if request.get("status") == "completed":
         context.bot.send_message(
             chat_id=chat_id,
-            text="✅ This counseling request has already been marked as completed."
+            text="✅ This counseling request has already been marked as completed.",
         )
         return
-    
+
     # Mark the request as completed
     set_counseling_request_status(request_message_id, "completed")
-    
+
     # Mark any active conversation as inactive
     db.conversations.update_one(
         {"from": request_message_id, "active": True},
-        {"$set": {"active": False, "completed_at": datetime.now()}}
+        {"$set": {"active": False, "completed_at": datetime.now()}},
     )
-    
+
     # Clear user last commands if they are in conversation
     user_chat_id = request["user_chat_id"]
     counselor_chat_id = request.get("counselor_chat_id")
-    
+
     # Clear states for both users
     set_user_last_command(user_chat_id, None)
     if counselor_chat_id:
         set_user_last_command(counselor_chat_id, None)
-    
+
     context.bot.send_message(
         chat_id=chat_id,
         text=f"✅ Counseling request for *{request['name']}* has been marked as completed.\n\n"
-             f"Both the user and counselor have been notified that the session has ended.",
-        parse_mode="Markdown"
+        f"Both the user and counselor have been notified that the session has ended.",
+        parse_mode="Markdown",
     )
-    
+
     # Notify the user that the session has been completed
     context.bot.send_message(
         chat_id=user_chat_id,
         text="✅ Your counseling session has been marked as completed by a counselor.\n\n"
-             "Thank you for using our counseling service. If you need further assistance, "
-             "please feel free to request another session.",
+        "Thank you for using our counseling service. If you need further assistance, "
+        "please feel free to request another session.",
         reply_markup=ReplyKeyboardMarkup(normal_keyboard, resize_keyboard=True),
     )
-    
+
     # Notify the assigned counselor if different from the one marking it complete
     if counselor_chat_id and counselor_chat_id != chat_id:
         context.bot.send_message(
