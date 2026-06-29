@@ -45,3 +45,4 @@ def test_bot_package_initializes_with_mocked_dependencies(monkeypatch):
 
     assert bot.bot == {"token": "123456:dummy-token"}
     assert bot.db == {"name": "cci_bot_test"}
+    assert bot.client.kwargs == {"serverSelectionTimeoutMS": 5000}

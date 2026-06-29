@@ -71,10 +71,11 @@ See `.env.example` for the complete list of expected variable names.
 | `COUNSELOR_PASSWORD` | Yes | Password for counselor verification |
 | `COUNSELOR_REQUEST_PASSWORD` | Yes | Password for viewing active counseling requests |
 | `PORT` | Deploy only | Webhook port; defaults to `5000` locally |
+| `HEALTH_PORT` | No | Pilot Dash `/health` HTTP port; defaults to `8080` |
 | `WEBHOOK_BASE_URL` | Webhook deploy only | Public base URL used by `python app.py --deploy` |
 | `EVENTBRITE_ORGANIZATION_ID` / `EVENTBRITE_EVENTS_URL` | Tickets only | Eventbrite organization or full events endpoint |
 
-Optional overrides include `SERMONS_FEED_URL`, `DEVOTIONAL_FEED_URL`, `CHURCH_LOCATIONS_FEED_URL`, `BLOG_URL`, `MEMBERSHIP_URL`, `FEEDBACK_CHAT_ID`, `TICKET_LOCATION_FILTER`, `BIRTHDAY_PHOTO_PATH`, `MEMBERSHIP_PHOTO_PATH`, `FEED_USER_AGENT`, `FEED_TIMEOUT`, `WEBHOOK_LISTEN`, `WEBHOOK_URL_PATH`, `CONFIG_PATH`, and `LOG_LEVEL`.
+Optional overrides include `MONGO_TLS`, `MONGO_TLS_CA_FILE`, `MONGO_SERVER_SELECTION_TIMEOUT_MS`, `SERMONS_FEED_URL`, `DEVOTIONAL_FEED_URL`, `CHURCH_LOCATIONS_FEED_URL`, `BLOG_URL`, `MEMBERSHIP_URL`, `FEEDBACK_CHAT_ID`, `TICKET_LOCATION_FILTER`, `BIRTHDAY_PHOTO_PATH`, `MEMBERSHIP_PHOTO_PATH`, `FEED_USER_AGENT`, `FEED_TIMEOUT`, `WEBHOOK_LISTEN`, `WEBHOOK_URL_PATH`, `CONFIG_PATH`, `LOG_LEVEL`, `HEALTH_ENABLED`, `HEALTH_HOST`, and `APP_VERSION`.
 
 ## Running locally
 
@@ -119,7 +120,13 @@ docker compose build
 docker compose up -d
 ```
 
-The compose file starts separate `bot` and `scheduler` services and writes logs under `./logs`.
+The default compose stack starts `bot` and `mongo`, writes bot logs under `./logs`, and exposes Pilot Dash health on `http://localhost:${HEALTH_PORT:-8080}/health`. The scheduler remains available as an opt-in profile:
+
+```bash
+docker compose --profile scheduler up -d scheduler
+```
+
+The health response returns HTTP 200 when Mongo responds to `ping` and HTTP 503 when Mongo is unavailable.
 
 ## Deployment
 

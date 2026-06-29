@@ -1,48 +1,101 @@
 services:
   bot:
-    build: .
-    restart: always
+    build:
+      context: .
+      target: runtime
+    restart: unless-stopped
+    init: true
+    depends_on:
+      mongo:
+        condition: service_healthy
     environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-      - EVENT_TOKEN=${EVENT_TOKEN}
-      - MONGO_URI=${MONGO_URI}
-      - DB_NAME=${DB_NAME}
-      - COUNSELOR_PASSWORD=${COUNSELOR_PASSWORD}
-      - COUNSELOR_REQUEST_PASSWORD=${COUNSELOR_REQUEST_PASSWORD}
-      - PORT=${PORT:-5000}
-      - PYTHONUNBUFFERED=1
-    command: >
-      bash -c "mkdir -p /app/logs && python3 app.py > >(tee /app/logs/bot.log) 2> >(tee /app/logs/bot-error.log >&2)"
+      APP_VERSION: ${APP_VERSION:-local}
+      BOT_TOKEN: ${BOT_TOKEN}
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
+      MONGO_TLS: ${MONGO_TLS:-false}
+      MONGO_TLS_CA_FILE: ${MONGO_TLS_CA_FILE:-}
+      MONGO_SERVER_SELECTION_TIMEOUT_MS: ${MONGO_SERVER_SELECTION_TIMEOUT_MS:-5000}
+      DB_NAME: ${DB_NAME:-cci_bot}
+      EVENT_TOKEN: ${EVENT_TOKEN}
+      EVENTBRITE_ORGANIZATION_ID: ${EVENTBRITE_ORGANIZATION_ID:-}
+      EVENTBRITE_EVENTS_URL: ${EVENTBRITE_EVENTS_URL:-}
+      COUNSELOR_PASSWORD: ${COUNSELOR_PASSWORD}
+      COUNSELOR_REQUEST_PASSWORD: ${COUNSELOR_REQUEST_PASSWORD}
+      PORT: ${PORT:-5000}
+      WEBHOOK_BASE_URL: ${WEBHOOK_BASE_URL:-}
+      WEBHOOK_LISTEN: ${WEBHOOK_LISTEN:-0.0.0.0}
+      WEBHOOK_URL_PATH: ${WEBHOOK_URL_PATH:-}
+      CONFIG_PATH: ${CONFIG_PATH:-}
+      SERMONS_FEED_URL: ${SERMONS_FEED_URL:-}
+      DEVOTIONAL_FEED_URL: ${DEVOTIONAL_FEED_URL:-}
+      CHURCH_LOCATIONS_FEED_URL: ${CHURCH_LOCATIONS_FEED_URL:-}
+      BLOG_URL: ${BLOG_URL:-}
+      MEMBERSHIP_URL: ${MEMBERSHIP_URL:-}
+      FEED_USER_AGENT: ${FEED_USER_AGENT:-}
+      FEED_TIMEOUT: ${FEED_TIMEOUT:-}
+      FEEDBACK_CHAT_ID: ${FEEDBACK_CHAT_ID:-}
+      TICKET_LOCATION_FILTER: ${TICKET_LOCATION_FILTER:-}
+      BIRTHDAY_PHOTO_PATH: ${BIRTHDAY_PHOTO_PATH:-}
+      MEMBERSHIP_PHOTO_PATH: ${MEMBERSHIP_PHOTO_PATH:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      HEALTH_ENABLED: ${HEALTH_ENABLED:-true}
+      HEALTH_HOST: ${HEALTH_HOST:-0.0.0.0}
+      HEALTH_PORT: ${HEALTH_PORT:-8080}
+    ports:
+      - "${HEALTH_PORT:-8080}:${HEALTH_PORT:-8080}"
     volumes:
       - ./logs:/app/logs
-      - ./:/app # Mount the entire project directory
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    tty: true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.getenv('HEALTH_PORT', '8080'), timeout=5)\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping').ok\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   scheduler:
-    build: .
-    restart: always
+    profiles: ["scheduler"]
+    build:
+      context: .
+      target: runtime
+    restart: unless-stopped
+    init: true
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command: ["python", "jobs.py"]
     environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-      - EVENT_TOKEN=${EVENT_TOKEN}
-      - MONGO_URI=${MONGO_URI}
-      - DB_NAME=${DB_NAME}
-      - COUNSELOR_PASSWORD=${COUNSELOR_PASSWORD}
-      - COUNSELOR_REQUEST_PASSWORD=${COUNSELOR_REQUEST_PASSWORD}
-      - PORT=${PORT:-5000}
-      - PYTHONUNBUFFERED=1
-    command: >
-      bash -c "mkdir -p /app/logs && python3 jobs.py > >(tee /app/logs/scheduler.log) 2> >(tee /app/logs/scheduler-error.log >&2)"
+      APP_VERSION: ${APP_VERSION:-local}
+      BOT_TOKEN: ${BOT_TOKEN}
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
+      MONGO_TLS: ${MONGO_TLS:-false}
+      MONGO_TLS_CA_FILE: ${MONGO_TLS_CA_FILE:-}
+      MONGO_SERVER_SELECTION_TIMEOUT_MS: ${MONGO_SERVER_SELECTION_TIMEOUT_MS:-5000}
+      DB_NAME: ${DB_NAME:-cci_bot}
+      EVENT_TOKEN: ${EVENT_TOKEN}
+      EVENTBRITE_ORGANIZATION_ID: ${EVENTBRITE_ORGANIZATION_ID:-}
+      EVENTBRITE_EVENTS_URL: ${EVENTBRITE_EVENTS_URL:-}
+      FEEDBACK_CHAT_ID: ${FEEDBACK_CHAT_ID:-}
+      TICKET_LOCATION_FILTER: ${TICKET_LOCATION_FILTER:-}
+      BIRTHDAY_PHOTO_PATH: ${BIRTHDAY_PHOTO_PATH:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
       - ./logs:/app/logs
-      - ./:/app # Mount the entire project directory
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    tty: true
+
+volumes:
+  mongo_data:

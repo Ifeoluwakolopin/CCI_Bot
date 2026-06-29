@@ -1,24 +1,41 @@
-FROM python:3.11-slim
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Install required system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m venv "$VIRTUAL_ENV" \
+    && python -m pip install --upgrade pip setuptools wheel \
+    && python -m pip install --no-cache-dir -r requirements.txt
 
-# Create logs directory
-RUN mkdir -p logs
+FROM python:3.11-slim AS runtime
 
-# Copy the rest of the application
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /app
+
+RUN addgroup --system app \
+    && adduser --system --ingroup app app
+
+COPY --from=builder /opt/venv /opt/venv
 COPY . .
 
-# Environment variables
-ENV PYTHONUNBUFFERED=1
+RUN mkdir -p /app/logs \
+    && chown -R app:app /app
 
-# Command will be specified in docker-compose.yml
-CMD ["python3", "app.py"]
+USER app
+
+EXPOSE 8080
+
+CMD ["python", "app.py"]
