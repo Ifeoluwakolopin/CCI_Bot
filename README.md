@@ -1,6 +1,6 @@
 # CCI Bot
 
-CCI Bot is a Python Telegram bot for Celebration Church International. It helps users find sermons, receive devotionals and service updates, set their CCI location and birthday, send feedback, and request or manage counseling conversations.
+CCI Bot is a configurable Python Telegram bot originally built for Celebration Church International. It helps users find sermons, receive devotionals and service updates, set a branch/location and birthday, send feedback, and request or manage counseling conversations.
 
 ## Stack
 
@@ -21,7 +21,7 @@ app.py                 # Starts the Telegram bot process
 jobs.py                # APScheduler jobs for birthdays, sermons, tickets, and devotionals
 bot/                   # Bot setup, commands, database helpers, keyboards, scrapers
 chat/                  # Counseling chat message and callback handlers
-config.json            # Message templates and bot copy
+config.json            # Message templates, links, feeds, assets, and location defaults
 img/                   # Static image assets used by broadcasts/jobs
 Dockerfile             # Python 3.11 container image
 docker-compose.yml     # Separate bot and scheduler services
@@ -52,6 +52,12 @@ requirements.txt       # Python dependencies
 
    Keep `.env` local only. It is ignored by Git and must never be committed.
 
+## Configuration
+
+Runtime copy and organization-specific defaults live in `config.json`. Deployers can customize message text, links, scraper/feed URLs, fallback church branches, MAP locations, asset paths, ticket-notification location filters, and webhook settings there.
+
+Environment variables override deploy-sensitive settings where supported. This lets each deployment use its own secrets and URLs without editing code.
+
 ## Environment variables
 
 See `.env.example` for the complete list of expected variable names.
@@ -65,6 +71,10 @@ See `.env.example` for the complete list of expected variable names.
 | `COUNSELOR_PASSWORD` | Yes | Password for counselor verification |
 | `COUNSELOR_REQUEST_PASSWORD` | Yes | Password for viewing active counseling requests |
 | `PORT` | Deploy only | Webhook port; defaults to `5000` locally |
+| `WEBHOOK_BASE_URL` | Webhook deploy only | Public base URL used by `python app.py --deploy` |
+| `EVENTBRITE_ORGANIZATION_ID` / `EVENTBRITE_EVENTS_URL` | Tickets only | Eventbrite organization or full events endpoint |
+
+Optional overrides include `SERMONS_FEED_URL`, `DEVOTIONAL_FEED_URL`, `CHURCH_LOCATIONS_FEED_URL`, `BLOG_URL`, `MEMBERSHIP_URL`, `FEEDBACK_CHAT_ID`, `TICKET_LOCATION_FILTER`, `BIRTHDAY_PHOTO_PATH`, `MEMBERSHIP_PHOTO_PATH`, `FEED_USER_AGENT`, `FEED_TIMEOUT`, `WEBHOOK_LISTEN`, `WEBHOOK_URL_PATH`, `CONFIG_PATH`, and `LOG_LEVEL`.
 
 ## Running locally
 

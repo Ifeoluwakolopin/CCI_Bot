@@ -3,14 +3,26 @@ from datetime import date as datetime
 
 import requests
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
 
-from bot import logger
-
-load_dotenv()
+from bot import config, logger
+from bot.settings import env_or_config, int_env_or_config
 
 
 class WebScrapers:
+    @staticmethod
+    def _headers() -> dict[str, str]:
+        user_agent = env_or_config(
+            config,
+            "FEED_USER_AGENT",
+            ("feeds", "user_agent"),
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)",
+        )
+        return {"user-agent": user_agent}
+
+    @staticmethod
+    def _timeout() -> int:
+        return int_env_or_config(config, "FEED_TIMEOUT", ("feeds", "timeout"), 20) or 20
+
     @staticmethod
     def service_ticket(start: str = "", end: str = "") -> list:
         """
@@ -23,8 +35,23 @@ class WebScrapers:
             "start_date.range_start": start,
             "start_date.range_end": end,
         }
-        base_url = "https://www.eventbriteapi.com/v3/organizations/180780002373/events/"
-        r = requests.get(base_url, params=params)
+        base_url = env_or_config(
+            config, "EVENTBRITE_EVENTS_URL", ("feeds", "eventbrite_events_url")
+        )
+        if not base_url:
+            organization_id = env_or_config(
+                config,
+                "EVENTBRITE_ORGANIZATION_ID",
+                ("feeds", "eventbrite_organization_id"),
+            )
+            if not organization_id:
+                logger.info("Eventbrite organization ID is not configured")
+                return []
+            base_url = (
+                "https://www.eventbriteapi.com/v3/organizations/"
+                f"{organization_id}/events/"
+            )
+        r = requests.get(base_url, params=params, timeout=WebScrapers._timeout())
         try:
             return [
                 {"image": event["logo"]["url"], "link": event["url"]}
@@ -47,12 +74,15 @@ class WebScrapers:
         as a dictionary.
         """
 
-        headers = {
-            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
-        }
-
-        base_url = "https://media.ccing.org/"
-        r = requests.get(base_url, headers=headers)
+        base_url = env_or_config(
+            config, "SERMONS_FEED_URL", ("feeds", "sermons_url"), ""
+        )
+        if not base_url:
+            logger.info("Sermons feed URL is not configured")
+            return []
+        r = requests.get(
+            base_url, headers=WebScrapers._headers(), timeout=WebScrapers._timeout()
+        )
         soup = BeautifulSoup(r.text, "html.parser")
         sermons_section = soup.find_all("article")
         sermons = []
@@ -123,12 +153,15 @@ class WebScrapers:
 
         Return: dict: returns a dictionary containing the latest devotional
         """
-        headers = {
-            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
-        }
-
-        base = "http://t30.org"
-        r = requests.get(base, headers=headers)
+        base = env_or_config(
+            config, "DEVOTIONAL_FEED_URL", ("feeds", "devotional_url"), ""
+        )
+        if not base:
+            logger.info("Devotional feed URL is not configured")
+            return {}
+        r = requests.get(
+            base, headers=WebScrapers._headers(), timeout=WebScrapers._timeout()
+        )
         soup = BeautifulSoup(r.text, "html.parser")
 
         title = soup.find("h3", {"class": "entry-title td-module-title"}).find("a").text
@@ -153,11 +186,18 @@ class WebScrapers:
 
     @staticmethod
     def church_locations():
-        headers = {
-            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)"
-        }
-        base_url = "https://ccing.org/campus/"
-        r = requests.get(base_url, headers=headers)
+        base_url = env_or_config(
+            config,
+            "CHURCH_LOCATIONS_FEED_URL",
+            ("feeds", "church_locations_url"),
+            "",
+        )
+        if not base_url:
+            logger.info("Church locations feed URL is not configured")
+            return {}
+        r = requests.get(
+            base_url, headers=WebScrapers._headers(), timeout=WebScrapers._timeout()
+        )
         soup = BeautifulSoup(r.text, "html.parser")
 
         titles_spans = soup.find_all("span", {"class": "elementskit-tab-title"})

@@ -1,24 +1,26 @@
 import re
 from datetime import datetime
-from bot import db, config
-from bot.helpers import (
-    add_note,
-    find_text_for_callback,
-    create_buttons_from_data,
-    handle_view_more,
-    PromptHelper,
-)
-from bot.database import (
-    update_counseling_topics,
-    get_all_counseling_topics,
-    set_user_last_command,
-)
+
 from telegram import (
-    Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    Update,
 )
 from telegram.ext import CallbackContext
+
+from bot import config, db
+from bot.database import (
+    get_all_counseling_topics,
+    set_user_last_command,
+    update_counseling_topics,
+)
+from bot.helpers import (
+    PromptHelper,
+    add_note,
+    create_buttons_from_data,
+    find_text_for_callback,
+    handle_view_more,
+)
 
 
 def counseling(update: Update, context: CallbackContext):
@@ -162,7 +164,7 @@ def handle_counselor_request_yes(update, context, topic):
                 resize_keyboard=True,
             ),
         )
-    except Exception as e:
+    except Exception:
         # More detailed error handling
         error_msg = config["messages"]["counselor_request_invalid_info"]
         context.bot.send_message(
@@ -259,7 +261,7 @@ def handle_get_faq_callback(update, context):
         )
         # Format the questions for display
         questions = "\n\n".join(
-            ["{0}. {1}".format(faq["id"], faq["q"]) for faq in displayed_faqs]
+            ["{}. {}".format(faq["id"], faq["q"]) for faq in displayed_faqs]
         )
 
         context.bot.send_message(

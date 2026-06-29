@@ -18,7 +18,6 @@ class BotUser:
         self.mute = False
         self.last_command = None
         self.active = True
-        self.location = "None"
         self.birthday = "None"
         self.role = "user"
         self.location = None
@@ -37,7 +36,6 @@ class BotUser:
             "location": self.location,
             "birthday": self.birthday,
             "role": self.role,
-            "location": self.location,
             "username": self.username,
         }
 
@@ -50,7 +48,7 @@ class Message:
         receiver: str,
         text: str,
         status: str | None = None,
-        time_sent: datetime = datetime.now(),
+        time_sent: datetime | None = None,
         reply_to: bool = False,
     ) -> None:
         self.message_id = message_id
@@ -58,7 +56,7 @@ class Message:
         self.receiver = receiver
         self.text = text
         self.status: str = status
-        self.time_sent = time_sent
+        self.time_sent = time_sent or datetime.now()
         self.reply_to = reply_to
 
     def _get_message_json(self):
@@ -96,16 +94,16 @@ class Conversation:
     def __init__(
         self,
         id: str,
-        start_time=datetime.now(),
+        start_time: datetime | None = None,
         status: str = "active",
         ongoing: bool = True,
-        messages: list = [],
+        messages: list | None = None,
     ) -> None:
         self.id = id
         self.status = status
         self.ongoing = ongoing
-        self.messages = []
-        self.start_time = start_time
+        self.messages = messages or []
+        self.start_time = start_time or datetime.now()
 
     def add_message(self, Message):
         self.messages.append(Message.get_content())

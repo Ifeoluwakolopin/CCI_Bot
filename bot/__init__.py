@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -9,13 +8,14 @@ from pymongo import MongoClient
 from telegram.ext import Updater
 
 from .logging_config import configure_logging
+from .settings import load_config
 
 load_dotenv()
 
 configure_logging()
 logger = logging.getLogger(__name__)
 
-config = json.load(open("config.json", encoding="utf-8"))
+config = load_config()
 
 bot = telegram.Bot(os.getenv("BOT_TOKEN"))
 

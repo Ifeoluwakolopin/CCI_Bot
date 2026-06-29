@@ -103,6 +103,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -160,3 +162,10 @@ yarn-error.log*
 
 #
 web/node_modules/
+
+# Local logs and tracking notes
+logs/
+research/
+PLAN.md
+NOTES.md
+TASKS.md

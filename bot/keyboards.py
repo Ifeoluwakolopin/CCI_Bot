@@ -1,7 +1,6 @@
-from . import db
-from telegram import KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton
 
-from telegram import KeyboardButton
+from . import db
 
 buttons1 = [
     [
@@ -60,7 +59,7 @@ def validate_user_keyboard(chat_id) -> list:
     Return: returns correct keyboard for user
     """
     user = db.users.find_one({"chat_id": chat_id})
-    if user["admin"] == True:
+    if user["admin"]:
         return admin_keyboard
     elif user["role"] == "counselor":
         return pastor_keyboard

@@ -1,6 +1,7 @@
-from . import db, logger
+from . import config, db, logger
 from .bot_types import Result
 from .models import BotUser
+from .settings import config_value
 
 
 def set_user_last_command(chat_id: int, last_command=None) -> bool:
@@ -158,9 +159,14 @@ def get_countries() -> list:
     Return: list of countries
     """
 
-    query = db.church_locations.find({})
-
-    return [document["country"] for document in query]
+    countries = [document["country"] for document in db.church_locations.find({})]
+    if countries:
+        return countries
+    return [
+        location["country"]
+        for location in config_value(config, ("locations", "churches"), [])
+        if "country" in location
+    ]
 
 
 def get_church_locations(country_name: str) -> list:
@@ -174,10 +180,14 @@ def get_church_locations(country_name: str) -> list:
     list: A list of church locations.
     """
 
-    # Fetch the document containing the campuses for the specified country
-    campuses = db.church_locations.find_one({"country": country_name})["branches"]
+    location_document = db.church_locations.find_one({"country": country_name})
+    if location_document and "branches" in location_document:
+        return location_document["branches"]
 
-    return campuses
+    for location in config_value(config, ("locations", "churches"), []):
+        if location.get("country") == country_name:
+            return location.get("branches", [])
+    return []
 
 
 def get_map_locations() -> list:
@@ -189,7 +199,10 @@ def get_map_locations() -> list:
 
     Return: list of map locations
     """
-    return list(db.map_locations.find())
+    map_locations = list(db.map_locations.find())
+    if map_locations:
+        return map_locations
+    return list(config_value(config, ("locations", "maps"), []))
 
 
 def get_all_counseling_topics() -> list:

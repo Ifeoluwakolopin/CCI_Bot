@@ -8,6 +8,7 @@ from bot.commands import notify_new_sermon
 from bot.database import insert_sermon
 from bot.helpers import BroadcastHandlers, MessageHelper
 from bot.scrapers import WebScrapers
+from bot.settings import env_or_config, int_env_or_config, list_env_or_config
 
 sched = BlockingScheduler()
 
@@ -26,7 +27,9 @@ def birthday_notifier():
     users_with_birthdays = list(birthday_users)
 
     # Prepare the message and photo for each user
-    photo_path = "img/birthday.jpg"
+    photo_path = env_or_config(
+        config, "BIRTHDAY_PHOTO_PATH", ("assets", "birthday_photo_path"), ""
+    )
     messages = [
         {
             "chat_id": user["chat_id"],
@@ -83,10 +86,12 @@ numbers = {1: "first", 2: "second", 3: "third"}
 
 @sched.scheduled_job("cron", day_of_week="sat", hour=6)
 def check_feedback():
-    feedback = db.feedback.find({"status": "pending"})
-    if feedback:
+    feedback_chat_id = int_env_or_config(
+        config, "FEEDBACK_CHAT_ID", ("jobs", "feedback_chat_id")
+    )
+    if feedback_chat_id and db.feedback.count_documents({"status": "pending"}):
         bot.send_message(
-            chat_id=792501227, text=config["messages"]["feedback_notifier"]
+            chat_id=feedback_chat_id, text=config["messages"]["feedback_notifier"]
         )
 
 
@@ -104,6 +109,9 @@ def notify_tickets():
     d = (datetime.today() + timedelta(days=4)).date()
     date = str(d)
     ticket = WebScrapers.service_ticket(date, date)
+    if not ticket:
+        logger.info("No service tickets found for %s", date)
+        return
     buttons = [
         [
             InlineKeyboardButton(
@@ -113,12 +121,17 @@ def notify_tickets():
         ]
         for service in ticket[0:2]
     ]
+    ticket_locations = list_env_or_config(
+        config,
+        "TICKET_LOCATION_FILTER",
+        ("locations", "ticket_notification_locations"),
+    )
+    location_filters = [{"location": {"$exists": False}}]
+    if ticket_locations:
+        location_filters.insert(0, {"location": {"$in": ticket_locations}})
     users = db.users.find(
         {
-            "$or": [
-                {"location": {"$in": ["Ikeja", "Lekki", "Online", "None"]}},
-                {"location": {"$exists": False}},
-            ]
+            "$or": location_filters,
         }
     )
     for user in users:

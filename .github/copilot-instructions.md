@@ -17,7 +17,7 @@
 - Static assets live under `img/` and are referenced by scheduled jobs and broadcasts.
 - Local secrets come from `.env` via `python-dotenv`; never read, print, stage, or commit `.env`.
 - Keep `.env.example` limited to variable names with empty values.
-- Expected environment variables are `BOT_TOKEN`, `MONGO_URI`, `DB_NAME`, `EVENT_TOKEN`, `COUNSELOR_PASSWORD`, `COUNSELOR_REQUEST_PASSWORD`, and optional `PORT`.
+- Expected environment variables are `BOT_TOKEN`, `MONGO_URI`, `DB_NAME`, `EVENT_TOKEN`, `COUNSELOR_PASSWORD`, `COUNSELOR_REQUEST_PASSWORD`, and optional `PORT`; `.env.example` lists additional non-secret deployment/config overrides.
 - Do not start the live bot or scheduler during routine validation unless explicitly asked and secrets/network access are confirmed.
 - The safe validation gate is `python -m compileall -q .`; activate `.venv` first when it exists.
 - Importing `app.py` can initialize Telegram and MongoDB clients, so rely on compileall if import side effects are risky.

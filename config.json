@@ -122,5 +122,50 @@
       "about": "🥳 REBOOT CAMP 2021 IS ALMOST HERE! 🥳\n\nStay tuned for more #rebootcamp2021 news.\nI'm your one-stop shop for up-to-date information.",
       "help": ""
     }
+  },
+  "app": {
+    "name": "CCI Bot",
+    "organization_name": "Celebration Church International",
+    "webhook_base_url": "",
+    "webhook_listen": "0.0.0.0",
+    "webhook_url_path": ""
+  },
+  "assets": {
+    "birthday_photo_path": "img/birthday.jpg",
+    "membership_photo_path": "img/membership.jpg"
+  },
+  "feeds": {
+    "blog_url": "https://ccing.org/blogs/",
+    "church_locations_url": "https://ccing.org/campus/",
+    "devotional_url": "http://t30.org",
+    "eventbrite_events_url": "https://www.eventbriteapi.com/v3/organizations/180780002373/events/",
+    "eventbrite_organization_id": "",
+    "membership_url": "https://ccing.org/membership-class/",
+    "sermons_url": "https://media.ccing.org/",
+    "timeout": 20,
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"
+  },
+  "jobs": {
+    "feedback_chat_id": 792501227
+  },
+  "locations": {
+    "churches": [
+      {
+        "country": "Nigeria",
+        "branches": [
+          "Ikeja",
+          "Lekki",
+          "Online",
+          "None"
+        ]
+      }
+    ],
+    "maps": [],
+    "ticket_notification_locations": [
+      "Ikeja",
+      "Lekki",
+      "Online",
+      "None"
+    ]
   }
 }

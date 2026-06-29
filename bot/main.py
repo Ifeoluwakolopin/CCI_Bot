@@ -1,75 +1,74 @@
 import os
-from . import dp, updater, PORT, db, config, bot
-from .database import search_db_title, set_user_last_command
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CallbackQueryHandler, CommandHandler, Filters, MessageHandler
+
+from chat.chat_callback_handlers import (
+    cancel_follow_up_cb,
+    continue_conversation_cb,
+    conversation_handler,
+    counselor_transfer,
+    counselor_transfer_callback_handler,
+    counselor_transfer_msg_confirm_cb_handler,
+    counselor_transfer_msg_handler,
+    end_conversation_cb_handler,
+    end_conversation_quick_cb_handler,
+    follow_up_request_cb,
+    handle_active_requests_verification,
+    handle_counseling_feedback_cb,
+    handle_initial_conversation_cb,
+    mark_request_completed_cb,
+    notify_pastors,
+    show_active_requests,
+    show_new_requests,
+)
+from chat.chat_message_handlers import (
+    counseling,
+    handle_ask_question_or_request_counselor,
+    handle_counseling,
+    handle_counseling_info_confirm,
+    handle_counseling_location_confirm,
+    handle_counselor_request_yes,
+    handle_get_faq_callback,
+)
+
+from . import PORT, config, db, dp, updater
 from .commands import (
-    get_devotional,
-    latest_sermon,
-    get_sermon,
-    helps,
-    stats,
     broadcast_message_handler,
-    map_loc,
     cancel,
-    reboot_about,
-    unknown,
-    start,
-    mute,
-    unmute,
-    menu,
+    church_location_callback_handler,
+    counselor_dashboard,
     done,
     feedback,
     feedback_cb_handler,
-    set_church_location,
     find_user,
-    church_location_callback_handler,
-    handle_find_user_callback,
-    handle_branch_selection_callback,
-    handle_update_user,
     find_user_message_handler,
+    get_devotional,
+    get_sermon,
+    handle_birthday_not_set,
+    handle_branch_selection_callback,
     handle_broadcast,
-    counselor_dashboard,
-    handle_counselor_verification,
     handle_counselor_topic_update,
-    handle_topic_selection,
+    handle_counselor_verification,
+    handle_find_user_callback,
     handle_location_not_set_first_time,
     handle_location_not_set_for_counseling,
-    handle_birthday_not_set,
+    handle_topic_selection,
+    handle_update_user,
+    helps,
+    latest_sermon,
+    map_loc,
+    menu,
+    mute,
+    reboot_about,
+    set_church_location,
+    start,
+    stats,
+    unknown,
+    unmute,
 )
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import CallbackQueryHandler, CommandHandler
-from telegram.ext import Filters
-from telegram.ext import MessageHandler
-from chat.chat_message_handlers import (
-    counseling,
-    handle_counseling,
-    handle_ask_question_or_request_counselor,
-    handle_counselor_request_yes,
-    handle_counseling_info_confirm,
-    handle_counseling_location_confirm,
-    handle_get_faq_callback,
-)
-from chat.chat_callback_handlers import (
-    show_active_requests,
-    show_new_requests,
-    conversation_handler,
-    counselor_transfer_msg_confirm_cb_handler,
-    counselor_transfer_msg_handler,
-    notify_pastors,
-    handle_initial_conversation_cb,
-    end_conversation_cb_handler,
-    end_conversation_quick_cb_handler,
-    handle_counseling_feedback_cb,
-    mark_request_completed_cb,
-    counselor_transfer_callback_handler,
-    counselor_transfer,
-    follow_up_request_cb,
-    continue_conversation_cb,
-    cancel_follow_up_cb,
-    handle_active_requests_verification,
-)
-from dotenv import dotenv_values, load_dotenv
-
-load_dotenv()
+from .database import search_db_title, set_user_last_command
+from .settings import env_or_config
 
 
 def handle_message_commands(update, context):
@@ -130,7 +129,7 @@ def handle_message_response(update, context):
     user = db.users.find_one({"chat_id": chat_id})
     last_command = user["last_command"]
 
-    if last_command == None:
+    if last_command is None:
         handle_message_commands(update, context)
     elif last_command == "first_time_location_set":
         handle_location_not_set_first_time(update, context)
@@ -382,11 +381,24 @@ def main(deploy: bool = False) -> None:
     dp.add_handler(cb_handler)
 
     if deploy:
-        URL = "https://cci-bot-be313a646eb4.herokuapp.com/"
-        updater.start_webhook(
-            listen="0.0.0.0", port=int(PORT), url_path=os.getenv("BOT_TOKEN")
+        webhook_base_url = env_or_config(
+            config, "WEBHOOK_BASE_URL", ("app", "webhook_base_url"), ""
         )
-        updater.bot.setWebhook(URL + os.getenv("BOT_TOKEN"))
+        webhook_url_path = env_or_config(
+            config, "WEBHOOK_URL_PATH", ("app", "webhook_url_path"), None
+        )
+        if not webhook_base_url:
+            raise RuntimeError("WEBHOOK_BASE_URL must be configured for deploy mode")
+        if not webhook_url_path:
+            webhook_url_path = os.getenv("BOT_TOKEN")
+        updater.start_webhook(
+            listen=env_or_config(
+                config, "WEBHOOK_LISTEN", ("app", "webhook_listen"), "0.0.0.0"
+            ),
+            port=int(PORT),
+            url_path=webhook_url_path,
+        )
+        updater.bot.setWebhook(f"{webhook_base_url.rstrip('/')}/{webhook_url_path}")
     else:
         updater.start_polling()
 

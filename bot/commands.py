@@ -30,6 +30,7 @@ from .keyboards import validate_user_keyboard
 from .map_utils import chunk_text, format_map_locations
 from .models import BotUser
 from .scrapers import WebScrapers
+from .settings import env_or_config
 
 
 def start(update, context):
@@ -323,9 +324,8 @@ def blog_posts(update, context):
     if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
     else:
-        button = [
-            [InlineKeyboardButton("Read blog posts", url="https://ccing.org/blogs/")]
-        ]
+        blog_url = env_or_config(config, "BLOG_URL", ("feeds", "blog_url"), "")
+        button = [[InlineKeyboardButton("Read blog posts", url=blog_url)]]
         context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["blog_posts"],
@@ -613,16 +613,16 @@ def membership_school(update, context):
     if check_user_in_conversation(chat_id):
         notify_in_conversation(chat_id)
     else:
-        button = [
-            [
-                InlineKeyboardButton(
-                    "Register", url="https://ccing.org/membership-class/"
-                )
-            ]
-        ]
+        membership_url = env_or_config(
+            config, "MEMBERSHIP_URL", ("feeds", "membership_url"), ""
+        )
+        membership_photo_path = env_or_config(
+            config, "MEMBERSHIP_PHOTO_PATH", ("assets", "membership_photo_path"), ""
+        )
+        button = [[InlineKeyboardButton("Register", url=membership_url)]]
         context.bot.send_photo(
             chat_id=chat_id,
-            photo=open("img/membership.jpg", "rb"),
+            photo=open(membership_photo_path, "rb"),
             caption=config["messages"]["membership"],
             reply_markup=InlineKeyboardMarkup(button),
         )
