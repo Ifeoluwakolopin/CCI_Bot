@@ -33,7 +33,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          target: runtime
           platforms: linux/arm64
           push: true
           provenance: false
@@ -69,7 +68,7 @@ jobs:
             echo "::warning::pull failed; building $IMAGE locally from a shallow clone"
             WORK="$(mktemp -d)"
             git clone --depth 1 "https://github.com/$REPO.git" "$WORK"
-            docker build -t "$IMAGE" --target runtime -f "$WORK/$DOCKERFILE" "$WORK/$CONTEXT"
+            docker build -t "$IMAGE" -f "$WORK/$DOCKERFILE" "$WORK/$CONTEXT"
             docker push "$IMAGE" || echo "::warning::could not push $IMAGE to GHCR; using local image"
             rm -rf "$WORK"
             docker compose up -d
