@@ -4,7 +4,7 @@ CCI Bot is a configurable Python Telegram bot originally built for Celebration C
 
 ## Stack
 
-- Python 3.11 (`runtime.txt`, `Dockerfile`)
+- Python 3.11 (`Dockerfile`)
 - [`python-telegram-bot`](https://python-telegram-bot.org/) 12.8 for Telegram polling/webhooks
 - MongoDB via `pymongo`
 - `python-dotenv` for local environment variables
@@ -12,7 +12,7 @@ CCI Bot is a configurable Python Telegram bot originally built for Celebration C
 - Requests + Beautiful Soup for web scraping sermon, devotional, location, and Eventbrite data
 - Docker and Docker Compose for containerized bot/scheduler processes
 - Pytest for pure-logic tests; Ruff and Black for incremental lint/format checks
-- Heroku-style `Procfile` and a self-hosted GitHub Actions deployment workflow
+- GitHub Actions CI and a self-hosted deployment workflow
 
 ## Project structure
 
@@ -25,7 +25,6 @@ config.json            # Message templates, links, feeds, assets, and location d
 img/                   # Static image assets used by broadcasts/jobs
 Dockerfile             # Python 3.11 container image
 docker-compose.yml     # Separate bot and scheduler services
-Procfile               # Web process for deploy mode
 requirements.txt       # Python dependencies
 ```
 
@@ -100,13 +99,26 @@ python jobs.py
 
 ## Validation
 
-Use the smallest validation gate that covers the files you changed:
+Use the smallest validation gate that covers the files you changed. The full local/CI gate is:
 
 ```bash
 source .venv/bin/activate
+ruff check .
+black --check .
 pytest
-ruff check bot/map_utils.py bot/pagination.py tests
-python -m compileall -q .
+docker build --target runtime -t cci-bot:local .
+BOT_TOKEN=ci-placeholder \
+DB_NAME=cci_bot \
+EVENT_TOKEN=ci-placeholder \
+COUNSELOR_PASSWORD=ci-placeholder \
+COUNSELOR_REQUEST_PASSWORD=ci-placeholder \
+docker compose config --quiet
+BOT_TOKEN=ci-placeholder \
+DB_NAME=cci_bot \
+EVENT_TOKEN=ci-placeholder \
+COUNSELOR_PASSWORD=ci-placeholder \
+COUNSELOR_REQUEST_PASSWORD=ci-placeholder \
+docker compose build
 ```
 
 Importing `app.py` is not used as a routine gate because module import initializes Telegram and MongoDB clients from environment variables. Tests that need initialization should mock Telegram and MongoDB.
@@ -130,7 +142,6 @@ The health response returns HTTP 200 when Mongo responds to `ping` and HTTP 503 
 
 ## Deployment
 
-- `Procfile` runs `python3 app.py -d` for webhook-style platforms.
 - `Dockerfile` builds the Python runtime image.
 - `docker-compose.yml` runs separate bot and scheduler containers.
 - `.github/workflows/deploy.yml` deploys from `main` on a self-hosted Raspberry Pi runner.

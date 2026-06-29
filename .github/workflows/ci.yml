@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    env:
+      BOT_TOKEN: ci-placeholder
+      MONGO_URI: mongodb://mongo:27017
+      DB_NAME: cci_bot
+      EVENT_TOKEN: ci-placeholder
+      COUNSELOR_PASSWORD: ci-placeholder
+      COUNSELOR_REQUEST_PASSWORD: ci-placeholder
+      PORT: "5000"
+      HEALTH_PORT: "8080"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run Ruff
+        run: ruff check .
+
+      - name: Check formatting with Black
+        run: black --check .
+
+      - name: Run tests
+        run: pytest
+
+      - name: Build Docker image
+        run: docker build --target runtime -t cci-bot:${{ github.sha }} .
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config --quiet
+
+      - name: Build Docker Compose services
+        run: docker compose build

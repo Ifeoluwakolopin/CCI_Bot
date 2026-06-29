@@ -2,7 +2,7 @@
 
 - This repository contains CCI Bot, a Python Telegram bot for Celebration Church International.
 - Primary user-facing features include onboarding, sermon lookup, devotionals, church/MAP locations, broadcasts, feedback, and counseling requests.
-- Use Python 3.11; the pinned runtime is in `runtime.txt` and dependencies are in `requirements.txt`.
+- Use Python 3.11; the Docker image pins Python 3.11 and dependencies are in `requirements.txt`.
 - The Telegram framework is `python-telegram-bot==12.8`, so prefer v12 APIs and `Updater`/dispatcher patterns.
 - MongoDB access is via `pymongo` using shared objects initialized in `bot/__init__.py`.
 - Scheduled work uses APScheduler's `BlockingScheduler` in `jobs.py`.
@@ -22,12 +22,11 @@
 - The safe validation gate is `python -m compileall -q .`; activate `.venv` first when it exists.
 - Importing `app.py` can initialize Telegram and MongoDB clients, so rely on compileall if import side effects are risky.
 - Run locally with `python app.py` for polling mode after secrets are configured.
-- Run deploy webhook mode with `python app.py --deploy` or `python app.py -d`.
+- Run deploy webhook mode with `python app.py --deploy` or `python app.py -d` inside the Docker runtime when deploying webhooks.
 - Run scheduler-only mode with `python jobs.py`.
 - Docker Compose defines separate `bot` and `scheduler` services and mounts `./logs`.
-- The Heroku-style `Procfile` runs `python3 app.py -d`.
 - The GitHub Actions deployment workflow targets `main` on a self-hosted Raspberry Pi runner.
-- There is no committed automated test suite, linter, formatter, or type checker configuration yet.
+- Pytest, Ruff, Black, and Docker build/Compose checks run in `.github/workflows/ci.yml`.
 - Prefer small, behavior-preserving changes because handlers are coupled through shared `last_command` state.
 - Be careful with MongoDB field names such as `chat_id`, `last_command`, `role`, `conversations`, and counseling request IDs.
 - Several code paths catch broad exceptions and some swallow errors; avoid adding more silent failures and add logging when practical.
