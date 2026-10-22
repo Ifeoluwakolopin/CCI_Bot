@@ -16,8 +16,182 @@ env:
   IMAGE: ghcr.io/ifeoluwakolopin/cci-bot
 
 jobs:
+  validate-security-dependencies:
+    name: Validate security dependencies
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and check pinned dependencies
+        env:
+          PIP_NO_CACHE_DIR: '1'
+          PIP_DISABLE_PIP_VERSION_CHECK: '1'
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          mkdir -p .security-build .security-mongo
+          export TMPDIR="$PWD/.security-build"
+          python -m venv .security-venv
+          .security-venv/bin/python -m pip install --upgrade pip==26.2.2
+          .security-venv/bin/python -m pip install -r requirements.txt
+          .security-venv/bin/python -m pip check
+          .security-venv/bin/python -m compileall -q app.py jobs.py bot chat __init__.py
+      - name: Start disposable TLS MongoDB replica set
+        run: |
+          set -euo pipefail
+          export TMPDIR="$PWD/.security-build"
+          endpoint="${DOCKER_HOST:-$(docker context inspect "$(docker context show)" --format '{{(index .Endpoints "docker").Host}}')}"
+          case "$endpoint" in unix://*) ;; *) echo "Local Docker Unix socket required"; exit 1 ;; esac
+          export DOCKER_HOST="$endpoint"
+          unset DOCKER_CONTEXT
+          docker info --format '{{.ServerVersion}}'
+          .security-venv/bin/python - <<'PY'
+          import datetime, ipaddress
+          from pathlib import Path
+          from cryptography import x509
+          from cryptography.hazmat.primitives import hashes, serialization
+          from cryptography.hazmat.primitives.asymmetric import rsa
+          from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
+          now = datetime.datetime.now(datetime.timezone.utc)
+          ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+          ca_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Disposable CI CA")])
+          ca = (x509.CertificateBuilder().subject_name(ca_name).issuer_name(ca_name)
+                .public_key(ca_key.public_key()).serial_number(x509.random_serial_number())
+                .not_valid_before(now-datetime.timedelta(minutes=5)).not_valid_after(now+datetime.timedelta(days=1))
+                .add_extension(x509.BasicConstraints(ca=True, path_length=0), critical=True)
+                .sign(ca_key, hashes.SHA256()))
+          key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+          cert = (x509.CertificateBuilder()
+                  .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "localhost")]))
+                  .issuer_name(ca_name).public_key(key.public_key()).serial_number(x509.random_serial_number())
+                  .not_valid_before(now-datetime.timedelta(minutes=5)).not_valid_after(now+datetime.timedelta(days=1))
+                  .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+                  .add_extension(x509.SubjectAlternativeName([x509.DNSName("localhost"), x509.IPAddress(ipaddress.ip_address("127.0.0.1"))]), critical=False)
+                  .add_extension(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH]), critical=False)
+                  .sign(ca_key, hashes.SHA256()))
+          path = Path(".security-mongo")
+          (path/"ca.pem").write_bytes(ca.public_bytes(serialization.Encoding.PEM))
+          (path/"server.pem").write_bytes(key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()) + cert.public_bytes(serialization.Encoding.PEM) + ca.public_bytes(serialization.Encoding.PEM))
+          (path/"server.pem").chmod(0o600)
+          PY
+          task="cci-security-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker network create --label "cci.security-task=$task" "$task-net" > .security-mongo/network-id
+          docker pull mongo@sha256:4c7d0fb8fde0681e2ae443b0b09371ec9c31a81caab05af9579458bfcb30d656
+          docker create --name "$task" --label "cci.security-task=$task" \
+            --network "$task-net" --user "$(id -u):$(id -g)" \
+            --memory 1g --cpus 1 --pids-limit 256 --cap-drop ALL --security-opt no-new-privileges \
+            --tmpfs "/data/db:rw,size=536870912,uid=$(id -u),gid=$(id -g),mode=0700" \
+            --tmpfs "/data/configdb:rw,size=33554432,uid=$(id -u),gid=$(id -g),mode=0700" \
+            --mount "type=bind,source=$PWD/.security-mongo,target=/run/task-tls,readonly" \
+            --env HOME=/data/db --publish 127.0.0.1:27017:27017 \
+            mongo@sha256:4c7d0fb8fde0681e2ae443b0b09371ec9c31a81caab05af9579458bfcb30d656 \
+            mongod --bind_ip_all --replSet cci_security_smoke --wiredTigerCacheSizeGB 0.25 --nounixsocket \
+            --tlsMode requireTLS --tlsCertificateKeyFile /run/task-tls/server.pem \
+            --tlsCAFile /run/task-tls/ca.pem --tlsAllowConnectionsWithoutCertificates > .security-mongo/container-id
+          container="$(cat .security-mongo/container-id)"
+          docker start "$container"
+          ready=0
+          for attempt in $(seq 1 30); do
+            if docker exec "$container" mongosh --norc --quiet --tls --tlsCAFile /run/task-tls/ca.pem --host localhost --eval 'quit(db.adminCommand({ping:1}).ok ? 0 : 1)'; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" != 1 ]; then docker logs "$container"; exit 1; fi
+          docker exec "$container" mongosh --norc --quiet --tls --tlsCAFile /run/task-tls/ca.pem --host localhost \
+            --eval 'JSON.stringify(rs.initiate({_id:"cci_security_smoke",members:[{_id:0,host:"localhost:27017"}]}))'
+      - name: Exercise existing database helpers against disposable MongoDB
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          export TMPDIR="$PWD/.security-build"
+          .security-venv/bin/python - <<'PY'
+          import ast, importlib, json, logging, sys, types
+          from pathlib import Path
+          import certifi, pymongo
+          from bson.int64 import Int64
+          from pymongo import MongoClient
+          from pymongo.errors import ServerSelectionTimeoutError
+          def require(value, message):
+              if not value:
+                  raise RuntimeError(message)
+          uri = "mongodb://localhost:27017/cci_security_smoke?replicaSet=cci_security_smoke"
+          ca = str(Path(".security-mongo/ca.pem").resolve())
+          with MongoClient(uri, tlsCAFile=ca, serverSelectionTimeoutMS=30000) as client:
+              print(json.dumps({"python":sys.version, "pymongo":pymongo.version, "mongodb":client.server_info()["version"]}))
+              require(client.options.direct_connection is not True and client.options.retry_writes is True, "Unexpected URI defaults")
+              require(client.admin.command("hello")["isWritablePrimary"] and client.topology_description.topology_type_name == "ReplicaSetWithPrimary", "Replica discovery failed")
+              with MongoClient(uri+"&directConnection=true", tlsCAFile=ca, serverSelectionTimeoutMS=10000) as direct:
+                  require(direct.options.direct_connection is True and direct.admin.command("ping")["ok"] == 1, "Explicit directConnection failed")
+              with MongoClient(uri, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=1500, connectTimeoutMS=500) as untrusted:
+                  try:
+                      untrusted.admin.command("ping")
+                  except ServerSelectionTimeoutError as exc:
+                      require("CERTIFICATE_VERIFY_FAILED" in str(exc) or "certificate verify failed" in str(exc), "Unexpected TLS failure")
+                  else:
+                      raise RuntimeError("Public roots unexpectedly trusted disposable private CA")
+              db = client.get_database("cci_security_smoke")
+              require(not db.list_collection_names(), "Expected fresh disposable database")
+              package = types.ModuleType("bot")
+              package.__path__ = [str(Path("bot").resolve())]
+              package.db = db
+              package.logger = logging.getLogger("isolated-ci")
+              sys.modules["bot"] = package
+              helpers = importlib.import_module("bot.database")
+              User = importlib.import_module("bot.models").BotUser
+              Result = importlib.import_module("bot.bot_types").Result
+              manager = importlib.import_module("bot.conversation_manager").ConversationManager
+              uid, cid = Int64(1234567890123), Int64(2234567890123)
+              user = User(uid, "Isolated", "User", "synthetic")
+              require(helpers.add_user_to_db(user) == Result.SUCCESS, "User insert failed")
+              user.first_name = "Updated"
+              require(helpers.add_user_to_db(user) == Result.SKIPPED, "User update failed")
+              saved = db.users.find_one({"chat_id":uid})
+              require(saved["first_name"] == "Updated" and isinstance(saved["chat_id"], Int64) and saved["date"].tzinfo is None, "BSON/user conventions changed")
+              require(helpers.set_user_last_command(uid, "find_user") and helpers.get_user_last_command(uid) == "find_user", "Command helpers failed")
+              require(helpers.set_user_active(uid, False) == Result.SUCCESS, "Activity helper failed")
+              require(db.users.count_documents({"admin":False}) == 1 and db.users.count_documents({"chat_id":-1}) == 0, "Search counts failed")
+              projected = list(db.users.find({"admin":False}, {"_id":0, "date":0}))
+              require(len(projected) == 1 and "_id" not in projected[0] and "date" not in projected[0], "Search projection failed")
+              sermon = {"title":"Isolated Hope"}
+              require(helpers.insert_sermon(sermon) and not helpers.insert_sermon(sermon) and len(helpers.search_db_title("hope")) == 1, "Sermon helpers failed")
+              helpers.update_counseling_topics("hope")
+              helpers.update_counseling_topics("hope")
+              require(db.counseling_topics.find_one({"topic":"hope"})["count"] == 2, "Topic increment failed")
+              require(helpers.add_user_to_db(User(cid, "Isolated", "Counselor")) == Result.SUCCESS, "Counselor insert failed")
+              helpers.set_user_last_command(cid, "stats")
+              require(manager.start_conversation(cid, uid, 201, "Synthetic", "hope"), "Conversation start failed")
+              require(not manager.start_conversation(cid, uid, 201, "Synthetic", "hope"), "Duplicate conversation not rejected")
+              require(manager.is_counselor_in_conversation(cid) and manager.route_message(cid, "synthetic")["request_message_id"] == 201, "Conversation routing failed")
+              manager.end_conversation(cid, uid, 201)
+              require(not manager.get_counselor_conversations(cid) and helpers.get_user_last_command(cid) == "stats" and helpers.get_user_last_command(uid) is None, "Counseling state restoration failed")
+              stats = next(n for n in ast.parse(Path("bot/commands.py").read_text()).body if isinstance(n, ast.FunctionDef) and n.name == "stats")
+              assignment = next(n for n in ast.walk(stats) if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "pipeline" for t in n.targets))
+              require(sum(doc["count"] for doc in db.users.aggregate(ast.literal_eval(assignment.value))) == db.users.count_documents({}), "Statistics aggregation failed")
+              db.temporary.update_one({"synthetic":True}, {"$set":{"latest_sermon":True}}, upsert=True)
+              require(db.temporary.delete_one({"synthetic":True}).deleted_count == 1, "Upsert/delete failed")
+          print("Isolated real TLS/replica/driver/database-helper smoke passed; no production or Telegram services contacted.")
+          PY
+      - name: Remove only this job's disposable resources
+        if: always()
+        run: |
+          if [ -s .security-mongo/container-id ]; then
+            container="$(cat .security-mongo/container-id)"
+            docker logs --tail 20 "$container" || true
+            docker rm -f -v "$container"
+          fi
+          if [ -s .security-mongo/network-id ]; then
+            docker network rm "$(cat .security-mongo/network-id)"
+          fi
+
   build-push:
     name: Build & push arm64 image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -16,10 +16,10 @@ CCI Bot is a Python Telegram bot for Celebration Church International. It helps 
 ### Security dependency baseline
 
 The requirements include the October 21, 2026 security fixes: certifi
-2026.10.19, cryptography 50.0.0, idna 3.15,
+2026.10.19, cryptography 50.0.0, idna 3.15, PyMongo 4.18.2,
 python-dotenv 1.2.2, requests 2.33.0, soupsieve 2.9.0, Tornado 6.5.9,
-and urllib3 2.8.0. dnspython 2.8.0 satisfies PyMongo's newer dependency
-candidate requirement and replaces its vulnerable 2.0.0 pin.
+and urllib3 2.8.0. dnspython 2.8.0 satisfies PyMongo's dependency
+requirement and replaces its vulnerable 2.0.0 pin.
 Setuptools 84.2.1 and the pip 26.2.2 installation step address additional
 installer/build-dependency advisories found when checking the resolved
 environment. APScheduler moves to 3.11.3 because 3.9.1 imports `pkg_resources`,
@@ -28,26 +28,39 @@ APScheduler 3's `BlockingScheduler`; no job schedules are changed.
 CMake stays on major version 3 at 3.31.10 because the 3.27.7 macOS wheel's
 malformed wheel metadata fails the patched pip's platform check.
 
-**Outstanding security blocker:** the existing PyMongo 3.11.0 pin remains
-vulnerable to Dependabot alerts 78–81. The patched candidate, PyMongo 4.18.2,
-requires **MongoDB Server 4.4 or newer**. Confirm the deployed server version
-and connection-string compatibility before adopting it; the repository does
-not specify the server version. It is not safe to assume compatibility or
-deploy a driver that could disconnect an older server.
-Current package-advisory metadata also matches GHSA-m87m-mmvp-v9qm against
-3.11.0, independently of those four open alerts; the same candidate covers it.
+### MongoDB compatibility contract
 
-User search uses `count_documents()` (supported by the current driver) instead
-of `Cursor.count()`, preparing for the patched candidate while preserving the
-original filter and result projection. No database migration is included.
+PyMongo 4.18.2 replaces the vulnerable 3.11.0 driver for Dependabot alerts
+78–81 and GHSA-m87m-mmvp-v9qm. **MongoDB Server 4.4 or newer is now a
+required driver-compatibility minimum.** Use a MongoDB release still receiving
+upstream security support for deployment; the protocol minimum does not imply
+that an end-of-life server is secure. Supporting older servers is intentionally
+not retained at the cost of the known driver vulnerabilities.
+
+The checked-in Docker/Compose, workflow, runtime and application configuration
+do not pin a conflicting MongoDB server version. This is an explicit supported
+server requirement, not verification of the currently deployed database.
+Production server version, authentication, certificates and topology have not
+been inspected or tested, and this dependency update does not deploy anything.
+
+User search uses `count_documents()` instead of the removed `Cursor.count()`
+API, preserving the original filter and result projection. No database schema
+migration is included. PyMongo 4 defaults `directConnection` to `false`, allowing
+replica-set discovery. Keep that default for discoverable replica sets; an
+intentionally single-endpoint connection can explicitly set
+`directConnection=true` in its URI. Do not force it globally, disable TLS
+verification or silently rewrite connection settings.
 See the [PyMongo migration guide](https://pymongo.readthedocs.io/en/4.18.2/migrate-to-pymongo4.html)
-for URI-option changes and the changed `directConnection` default. Connection
-settings are not changed automatically.
+for renamed/removed URI options. The application continues to use `tlsCAFile`
+with the certifi CA bundle.
 
 The Telegram framework remains at 12.8 to preserve its v12 handler APIs.
-It includes a separate vendored urllib3 transport; updating the top-level
-urllib3 pin does not replace that bundled code. This dependency update is
-not a security certification of the legacy Telegram framework.
+`telegram.utils.request` imports a separate
+`telegram.vendor.ptb_urllib3` transport whose version marker is `dev`;
+updating the top-level urllib3 pin does not replace that bundled code.
+Dependency-metadata scans do not establish the security of that unversioned
+vendored code. A feature-preserving Telegram migration needs a separate
+assessment; this update is not a security certification of the legacy framework.
 
 ## Project structure
 
@@ -137,6 +150,17 @@ Importing `app.py` is not used as a routine gate because module import initializ
 Dependency and compilation checks do not validate live MongoDB connectivity,
 Telegram polling/webhooks, scheduled jobs, or deployment on the Raspberry Pi.
 
+Pull requests additionally run a GitHub-hosted dependency check and an isolated
+MongoDB 8.0 TLS replica-set smoke check of existing user, sermon, topic,
+conversation and statistics helpers. The check binds only a loopback port and
+uses synthetic data and a disposable private CA. Database/logger bindings are
+injected to avoid starting the bot; production authentication, certificates,
+network topology and Telegram services are not exercised. It also verifies the
+effective replica-discovery default, an explicit `directConnection=true` URI,
+and rejection of the private CA when only public certifi roots are trusted.
+The driver protocol minimum of MongoDB 4.4 is not an integration result for
+every supported server version.
+
 ## Docker
 
 Build and run both long-lived processes with Docker Compose:
@@ -154,6 +178,8 @@ The compose file starts separate `bot` and `scheduler` services and writes logs 
 - `Dockerfile` builds the Python runtime image.
 - `docker-compose.yml` runs separate bot and scheduler containers.
 - `.github/workflows/deploy.yml` deploys from `main` on a self-hosted Raspberry Pi runner.
+  Pull requests use GitHub-hosted validation only: they neither publish the
+  production image nor run the Pi deployment job.
 
 ## Status and notes
 
