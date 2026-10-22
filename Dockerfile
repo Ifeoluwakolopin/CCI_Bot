@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir --upgrade pip==26.2.2 \
+    && python -m pip install --no-cache-dir -r requirements.txt
 
 # Create logs directory
 RUN mkdir -p logs

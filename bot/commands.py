@@ -147,7 +147,7 @@ def find_user_message_handler(update, context):
     if "admin" in db_query:
         db_query["admin"] = True if db_query["admin"].lower() == "true" else False
     users = db.users.find(db_query, {"_id": 0, "date": 0})
-    if users.count() == 0:
+    if db.users.count_documents(db_query) == 0:
         update.message.reply_text("No users found")
     else:
         for user in users:
