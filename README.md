@@ -16,10 +16,10 @@ CCI Bot is a Python Telegram bot for Celebration Church International. It helps 
 ### Security dependency baseline
 
 The requirements include the October 21, 2026 security fixes: certifi
-2026.10.19, cryptography 50.0.0, idna 3.15, PyMongo 4.18.2,
+2026.10.19, cryptography 50.0.0, idna 3.15,
 python-dotenv 1.2.2, requests 2.33.0, soupsieve 2.9.0, Tornado 6.5.9,
 and urllib3 2.8.0. dnspython 2.8.0 satisfies PyMongo's newer dependency
-requirement and replaces its vulnerable 2.0.0 pin.
+candidate requirement and replaces its vulnerable 2.0.0 pin.
 Setuptools 84.2.1 and the pip 26.2.2 installation step address additional
 installer/build-dependency advisories found when checking the resolved
 environment. APScheduler moves to 3.11.3 because 3.9.1 imports `pkg_resources`,
@@ -28,11 +28,18 @@ APScheduler 3's `BlockingScheduler`; no job schedules are changed.
 CMake stays on major version 3 at 3.31.10 because the 3.27.7 macOS wheel's
 malformed wheel metadata fails the patched pip's platform check.
 
-PyMongo 4.18 requires **MongoDB Server 4.4 or newer**. Confirm the deployed
-server version and connection-string compatibility before deployment; the
-repository does not specify the server version. User search uses
-`count_documents()` instead of the removed `Cursor.count()` API, preserving
-the original filter and result projection. No database migration is included.
+**Outstanding security blocker:** the existing PyMongo 3.11.0 pin remains
+vulnerable to Dependabot alerts 78–81. The patched candidate, PyMongo 4.18.2,
+requires **MongoDB Server 4.4 or newer**. Confirm the deployed server version
+and connection-string compatibility before adopting it; the repository does
+not specify the server version. It is not safe to assume compatibility or
+deploy a driver that could disconnect an older server.
+Current package-advisory metadata also matches GHSA-m87m-mmvp-v9qm against
+3.11.0, independently of those four open alerts; the same candidate covers it.
+
+User search uses `count_documents()` (supported by the current driver) instead
+of `Cursor.count()`, preparing for the patched candidate while preserving the
+original filter and result projection. No database migration is included.
 See the [PyMongo migration guide](https://pymongo.readthedocs.io/en/4.18.2/migrate-to-pymongo4.html)
 for URI-option changes and the changed `directConnection` default. Connection
 settings are not changed automatically.
