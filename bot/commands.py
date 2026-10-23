@@ -1,6 +1,6 @@
 import os
 import json
-from . import bot, db, config
+from . import bot, db, config, logger
 from .models import BotUser
 from .helpers import (
     BroadcastHandlers,
@@ -27,7 +27,7 @@ from .keyboards import validate_user_keyboard
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 
 
-def start(update, context):
+async def start(update, context):
     """
     This is the response of the bot on startup.
 
@@ -48,14 +48,14 @@ def start(update, context):
     set_user_active(chat_id, True)
 
     # Send welcome message
-    send_welcome_message(chat_id, first_name, context.bot)
+    await send_welcome_message(chat_id, first_name, context.bot)
 
     db.users.update_one(
         {"chat_id": chat_id}, {"$set": {"last_command": "first_time_location_set"}}
     )
 
 
-def send_welcome_message(chat_id, first_name, bot):
+async def send_welcome_message(chat_id, first_name, bot):
     """
     Sends a welcome message to the user.
 
@@ -71,52 +71,52 @@ def send_welcome_message(chat_id, first_name, bot):
     rows, cols = 4, 1
     buttons = create_buttons_from_data(countries, "loc", rows, cols)
 
-    bot.send_message(
+    await bot.send_message(
         chat_id=chat_id,
         text=welcome_message,
         parse_mode="Markdown",
-        disable_web_page_preview="True",
+        disable_web_page_preview=True,
         reply_markup=buttons,
     )
 
 
-def handle_location_not_set_first_time(update, context):
+async def handle_location_not_set_first_time(update, context):
     """
     Handles the case where a user has not set their location for the first time.
     Prompts the user to set their church location.
     """
     chat_id = update.effective_chat.id
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["location_not_set_first_time"],
     )
 
 
-def handle_location_not_set_for_counseling(update, context):
+async def handle_location_not_set_for_counseling(update, context):
     """
     Handles the case where a user has not set their location for counseling.
     Prompts the user to set their church location.
     """
     chat_id = update.effective_chat.id
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["location_not_set_for_counseling"],
     )
 
 
-def handle_birthday_not_set(update, context):
+async def handle_birthday_not_set(update, context):
     """
     Handles the case where a user has not set their birthday.
     Prompts the user to set their birthday.
     """
     chat_id = update.effective_chat.id
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["birthday_not_set"],
     )
 
 
-def bc_setup(update, context):
+async def bc_setup(update, context):
     """
     Unified function to set up broadcast for different types of messages.
     """
@@ -126,21 +126,21 @@ def bc_setup(update, context):
         return
 
     # Send a message to the admin to select the type of broadcast
-    context.bot.send_message(chat_id=chat_id, text=config["messages"]["bc_prompt"])
+    await context.bot.send_message(chat_id=chat_id, text=config["messages"]["bc_prompt"])
 
     set_user_last_command(chat_id, "broadcast")
 
 
-def find_user(update, context):
+async def find_user(update, context):
     chat_id = update.effective_chat.id
     if db.users.find_one({"chat_id": chat_id, "admin": True}):
-        context.bot.send_message(chat_id=chat_id, text=config["messages"]["find_user"])
+        await context.bot.send_message(chat_id=chat_id, text=config["messages"]["find_user"])
         set_user_last_command(chat_id, "find_user")
     else:
-        unknown(update, context)
+        await unknown(update, context)
 
 
-def find_user_message_handler(update, context):
+async def find_user_message_handler(update, context):
     chat_id = update.effective_chat.id
     msg = update.message.text.split("\n")
     db_query = {k: v.strip() for k, v in [i.split(":") for i in msg]}
@@ -148,7 +148,7 @@ def find_user_message_handler(update, context):
         db_query["admin"] = True if db_query["admin"].lower() == "true" else False
     users = db.users.find(db_query, {"_id": 0, "date": 0})
     if db.users.count_documents(db_query) == 0:
-        update.message.reply_text("No users found")
+        await update.message.reply_text("No users found")
     else:
         for user in users:
             keyboard = [
@@ -188,7 +188,7 @@ def find_user_message_handler(update, context):
                     ]
                 )
 
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["user_found"].format(
                     json.dumps(user, indent=2)
@@ -197,7 +197,7 @@ def find_user_message_handler(update, context):
             )
 
 
-def handle_find_user_callback(update, context):
+async def handle_find_user_callback(update, context):
     chat_id = update.effective_chat.id
     query_data = update.callback_query.data.split("=")
     user_id = query_data[-1]
@@ -205,7 +205,7 @@ def handle_find_user_callback(update, context):
     if query_data[1] == "loc":
         action = "location"
         church_locations = list(db.church_locations.find({}, {"_id": 0}))
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["update_user_location"].format(
                 user["first_name"],
@@ -216,7 +216,7 @@ def handle_find_user_callback(update, context):
     elif query_data[1] == "rm_loc":
         action = "remove location"
         locations = list(user["locations"])
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["update_remove_pastor_location"].format(
                 user["first_name"], user["last_name"], locations
@@ -230,7 +230,7 @@ def handle_find_user_callback(update, context):
         action = "admin"
 
     if action != "location" and action != "remove location":
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["update_user"].format(
                 user["first_name"], user["last_name"], action
@@ -239,7 +239,7 @@ def handle_find_user_callback(update, context):
     set_user_last_command(chat_id, f"update_user={action}={user_id}")
 
 
-def handle_update_user(update, context):
+async def handle_update_user(update, context):
     chat_id = update.effective_chat.id
     last_command = get_user_last_command(chat_id).split("=")
     user_id = last_command[-1]
@@ -259,14 +259,14 @@ def handle_update_user(update, context):
         update = {"$set": {last_command[1]: msg}}
 
     db.users.update_one({"chat_id": int(user_id)}, update)
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["update_user_done"].format(last_command[1], update),
     )
     set_user_last_command(chat_id, None)
 
 
-def handle_broadcast(update, context):
+async def handle_broadcast(update, context):
     """
     Handles the broadcast action based on the admin's response.
     """
@@ -282,45 +282,40 @@ def handle_broadcast(update, context):
     # Fetch all users to broadcast to
     users = db.users.distinct("chat_id", {"active": True})
 
-    print(f"FOund {len(users)} users to broadcast to")
-    print("Sample user id", users[0])
-
-    print("Message:", message)
-
     if message.text:
-        BroadcastHandlers.broadcast_message(
+        await BroadcastHandlers.broadcast_message(
             users, message.text, MessageHelper.send_text
         )
     elif message.photo:
         photo = message.photo[-1].file_id
         caption = message.caption or ""
-        BroadcastHandlers.broadcast_message(
+        await BroadcastHandlers.broadcast_message(
             users, photo, MessageHelper.send_photo, caption
         )
     elif message.video:
         video = message.video.file_id
         caption = message.caption or ""
-        BroadcastHandlers.broadcast_message(
+        await BroadcastHandlers.broadcast_message(
             users, video, MessageHelper.send_video, caption
         )
     elif message.animation:
         animation = message.animation.file_id
         caption = message.caption or ""
-        BroadcastHandlers.broadcast_message(
+        await BroadcastHandlers.broadcast_message(
             users, animation, MessageHelper.send_animation, caption
         )
 
 
-def blog_posts(update, context):
+async def blog_posts(update, context):
     chat_id = update.effective_chat.id
 
     if check_user_in_conversation(chat_id):
-        notify_in_conversation(chat_id)
+        await notify_in_conversation(chat_id)
     else:
         button = [
             [InlineKeyboardButton("Read blog posts", url="https://ccing.org/blogs/")]
         ]
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["blog_posts"],
             reply_markup=InlineKeyboardMarkup(button),
@@ -328,14 +323,14 @@ def blog_posts(update, context):
         set_user_last_command(chat_id)
 
 
-def broadcast_message_handler(update, context):
+async def broadcast_message_handler(update, context):
     """
     This function allows for an admin personnel send broadcast
     to all users
     """
     chat_id = update.effective_chat.id
     if db.users.find_one({"chat_id": chat_id, "admin": True}):
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["broadcast"],
             reply_markup=InlineKeyboardMarkup(
@@ -346,10 +341,10 @@ def broadcast_message_handler(update, context):
         )
         set_user_last_command(chat_id)
     else:
-        unknown(update, context)
+        await unknown(update, context)
 
 
-def cancel(update, context):
+async def cancel(update, context):
     """
     This function helps you cancel any existing action
     """
@@ -359,7 +354,7 @@ def cancel(update, context):
 
     if user["last_command"] is not None:
         if user["last_command"].startswith("in-conversation-with"):
-            end_conversation_prompt(update, context)
+            await end_conversation_prompt(update, context)
         elif user["last_command"].startswith("counselor_request") or user[
             "last_command"
         ].startswith("location_counseling"):
@@ -368,7 +363,7 @@ def cancel(update, context):
             )
             if latest_request:
                 db.counseling_requests.delete_one({"_id": latest_request["_id"]})
-                context.bot.send_message(
+                await context.bot.send_message(
                     chat_id=chat_id,
                     text=config["messages"]["counselor_request_cancel"],
                 )
@@ -376,7 +371,7 @@ def cancel(update, context):
             set_user_last_command(chat_id, None)
         elif user["last_command"].split("=")[0] == "transfer_req":
             # cancel a counseling transfer request
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["counselor_transfer_cancel"],
             )
@@ -391,62 +386,62 @@ def cancel(update, context):
                 },
             )
         elif user["last_command"] == "verify_counselor":
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"].get("cancel", "Action cancelled."),
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             )
             set_user_last_command(chat_id, None)
         elif user["last_command"] == "verify_active_requests":
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text="🚫 Active requests verification cancelled.",
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             )
             set_user_last_command(chat_id, None)
         else:
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["cancel"],
                 parse_mode="Markdown",
-                disable_web_page_preview="True",
+                disable_web_page_preview=True,
                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
             )
             set_user_last_command(chat_id, None)
 
     else:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["cancel"],
             parse_mode="Markdown",
-            disable_web_page_preview="True",
+            disable_web_page_preview=True,
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
         set_user_last_command(chat_id, None)
 
 
-def done(update, context):
+async def done(update, context):
     """
     This function helps you finish an existing action.
     """
     chat_id = update.effective_chat.id
     keyboard = validate_user_keyboard(chat_id)
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["done"],
         parse_mode="Markdown",
-        disable_web_page_preview="True",
+        disable_web_page_preview=True,
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
     set_user_last_command(chat_id, None)
 
 
-def feedback(update, context):
+async def feedback(update, context):
     chat_id = update.effective_chat.id
     if check_user_in_conversation(chat_id):
-        notify_in_conversation(chat_id)
+        await notify_in_conversation(chat_id)
     else:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["feedback"],
             reply_markup=InlineKeyboardMarkup(
@@ -463,18 +458,17 @@ def feedback(update, context):
                     ],
                     [InlineKeyboardButton("Other", callback_data="feedback=other")],
                 ],
-                resize_keyboard=True,
             ),
         )
         db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
 
 
-def feedback_cb_handler(update, context):
+async def feedback_cb_handler(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     q_head = q.split("=")
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["feedback_handler"],
     )
@@ -483,7 +477,7 @@ def feedback_cb_handler(update, context):
     )
 
 
-def get_sermon(update, context):
+async def get_sermon(update, context):
     """
     This gets a particular sermon user wants
     """
@@ -496,14 +490,14 @@ def get_sermon(update, context):
             )
         ],
     ]
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["get_sermon"],
         reply_markup=InlineKeyboardMarkup(buttons),
     )
 
 
-def get_devotional(update, context):
+async def get_devotional(update, context):
     """
     This get the devotional for the particular day
     """
@@ -514,7 +508,7 @@ def get_devotional(update, context):
     else:
         d = db.devotionals.find_one({"date": str(date.today())})
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
-    context.bot.send_photo(
+    await context.bot.send_photo(
         chat_id=chat_id,
         photo=d["image"],
         caption=config["messages"]["t30_caption"].format(
@@ -525,13 +519,13 @@ def get_devotional(update, context):
     db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
 
 
-def helps(update, context):
+async def helps(update, context):
     """
     This sends a list of available commands for the bot
     """
     chat_id = update.effective_chat.id
     keyboard = validate_user_keyboard(chat_id)
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["help"],
         parse_mode="Markdown",
@@ -540,7 +534,7 @@ def helps(update, context):
     db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
 
 
-def latest_sermon(update, context):
+async def latest_sermon(update, context):
     """
     This gets the most recent sermon
     """
@@ -551,7 +545,7 @@ def latest_sermon(update, context):
             [InlineKeyboardButton("Download Sermon", url=sermon["download"])],
             [InlineKeyboardButton("Watch Video", url=sermon["video"])],
         ]
-        context.bot.send_photo(
+        await context.bot.send_photo(
             chat_id=chat_id,
             photo=sermon["image"],
             caption=sermon["title"],
@@ -559,7 +553,7 @@ def latest_sermon(update, context):
         )
     else:
         button = [[InlineKeyboardButton("Download Sermon", url=sermon["link"])]]
-        context.bot.send_photo(
+        await context.bot.send_photo(
             chat_id=chat_id,
             photo=sermon["image"],
             caption=sermon["title"],
@@ -576,28 +570,28 @@ def map_loc(update, context):
     pass
 
 
-def menu(update, context):
+async def menu(update, context):
     """
     This restores the default keyboard.
     """
     chat_id = update.effective_chat.id
     keyboard = validate_user_keyboard(chat_id)
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["menu"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
     if check_user_in_conversation(chat_id):
-        notify_in_conversation(chat_id)
+        await notify_in_conversation(chat_id)
     else:
         set_user_last_command(chat_id, None)
 
 
-def membership_school(update, context):
+async def membership_school(update, context):
     chat_id = update.effective_chat.id
 
     if check_user_in_conversation(chat_id):
-        notify_in_conversation(chat_id)
+        await notify_in_conversation(chat_id)
     else:
         button = [
             [
@@ -606,7 +600,7 @@ def membership_school(update, context):
                 )
             ]
         ]
-        context.bot.send_photo(
+        await context.bot.send_photo(
             chat_id=chat_id,
             photo=open("img/membership.jpg", "rb"),
             caption=config["messages"]["membership"],
@@ -615,25 +609,25 @@ def membership_school(update, context):
         set_user_last_command(chat_id, None)
 
 
-def mute(update, context):
+async def mute(update, context):
     """
     This set the user's mute status
     """
     chat_id = update.effective_chat.id
-    context.bot.send_message(chat_id=chat_id, text=config["messages"]["mute"])
+    await context.bot.send_message(chat_id=chat_id, text=config["messages"]["mute"])
     db.users.update_one({"chat_id": chat_id}, {"$set": {"mute": True}})
 
 
-def unmute(update, context):
+async def unmute(update, context):
     """
     This sets the user's mute status to false
     """
     chat_id = update.effective_chat.id
-    context.bot.send_message(chat_id=chat_id, text=config["messages"]["unmute"])
+    await context.bot.send_message(chat_id=chat_id, text=config["messages"]["unmute"])
     db.users.update_one({"chat_id": chat_id}, {"$set": {"mute": False}})
 
 
-def notify_new_sermon(chat_id, sermons):
+async def notify_new_sermon(chat_id, sermons):
     try:
         buttons = [
             [InlineKeyboardButton(i, callback_data="s=" + i.split("-")[2])]
@@ -643,23 +637,24 @@ def notify_new_sermon(chat_id, sermons):
         buttons = [[InlineKeyboardButton(i, callback_data="s=" + i)] for i in sermons]
     user = db.users.find_one({"chat_id": chat_id})
     try:
-        bot.send_message(
+        await bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["new_sermon"].format(user["first_name"]),
             reply_markup=InlineKeyboardMarkup(buttons),
         )
-    except:
+    except Exception as error:
         set_user_active(chat_id, False)
+        logger.warning("Sermon notification failed (%s)", type(error).__name__)
 
 
-def unknown(update, context):
+async def unknown(update, context):
     """
     This handles unrecognized commands.
     """
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
     keyboard = validate_user_keyboard(chat_id)
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["unknown"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -667,10 +662,10 @@ def unknown(update, context):
     set_user_last_command(chat_id, None)
 
 
-def reboot_about(update, context):
+async def reboot_about(update, context):
     chat_id = update.effective_chat.id
     keyboard = validate_user_keyboard(chat_id)
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["reboot_camp"]["about"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -678,7 +673,7 @@ def reboot_about(update, context):
     set_user_last_command(chat_id, None)
 
 
-def set_church_location(update, context):
+async def set_church_location(update, context):
     """
     This function sets the church location for a user
     """
@@ -689,14 +684,14 @@ def set_church_location(update, context):
     rows, cols = 4, 1
     buttons = create_buttons_from_data(countries, "loc", rows, cols)
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["lc"].format(user["first_name"]),
         reply_markup=buttons,
     )
 
 
-def church_location_callback_handler(update, context):
+async def church_location_callback_handler(update, context):
     """
     This function handles the callback from the church location prompt
     """
@@ -714,7 +709,7 @@ def church_location_callback_handler(update, context):
             cols,
         )
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["lc_other"],
             reply_markup=updated_buttons,
@@ -725,14 +720,14 @@ def church_location_callback_handler(update, context):
 
         buttons = create_buttons_from_data(church_locations, f"br={country}", 4, 2)
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["lc_country"].format(country),
             reply_markup=buttons,
         )
 
 
-def handle_branch_selection_callback(update, context):
+async def handle_branch_selection_callback(update, context):
     """
     This function handles the callback from the church location prompt
     """
@@ -749,7 +744,7 @@ def handle_branch_selection_callback(update, context):
             4,
             2,
         )
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["lc_other"],
             reply_markup=updated_buttons,
@@ -757,14 +752,14 @@ def handle_branch_selection_callback(update, context):
     else:
         branch = find_text_for_callback(update.callback_query)
         db.users.update_one({"chat_id": chat_id}, {"$set": {"location": branch}})
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["lc_done"].format(branch),
         )
 
         user = db.users.find_one({"chat_id": chat_id})
         if user["last_command"] == "first_time_location_set":
-            PromptHelper.birthday_prompt(chat_id)
+            await PromptHelper.birthday_prompt(chat_id)
             db.users.update_one(
                 {"chat_id": chat_id},
                 {"$set": {"last_command": "first_time_birthday_set"}},
@@ -774,7 +769,7 @@ def handle_branch_selection_callback(update, context):
         ):
             msg_id = user["last_command"].split("=")[-1]
             set_user_last_command(chat_id, None)
-            add_note(
+            await add_note(
                 update,
                 context,
                 config["messages"]["counselor_request_note"],
@@ -782,7 +777,7 @@ def handle_branch_selection_callback(update, context):
             )
 
 
-def stats(update, context):
+async def stats(update, context):
     """
     This function gives you statistics about the bot
     """
@@ -814,7 +809,7 @@ def stats(update, context):
         location_counts_cursor = db.users.aggregate(pipeline)
         location_counts = {doc["_id"]: doc["count"] for doc in location_counts_cursor}
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["stats"].format(
                 total_users,
@@ -829,7 +824,7 @@ def stats(update, context):
         )
         set_user_last_command(chat_id, None)
     else:
-        unknown(update, context)
+        await unknown(update, context)
 
 
 def check_user_in_conversation(chat_id):
@@ -844,19 +839,19 @@ def check_user_in_conversation(chat_id):
         return False
 
 
-def notify_in_conversation(chat_id):
+async def notify_in_conversation(chat_id):
     """
     This function notifies the user that they are in a conversation.
     """
     keyboard = validate_user_keyboard(chat_id)
-    bot.send_message(
+    await bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["in_conversation"],
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
 
 
-def counselor_dashboard(update, context):
+async def counselor_dashboard(update, context):
     """
     Displays the counselor's dashboard or prompts for counselor verification.
     """
@@ -865,7 +860,7 @@ def counselor_dashboard(update, context):
 
     if not user or user.get("role") != "counselor":
         # Prompt for counselor verification
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["not_counselor_prompt"],
         )
@@ -912,7 +907,7 @@ def counselor_dashboard(update, context):
         ]
     ]
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=dashboard_message,
         parse_mode="Markdown",
@@ -920,7 +915,7 @@ def counselor_dashboard(update, context):
     )
 
 
-def handle_counselor_verification(update, context):
+async def handle_counselor_verification(update, context):
     """
     Handles the verification of a counselor.
     """
@@ -929,20 +924,20 @@ def handle_counselor_verification(update, context):
     if password == os.getenv("COUNSELOR_PASSWORD"):
         db.users.update_one({"chat_id": chat_id}, {"$set": {"role": "counselor"}})
         keyboard = validate_user_keyboard(chat_id)
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_verified"],
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
         )
         set_user_last_command(chat_id, None)
     else:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_verification_failed"],
         )
 
 
-def handle_counselor_topic_update(update, context):
+async def handle_counselor_topic_update(update, context):
     """
     Handles the update of counseling topics for a counselor.
     """
@@ -950,7 +945,7 @@ def handle_counselor_topic_update(update, context):
     user = db.users.find_one({"chat_id": chat_id})
 
     if not user or user.get("role") != "counselor":
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["not_counselor_prompt"],
         )
@@ -973,10 +968,10 @@ def handle_counselor_topic_update(update, context):
         {"chat_id": chat_id}, {"$set": {"last_command": "select_topics"}}
     )
 
-    context.bot.send_message(chat_id=chat_id, text=message)
+    await context.bot.send_message(chat_id=chat_id, text=message)
 
 
-def handle_topic_selection(update, context):
+async def handle_topic_selection(update, context):
     """
     Adds selected topics to the counselor's current assignments.
     """
@@ -984,7 +979,7 @@ def handle_topic_selection(update, context):
     user = db.users.find_one({"chat_id": chat_id})
 
     if not user or user.get("role") != "counselor":
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["not_counselor_prompt"]
         )
         return
@@ -995,7 +990,7 @@ def handle_topic_selection(update, context):
     try:
         indexes = [int(i.strip()) for i in selected_indexes]
     except ValueError:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["invalid_topic_input"]
         )
         return
@@ -1008,7 +1003,7 @@ def handle_topic_selection(update, context):
             selected_topics.append(topics[i - 1]["topic"])
 
     if not selected_topics:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["no_valid_topics"]
         )
         return
@@ -1020,7 +1015,7 @@ def handle_topic_selection(update, context):
         )
 
     db.users.update_one({"chat_id": chat_id}, {"$set": {"last_command": None}})
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["topics_updated_confirmation"].format(
             topics=", ".join(selected_topics)

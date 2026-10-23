@@ -1,5 +1,5 @@
 import os
-from . import dp, updater, PORT, db, config, bot
+from . import application, PORT, db, config, bot
 from .database import search_db_title, set_user_last_command
 from .commands import (
     get_devotional,
@@ -37,7 +37,7 @@ from .commands import (
 )
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, CommandHandler
-from telegram.ext import Filters
+from telegram.ext import filters
 from telegram.ext import MessageHandler
 from chat.chat_message_handlers import (
     counseling,
@@ -72,7 +72,7 @@ from dotenv import dotenv_values, load_dotenv
 load_dotenv()
 
 
-def handle_message_commands(update, context):
+async def handle_message_commands(update, context):
     """
     This matches incoming commands from users to their respective functions
 
@@ -87,42 +87,42 @@ def handle_message_commands(update, context):
     title = update.message.text.lower()
 
     if title == "devotional":
-        get_devotional(update, context)
+        await get_devotional(update, context)
     elif title == "latest sermon":
-        latest_sermon(update, context)
+        await latest_sermon(update, context)
     elif title == "get sermon":
-        get_sermon(update, context)
+        await get_sermon(update, context)
     elif title == "help":
-        helps(update, context)
+        await helps(update, context)
     elif title == "find user":
-        find_user(update, context)
+        await find_user(update, context)
     elif title == "statistics":
-        stats(update, context)
+        await stats(update, context)
     elif title == "broadcast":
-        broadcast_message_handler(update, context)
+        await broadcast_message_handler(update, context)
     elif title == "map":
         map_loc(update, context)
     elif title == "cancel":
-        cancel(update, context)
+        await cancel(update, context)
     elif title == "reboot camp":
-        reboot_about(update, context)
+        await reboot_about(update, context)
     elif title == "counseling":
-        counseling(update, context)
+        await counseling(update, context)
     elif title == "menu":
-        menu(update, context)
+        await menu(update, context)
     elif title == "view active requests":
-        show_active_requests(update, context)
+        await show_active_requests(update, context)
     elif title == "view new requests":
-        show_new_requests(update, context)
+        await show_new_requests(update, context)
     elif title == "counselor dashboard":
-        counselor_dashboard(update, context)
+        await counselor_dashboard(update, context)
     elif title == "location":
-        set_church_location(update, context)
+        await set_church_location(update, context)
     else:
-        unknown(update, context)
+        await unknown(update, context)
 
 
-def handle_message_response(update, context):
+async def handle_message_response(update, context):
     """
     Handles actions for messages
     """
@@ -131,30 +131,30 @@ def handle_message_response(update, context):
     last_command = user["last_command"]
 
     if last_command == None:
-        handle_message_commands(update, context)
+        await handle_message_commands(update, context)
     elif last_command == "first_time_location_set":
-        handle_location_not_set_first_time(update, context)
+        await handle_location_not_set_first_time(update, context)
     elif last_command == "first_time_birthday_set":
-        handle_birthday_not_set(update, context)
+        await handle_birthday_not_set(update, context)
     elif last_command.startswith("location_counseling"):
-        handle_location_not_set_for_counseling(update, context)
+        await handle_location_not_set_for_counseling(update, context)
     elif last_command.startswith("in-conversation-with"):
-        conversation_handler(update, context)
+        await conversation_handler(update, context)
     elif last_command == "find_user":
-        find_user_message_handler(update, context)
+        await find_user_message_handler(update, context)
     elif last_command == "select_topics":
-        handle_topic_selection(update, context)
+        await handle_topic_selection(update, context)
     elif last_command == "verify_counselor":
-        handle_counselor_verification(update, context)
+        await handle_counselor_verification(update, context)
     elif last_command == "verify_active_requests":
-        handle_active_requests_verification(update, context)
+        await handle_active_requests_verification(update, context)
     elif last_command.startswith("update_user"):
-        handle_update_user(update, context)
+        await handle_update_user(update, context)
     elif last_command == "get_sermon":
         title = update.message.text.strip()
         sermons = search_db_title(title)
         if len(sermons) == 0:
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["empty"].format(title)
             )
         else:
@@ -168,7 +168,7 @@ def handle_message_response(update, context):
                         ],
                         [InlineKeyboardButton("Watch Video", url=sermon["video"])],
                     ]
-                    context.bot.send_photo(
+                    await context.bot.send_photo(
                         chat_id=chat_id,
                         photo=sermon["image"],
                         caption=sermon["title"],
@@ -178,18 +178,18 @@ def handle_message_response(update, context):
                     button = [
                         [InlineKeyboardButton("Download Sermon", url=sermon["link"])]
                     ]
-                    context.bot.send_photo(
+                    await context.bot.send_photo(
                         chat_id=chat_id,
                         photo=sermon["image"],
                         caption=sermon["title"],
                         reply_markup=InlineKeyboardMarkup(button),
                     )
-        menu(update, context)
+        await menu(update, context)
     elif last_command.startswith("broadcast"):
-        handle_broadcast(update, context)
+        await handle_broadcast(update, context)
 
     elif last_command == "map":
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["map_feedback"],
             parse_mode="Markdown",
@@ -197,7 +197,7 @@ def handle_message_response(update, context):
         set_user_last_command(chat_id, None)
     elif last_command.startswith("counselor_request"):
         topic = last_command.split("=")[-1]
-        handle_counselor_request_yes(update, context, topic)
+        await handle_counselor_request_yes(update, context, topic)
     elif last_command.startswith("cr_yes"):
         message_id = int(last_command.split("=")[-1])
         text = update.message.text
@@ -205,10 +205,10 @@ def handle_message_response(update, context):
             {"request_message_id": message_id}, {"$set": {"active": True, "note": text}}
         )
         req = db.counseling_requests.find_one({"request_message_id": message_id})
-        context.bot.send_message(chat_id=chat_id, text=config["messages"]["cr_done"])
-        done(update, context)
+        await context.bot.send_message(chat_id=chat_id, text=config["messages"]["cr_done"])
+        await done(update, context)
         # Notify pastors in particular category about new request.
-        notify_pastors(req)
+        await notify_pastors(req)
     elif last_command.startswith("feedback"):
         type = last_command.split("=")[-1]
         message = update.message.text
@@ -216,15 +216,15 @@ def handle_message_response(update, context):
         db.feedback.insert_one(
             {"type": type, "message": message, "status": "pending", "user": chat_id}
         )
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["feedback_done"]
         )
         set_user_last_command(chat_id, None)
     elif last_command.startswith("transfer_req"):
-        counselor_transfer_msg_handler(update, context)
+        await counselor_transfer_msg_handler(update, context)
 
 
-def cb_handle(update, context):
+async def cb_handle(update, context):
     chat_id = update.effective_chat.id
     callback = update.callback_query
     q = callback.data
@@ -233,14 +233,14 @@ def cb_handle(update, context):
         # TODO: refactor map location handling
         pass
     elif q_head[0] == "update":
-        handle_find_user_callback(update, context)
+        await handle_find_user_callback(update, context)
     elif q_head[0] == "counsel":
-        handle_counseling(update, context)
+        await handle_counseling(update, context)
     elif q_head[0] == "qa_or_c":
-        handle_ask_question_or_request_counselor(update, context)
+        await handle_ask_question_or_request_counselor(update, context)
     elif q_head[0] == "bc":
         if q_head[1] == "all":
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["bc_prompt"],
             )
@@ -255,16 +255,16 @@ def cb_handle(update, context):
             ]
         else:
             button = [[InlineKeyboardButton("Download Sermon", url=sermon["link"])]]
-        context.bot.send_photo(
+        await context.bot.send_photo(
             chat_id=chat_id,
             photo=sermon["image"],
             caption=sermon["title"],
             reply_markup=InlineKeyboardMarkup(button),
         )
     elif q_head[0] == "loc":
-        church_location_callback_handler(update, context)
+        await church_location_callback_handler(update, context)
     elif q_head[0] == "br":
-        handle_branch_selection_callback(update, context)
+        await handle_branch_selection_callback(update, context)
     elif q_head[0] == "bd":
         if len(q_head) == 2:
             month = q_head[1]
@@ -295,7 +295,7 @@ def cb_handle(update, context):
             if current_row:
                 day_buttons.append(current_row)
 
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_day"],
                 reply_markup=InlineKeyboardMarkup(day_buttons),
@@ -305,7 +305,7 @@ def cb_handle(update, context):
                 {"chat_id": chat_id},
                 {"$set": {"birthday": q.split("=")[1] + "-" + q.split("=")[2]}},
             )
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_confirm"].format(
                     q.split("=")[1] + "/" + q.split("=")[2]
@@ -314,80 +314,80 @@ def cb_handle(update, context):
             set_user_last_command(chat_id, None)
     elif q_head[0] == "get-sermon":
         if q_head[1] == "yes":
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id, text=config["messages"]["get_sermon_1"]
             )
             set_user_last_command(chat_id, "get_sermon")
         else:
             buttons = []
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["get_sermon_2"],
                 reply_markup=InlineKeyboardMarkup(buttons),
             )
     elif q_head[0] == "confirm_info":
-        handle_counseling_info_confirm(update, context)
+        await handle_counseling_info_confirm(update, context)
     elif q_head[0] == "confirm_loc":
-        handle_counseling_location_confirm(update, context)
+        await handle_counseling_location_confirm(update, context)
     elif q_head[0] == "cr-yes":
         user_local_church = db.users.find_one({"chat_id": chat_id}).get("location")
         db.counseling_requests.update_one(
             {"request_message_id": int(q_head[1])},
             {"$set": {"location": user_local_church}},
         )
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["cr_yes_confirm"]
         )
         set_user_last_command(chat_id, "cr_yes=" + q_head[1])
     elif q_head[0] == "conv":
-        handle_initial_conversation_cb(update, context)
+        await handle_initial_conversation_cb(update, context)
     elif q_head[0] == "mark_complete":
-        mark_request_completed_cb(update, context)
+        await mark_request_completed_cb(update, context)
     elif q_head[0] == "follow_up":
-        follow_up_request_cb(update, context)
+        await follow_up_request_cb(update, context)
     elif q_head[0] == "continue_conv":
-        continue_conversation_cb(update, context)
+        await continue_conversation_cb(update, context)
     elif q_head[0] == "cancel_follow_up":
-        cancel_follow_up_cb(update, context)
+        await cancel_follow_up_cb(update, context)
     elif q_head[0] == "end_conv":
-        end_conversation_cb_handler(update, context)
+        await end_conversation_cb_handler(update, context)
     elif q_head[0] == "end_conv_quick":
-        end_conversation_quick_cb_handler(update, context)
+        await end_conversation_quick_cb_handler(update, context)
     elif q_head[0] == "faq":
-        handle_get_faq_callback(update, context)
+        await handle_get_faq_callback(update, context)
     elif q_head[0] == "feedback":
-        feedback_cb_handler(update, context)
+        await feedback_cb_handler(update, context)
     elif q_head[0] == "counseling_feedback":
-        handle_counseling_feedback_cb(update, context)
+        await handle_counseling_feedback_cb(update, context)
     elif q_head[0] == "transfer":
-        counselor_transfer_callback_handler(update, context)
+        await counselor_transfer_callback_handler(update, context)
     elif q_head[0] == "transfer_req_confirm":
-        counselor_transfer_msg_confirm_cb_handler(update, context)
+        await counselor_transfer_msg_confirm_cb_handler(update, context)
     elif q_head[0] == "update_topics":
-        handle_counselor_topic_update(update, context)
+        await handle_counselor_topic_update(update, context)
 
 
-msg_handler = MessageHandler(Filters.all & (~Filters.command), handle_message_response)
+msg_handler = MessageHandler(filters.ALL & (~filters.COMMAND), handle_message_response)
 cb_handler = CallbackQueryHandler(cb_handle)
 
 
 def main(deploy: bool = False) -> None:
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("mute", mute))
-    dp.add_handler(CommandHandler("unmute", unmute))
-    dp.add_handler(CommandHandler("cancel", cancel))
-    dp.add_handler(CommandHandler("feedback", feedback))
-    dp.add_handler(CommandHandler("transfer", counselor_transfer))
-    dp.add_handler(msg_handler)
-    dp.add_handler(cb_handler)
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("mute", mute))
+    application.add_handler(CommandHandler("unmute", unmute))
+    application.add_handler(CommandHandler("cancel", cancel))
+    application.add_handler(CommandHandler("feedback", feedback))
+    application.add_handler(CommandHandler("transfer", counselor_transfer))
+    application.add_handler(msg_handler)
+    application.add_handler(cb_handler)
 
     if deploy:
         URL = "https://cci-bot-be313a646eb4.herokuapp.com/"
-        updater.start_webhook(
-            listen="0.0.0.0", port=int(PORT), url_path=os.getenv("BOT_TOKEN")
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=int(PORT),
+            url_path=os.getenv("BOT_TOKEN"),
+            webhook_url=URL + os.getenv("BOT_TOKEN"),
         )
-        updater.bot.setWebhook(URL + os.getenv("BOT_TOKEN"))
     else:
-        updater.start_polling()
-
-    updater.idle()
+        application.run_polling()

@@ -109,5 +109,4 @@ def get_counseling_feedback_keyboard(user_chat_id, pastor_chat_id):
                 ),
             ]
         ],
-        resize_keyboard=True,
     )

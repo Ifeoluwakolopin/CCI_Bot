@@ -1,5 +1,5 @@
-from . import db, bot, config
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
+from . import db, bot, config, logger
 from .database import set_user_active, get_countries
 from telegram import InlineKeyboardMarkup, CallbackQuery, InlineKeyboardButton
 
@@ -109,7 +109,7 @@ def create_buttons_from_data(
             [InlineKeyboardButton("View More", callback_data=view_more_callback_data)]
         )
 
-    return InlineKeyboardMarkup(buttons, resize_keyboard=True)
+    return InlineKeyboardMarkup(buttons)
 
 
 def handle_view_more(
@@ -138,10 +138,10 @@ def handle_view_more(
     )
 
 
-def add_note(update, context, msg: str, request_message_id: int):
+async def add_note(update, context, msg: str, request_message_id: int):
     chat_id = update.effective_chat.id
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=msg,
         reply_markup=InlineKeyboardMarkup(
@@ -153,14 +153,13 @@ def add_note(update, context, msg: str, request_message_id: int):
                     )
                 ]
             ],
-            resize_keyboard=True,
         ),
     )
 
 
 class PromptHelper:
     @staticmethod
-    def location_prompt(chat_id: int, msg: str) -> bool:
+    async def location_prompt(chat_id: int, msg: str) -> bool:
         """
         This functions takes in a chat id, and sends a message
         to request for the user's physical church location.
@@ -175,18 +174,19 @@ class PromptHelper:
         buttons = create_buttons_from_data(countries, "loc", rows, cols)
 
         try:
-            bot.send_message(
+            await bot.send_message(
                 chat_id=chat_id,
                 text=msg,
                 reply_markup=buttons,
             )
             return True
-        except:
+        except Exception as error:
             set_user_active(chat_id, False)
+            logger.warning("Location prompt failed (%s)", type(error).__name__)
             return False
 
     @staticmethod
-    def birthday_prompt(chat_id):
+    async def birthday_prompt(chat_id):
         """
         This functions takes in a chat id, and gets the birthdate
         of a particular user
@@ -236,18 +236,19 @@ class PromptHelper:
         buttons = create_month_buttons()
 
         try:
-            bot.send_message(
+            await bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["birthday_prompt"].format(user["first_name"]),
                 reply_markup=buttons,
             )
-        except:
+        except Exception as error:
             set_user_active(chat_id, False)
+            logger.warning("Birthday prompt failed (%s)", type(error).__name__)
 
 
 class MessageHelper:
     @staticmethod
-    def send_text(chat_id: int, message: str) -> bool:
+    async def send_text(chat_id: int, message: str) -> bool:
         """
         This takes in a user's id and a message string. It sends the
         associated user the message via the Telegram Bot API
@@ -259,15 +260,16 @@ class MessageHelper:
         Return: None or True
         """
         try:
-            bot.send_message(
-                chat_id=chat_id, text=message, disable_web_page_preview="True"
+            await bot.send_message(
+                chat_id=chat_id, text=message, disable_web_page_preview=True
             )
             return True
-        except:
+        except Exception as error:
+            logger.warning("Text delivery failed (%s)", type(error).__name__)
             return False
 
     @staticmethod
-    def send_photo(chat_id: int, photo, caption: str = "") -> bool:
+    async def send_photo(chat_id: int, photo, caption: str = "") -> bool:
         """
         This takes in an ID, photo and caption. It sends the associated
         user the photo with the given caption via the Telegram Bot API
@@ -280,13 +282,14 @@ class MessageHelper:
         Return: None or True
         """
         try:
-            bot.send_photo(chat_id=chat_id, photo=photo, caption=caption)
+            await bot.send_photo(chat_id=chat_id, photo=photo, caption=caption)
             return True
-        except:
+        except Exception as error:
+            logger.warning("Photo delivery failed (%s)", type(error).__name__)
             return False
 
     @staticmethod
-    def send_animation(chat_id: int, animation, caption: str = "") -> bool:
+    async def send_animation(chat_id: int, animation, caption: str = "") -> bool:
         """
         This takes in an ID, animation and caption. It sends the associated
         user the animation with the given caption via the Telegram Bot API
@@ -299,13 +302,14 @@ class MessageHelper:
         Return: None or True
         """
         try:
-            bot.send_animation(chat_id=chat_id, animation=animation, caption=caption)
+            await bot.send_animation(chat_id=chat_id, animation=animation, caption=caption)
             return True
-        except:
+        except Exception as error:
+            logger.warning("Animation delivery failed (%s)", type(error).__name__)
             return False
 
     @staticmethod
-    def send_video(chat_id, video, caption=""):
+    async def send_video(chat_id, video, caption=""):
         """
         This takes in an ID, video and caption. It sends the associated
         user the photo with the given caption via the Telegram Bot API
@@ -318,15 +322,16 @@ class MessageHelper:
         Return: None or True
         """
         try:
-            bot.send_video(chat_id=chat_id, video=video, caption=caption)
+            await bot.send_video(chat_id=chat_id, video=video, caption=caption)
             return True
-        except:
+        except Exception as error:
+            logger.warning("Video delivery failed (%s)", type(error).__name__)
             return False
 
 
 class BroadcastHandlers:
     @staticmethod
-    def broadcast_message(users, content, send_function, *args):
+    async def broadcast_message(users, content, send_function, *args):
         """
         Generic method for broadcasting messages (text, photo, animation, video) to users.
 
@@ -337,35 +342,25 @@ class BroadcastHandlers:
         *args -- additional arguments required by the send_function
         """
 
-        # Add counters for success/failure stats
-        success_count = 0
-        failure_count = 0
+        users = list(users)
+        semaphore = asyncio.Semaphore(20)
 
-        def worker(chat_id):
-            try:
-                result = send_function(chat_id, content, *args)
-                return result, None
-            except Exception as e:
-                set_user_active(chat_id, False)
-                return False, e
+        async def worker(chat_id):
+            async with semaphore:
+                try:
+                    success = await send_function(chat_id, content, *args)
+                except Exception as error:
+                    set_user_active(chat_id, False)
+                    logger.warning("Broadcast delivery failed (%s)", type(error).__name__)
+                    return False
+                return bool(success)
 
-        # Use more workers for larger broadcasts
-        max_workers = min(20, len(users))
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Map of future to user chat_id
-            future_to_chat_id = {executor.submit(worker, user): user for user in users}
-            for future in as_completed(future_to_chat_id):
-                chat_id = future_to_chat_id[future]
-                success, error = future.result()
-                if error:
-                    failure_count += 1
-                    print(f"Error sending message to {chat_id}: {str(error)}")
-                else:
-                    success_count += 1
-
-        # Return statistics about the broadcast
-        print(
-            f"Broadcast completed: {success_count} successes, {failure_count} failures"
+        results = await asyncio.gather(*(worker(user) for user in users))
+        success_count = sum(results)
+        failure_count = len(users) - success_count
+        logger.info(
+            "Broadcast completed: %s successes, %s failures",
+            success_count,
+            failure_count,
         )
         return {"total": len(users), "success": success_count, "failure": failure_count}

@@ -20,13 +20,13 @@ from bot.database import (
 )
 
 
-def show_active_requests(update, context):
+async def show_active_requests(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
 
     if not user:
         keyboard = validate_user_keyboard(chat_id)
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["unknown"],
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -38,7 +38,7 @@ def show_active_requests(update, context):
     # Once verified, they stay verified (no time-based expiration)
     if not user.get("active_requests_verified", False):
         # Prompt for verification
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text="🔐 To view active requests, please enter the authorization password:",
         )
@@ -50,13 +50,13 @@ def show_active_requests(update, context):
 
     reqs = len(ongoing_requests)
     if reqs == 0:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text="There are no ongoing counseling requests at the moment.",
         )
         return
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=f"There are currently {reqs} ongoing counseling requests.\n\nHere are the ongoing sessions (oldest first):",
     )
@@ -82,7 +82,7 @@ def show_active_requests(update, context):
         created_date = request["created"]
         formatted_date = created_date.strftime("%A, %B %d, %Y")
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=f"📋 *Ongoing Session*\n\n"
             f"👤 *Name:* {request['name']}\n"
@@ -108,12 +108,11 @@ def show_active_requests(update, context):
                         )
                     ],
                 ],
-                resize_keyboard=True,
             ),
         )
 
 
-def handle_active_requests_verification(update, context):
+async def handle_active_requests_verification(update, context):
     """
     Handles the verification for viewing active requests.
     """
@@ -132,7 +131,7 @@ def handle_active_requests_verification(update, context):
             },
         )
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text="✅ Access granted! You now have permanent access to view active requests.",
         )
@@ -140,10 +139,10 @@ def handle_active_requests_verification(update, context):
         set_user_last_command(chat_id, None)
 
         # Automatically call show_active_requests after successful verification
-        show_active_requests(update, context)
+        await show_active_requests(update, context)
     else:
         keyboard = validate_user_keyboard(chat_id)
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text="❌ Incorrect password. Access denied.\n\nPlease contact an administrator if you need access to view active requests.",
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -178,13 +177,13 @@ def grant_active_requests_access(chat_id):
     )
 
 
-def show_new_requests(update, context):
+async def show_new_requests(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
 
     if not user:
         keyboard = validate_user_keyboard(chat_id)
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["unknown"],
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -206,12 +205,12 @@ def show_new_requests(update, context):
 
     reqs = len(active_requests)
     if reqs == 0:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["active_requests_none"]
         )
         return
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id, text=config["messages"]["active_requests"].format(reqs)
     )
 
@@ -222,7 +221,7 @@ def show_new_requests(update, context):
         created_date = request["created"]
         formatted_date = created_date.strftime("%A, %B %d, %Y")
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["active_request"].format(
                 request["name"],
@@ -241,12 +240,11 @@ def show_new_requests(update, context):
                         )
                     ]
                 ],
-                resize_keyboard=True,
             ),
         )
 
 
-def notify_pastors(counseling_request):
+async def notify_pastors(counseling_request):
     # Step 1: Get topic document
     topic_doc = db.counseling_topics.find_one({"topic": counseling_request["topic"]})
 
@@ -277,11 +275,11 @@ def notify_pastors(counseling_request):
     for pastor in pastors:
         if str(pastor.get("last_command", "")).startswith("in-conversation-with"):
             continue
-        bot.send_message(
+        await bot.send_message(
             chat_id=pastor["chat_id"], text=config["messages"]["active_request_notify"]
         )
 
-        bot.send_message(
+        await bot.send_message(
             chat_id=pastor["chat_id"],
             text=config["messages"]["active_request"].format(
                 counseling_request["name"],
@@ -300,18 +298,17 @@ def notify_pastors(counseling_request):
                         )
                     ]
                 ],
-                resize_keyboard=True,
             ),
         )
 
 
-def handle_initial_conversation_cb(update, context):
+async def handle_initial_conversation_cb(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     q_head = q.split("=")
     req = db.counseling_requests.find_one({"request_message_id": int(q_head[1])})
     if req["user_chat_id"] == chat_id:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["conversation_start_self_not_allowed"],
         )
@@ -323,18 +320,18 @@ def handle_initial_conversation_cb(update, context):
         if user_last_command is not None and user_last_command.startswith(
             "in-conversation-with"
         ):
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["user_in_separate_conversation"],
             )
             return
         ## notify pastor that conversation has started
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["conversation_start"].format(req["name"]),
         )
         ## notify user that conversation has started
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=req["user_chat_id"],
             text=config["messages"]["conversation_start_user"].format(
                 pastor["first_name"]
@@ -364,7 +361,7 @@ def handle_initial_conversation_cb(update, context):
     else:
         counselor_chat_id = req.get("counselor_chat_id")
         counselor_name = db.users.find_one({"chat_id": counselor_chat_id})["first_name"]
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["conversation_already_started"].format(
                 counselor_name
@@ -372,7 +369,7 @@ def handle_initial_conversation_cb(update, context):
         )
 
 
-def send_message_handler(msg, to, from_chat_id=None):
+async def send_message_handler(msg, to, from_chat_id=None):
     ## Send message to the other user with "End Conversation" button
 
     # Create the "End Conversation" button
@@ -391,12 +388,12 @@ def send_message_handler(msg, to, from_chat_id=None):
         if msg.text in keyboard_commands:
             return "Error"
         else:
-            bot.send_message(
+            await bot.send_message(
                 chat_id=to, text=msg.text, reply_markup=end_conversation_keyboard
             )
             return msg.text
     elif msg.photo:
-        bot.send_photo(
+        await bot.send_photo(
             chat_id=to,
             photo=msg.photo[-1].file_id,
             caption=msg.caption or " ",
@@ -404,7 +401,7 @@ def send_message_handler(msg, to, from_chat_id=None):
         )
         return "photo=" + msg.photo[-1].file_id
     elif msg.voice:
-        bot.send_voice(
+        await bot.send_voice(
             chat_id=to,
             voice=msg.voice.file_id,
             caption=msg.caption or " ",
@@ -412,7 +409,7 @@ def send_message_handler(msg, to, from_chat_id=None):
         )
         return "video=" + msg.voice.file_id
     elif msg.video:
-        bot.send_video(
+        await bot.send_video(
             chat_id=to,
             video=msg.video.file_id,
             caption=msg.caption or " ",
@@ -420,7 +417,7 @@ def send_message_handler(msg, to, from_chat_id=None):
         )
         return msg.video.file_id
     elif msg.animation:
-        bot.send_animation(
+        await bot.send_animation(
             chat_id=to,
             animation=msg.animation.file_id,
             caption=msg.caption or " ",
@@ -429,16 +426,16 @@ def send_message_handler(msg, to, from_chat_id=None):
         return "animation=" + msg.animation.file_id
 
 
-def conversation_handler(update, context):
+async def conversation_handler(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
     send_to = user["last_command"].split("=")
     msg = update.message
 
-    message_value = send_message_handler(msg, int(send_to[1]), chat_id)
+    message_value = await send_message_handler(msg, int(send_to[1]), chat_id)
     if message_value == "Error":
         keyboard = validate_user_keyboard(chat_id)
-        bot.send_message(
+        await bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["in_conversation"],
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -458,14 +455,14 @@ def conversation_handler(update, context):
             update_conversation(message, chat_id, int(send_to[1]))
 
 
-def end_conversation_prompt(update, context):
+async def end_conversation_prompt(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id})
     send_to = user["last_command"].split("=")
 
     role = send_to[2]
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["conversation_end_prompt"].format(role),
         reply_markup=InlineKeyboardMarkup(
@@ -491,7 +488,6 @@ def end_conversation_prompt(update, context):
                     ),
                 ]
             ],
-            resize_keyboard=True,
         ),
     )
 
@@ -502,7 +498,7 @@ def set_conversation_status(counselor_id, user_id, active):
     )
 
 
-def end_conversation_cb_handler(update, context):
+async def end_conversation_cb_handler(update, context):
     chat_id = Int64(update.effective_chat.id)
     q = update.callback_query.data
     q_head = q.split("=")
@@ -517,7 +513,7 @@ def end_conversation_cb_handler(update, context):
         request_message_id = int(msg_id_str)
         role = "counselor" if role_str == "pastor" else "user"
     except (ValueError, IndexError):
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text="⚠️ Could not parse conversation context."
         )
         return
@@ -536,13 +532,13 @@ def end_conversation_cb_handler(update, context):
 
     if q_head[1] == "yes":
         # Confirm to actor
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["conversation_end_confirm"],
             reply_markup=ReplyKeyboardMarkup(actor_keyboard, resize_keyboard=True),
         )
         # Notify the other participant
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=other_id,
             text=config["messages"]["conversation_end_notify"].format(actor_role),
             reply_markup=ReplyKeyboardMarkup(other_keyboard, resize_keyboard=True),
@@ -554,14 +550,14 @@ def end_conversation_cb_handler(update, context):
         set_user_last_command(other_id, None)
 
         # Trigger feedback from the user about the counselor
-        request_counseling_feedback_from_user(user_id, counselor_id)
+        await request_counseling_feedback_from_user(user_id, counselor_id)
     else:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["conversation_end_cancel"]
         )
 
 
-def end_conversation_quick_cb_handler(update, context):
+async def end_conversation_quick_cb_handler(update, context):
     """Handle the quick 'End Conversation' button attached to messages"""
     chat_id = update.effective_chat.id
     q = update.callback_query.data
@@ -572,7 +568,7 @@ def end_conversation_quick_cb_handler(update, context):
     last_command = user.get("last_command", "") if user else ""
 
     if not last_command or not last_command.startswith("in-conversation-with"):
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text="❌ You are not currently in an active conversation."
         )
         return
@@ -584,13 +580,13 @@ def end_conversation_quick_cb_handler(update, context):
         request_message_id = int(msg_id_str)
         role = "counselor" if role_str == "pastor" else "user"
     except (ValueError, IndexError):
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text="⚠️ Could not parse conversation context."
         )
         return
 
     # Send confirmation prompt (same as /cancel command)
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["conversation_end_prompt"].format(role),
         reply_markup=InlineKeyboardMarkup(
@@ -606,7 +602,6 @@ def end_conversation_quick_cb_handler(update, context):
                     ),
                 ]
             ],
-            resize_keyboard=True,
         ),
     )
 
@@ -635,16 +630,16 @@ def update_conversation(msg, counselor_id, user_id):
     )
 
 
-def request_counseling_feedback_from_user(user_chat_id, pastor_chat_id):
+async def request_counseling_feedback_from_user(user_chat_id, pastor_chat_id):
     pastor_name = db.users.find_one({"chat_id": pastor_chat_id})["first_name"]
-    bot.send_message(
+    await bot.send_message(
         chat_id=user_chat_id,
         text=config["messages"]["counseling_feedback_prompt"].format(pastor_name),
         reply_markup=get_counseling_feedback_keyboard(user_chat_id, pastor_chat_id),
     )
 
 
-def handle_counseling_feedback_cb(update, context):
+async def handle_counseling_feedback_cb(update, context):
     chat_id = update.effective_chat.id
     q = update.callback_query.data
     q_head = q.split("=")
@@ -661,7 +656,7 @@ def handle_counseling_feedback_cb(update, context):
 
     if existing_rating:
         # Rating for this counselor already exists
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counseling_feedback_already"],
         )
@@ -679,20 +674,20 @@ def handle_counseling_feedback_cb(update, context):
             },
         )
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counseling_feedback_thanks"]
         )
 
     set_user_last_command(chat_id, None)
 
 
-def follow_up_request_cb(update, context):
+async def follow_up_request_cb(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
 
     if not user:
         keyboard = validate_user_keyboard(chat_id)
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["unknown"],
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -709,7 +704,7 @@ def follow_up_request_cb(update, context):
     )
 
     if not request:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text="❌ Counseling request not found."
         )
         return
@@ -718,7 +713,7 @@ def follow_up_request_cb(update, context):
     conversation = db.conversations.find_one({"from": request_message_id})
 
     if not conversation:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text="❌ No conversation history found for this request."
         )
         return
@@ -769,7 +764,7 @@ def follow_up_request_cb(update, context):
         conversation_text = "\n\n📝 *No conversation history available*"
 
     # Send follow-up confirmation message
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=f"🔄 *Follow-Up Request*\n\n"
         f"👤 *User:* {request['name']}\n"
@@ -797,12 +792,11 @@ def follow_up_request_cb(update, context):
                     )
                 ],
             ],
-            resize_keyboard=True,
         ),
     )
 
 
-def continue_conversation_cb(update, context):
+async def continue_conversation_cb(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
 
@@ -820,7 +814,7 @@ def continue_conversation_cb(update, context):
     conversation = db.conversations.find_one({"from": request_message_id})
 
     if not request or not conversation:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text="❌ Request or conversation not found."
         )
         return
@@ -830,7 +824,7 @@ def continue_conversation_cb(update, context):
     # Check if user is already in another conversation
     user_last_command = get_user_last_command(user_chat_id)
     if user_last_command and user_last_command.startswith("in-conversation-with"):
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text="❌ This user is currently in another conversation. Please try again later.",
         )
@@ -841,7 +835,7 @@ def continue_conversation_cb(update, context):
     if counselor_last_command and counselor_last_command.startswith(
         "in-conversation-with"
     ):
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text="❌ You are currently in another conversation. Please end that conversation first.",
         )
@@ -880,7 +874,7 @@ def continue_conversation_cb(update, context):
     )
 
     # Notify the counselor
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=f"✅ You have successfully continued the conversation with *{request['name']}*.\n\n"
         f"Messages you send from now will be delivered to them. You can end the conversation using /cancel.",
@@ -888,7 +882,7 @@ def continue_conversation_cb(update, context):
     )
 
     # Notify the user
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=user_chat_id,
         text=f"🔄 *Your counseling session has been resumed*\n\n"
         f"Counselor *{counselor_name}* has picked up your conversation and is ready to continue helping you.\n\n"
@@ -897,21 +891,21 @@ def continue_conversation_cb(update, context):
     )
 
 
-def cancel_follow_up_cb(update, context):
+async def cancel_follow_up_cb(update, context):
     chat_id = update.effective_chat.id
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text="❌ Follow-up cancelled. You can view other active requests or perform other actions.",
     )
 
 
-def mark_request_completed_cb(update, context):
+async def mark_request_completed_cb(update, context):
     chat_id = update.effective_chat.id
     user = db.users.find_one({"chat_id": chat_id, "role": "counselor"})
 
     if not user:
         keyboard = validate_user_keyboard(chat_id)
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["unknown"],
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -928,13 +922,13 @@ def mark_request_completed_cb(update, context):
     )
 
     if not request:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text="❌ Counseling request not found."
         )
         return
 
     if request.get("status") == "completed":
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text="✅ This counseling request has already been marked as completed.",
         )
@@ -958,7 +952,7 @@ def mark_request_completed_cb(update, context):
     if counselor_chat_id:
         set_user_last_command(counselor_chat_id, None)
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=f"✅ Counseling request for *{request['name']}* has been marked as completed.\n\n"
         f"Both the user and counselor have been notified that the session has ended.",
@@ -966,7 +960,7 @@ def mark_request_completed_cb(update, context):
     )
 
     # Notify the user that the session has been completed
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=user_chat_id,
         text="✅ Your counseling session has been marked as completed by a counselor.\n\n"
         "Thank you for using our counseling service. If you need further assistance, "
@@ -976,7 +970,7 @@ def mark_request_completed_cb(update, context):
 
     # Notify the assigned counselor if different from the one marking it complete
     if counselor_chat_id and counselor_chat_id != chat_id:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=counselor_chat_id,
             text=f"ℹ️ The counseling session with *{request['name']}* has been marked as completed by another counselor.",
             parse_mode="Markdown",
@@ -988,13 +982,13 @@ from bson.int64 import Int64
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 
 
-def counselor_transfer(update, context):
+async def counselor_transfer(update, context):
     chat_id = Int64(update.effective_chat.id)
     user = db.users.find_one({"chat_id": chat_id})
 
     if user.get("role") != "counselor":
         keyboard = validate_user_keyboard(chat_id)
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["unknown"],
             reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
@@ -1004,7 +998,7 @@ def counselor_transfer(update, context):
 
     last_command = user.get("last_command")
     if not last_command or not last_command.startswith("in-conversation-with"):
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_transfer_invalid"]
         )
         return
@@ -1012,7 +1006,7 @@ def counselor_transfer(update, context):
     try:
         request_msg_id = int(last_command.split("=")[-1])
     except (IndexError, ValueError):
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text="Could not extract request ID from your current session.",
         )
@@ -1020,7 +1014,7 @@ def counselor_transfer(update, context):
 
     req = db.counseling_requests.find_one({"request_message_id": request_msg_id})
     if not req:
-        context.bot.send_message(chat_id=chat_id, text="Counseling request not found.")
+        await context.bot.send_message(chat_id=chat_id, text="Counseling request not found.")
         return
 
     topic = req["topic"]
@@ -1062,19 +1056,19 @@ def counselor_transfer(update, context):
     ]
 
     if not buttons:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text="No eligible counselors found for transfer."
         )
         return
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["counselor_transfer_prompt"],
-        reply_markup=InlineKeyboardMarkup(buttons, resize_keyboard=True),
+        reply_markup=InlineKeyboardMarkup(buttons),
     )
 
 
-def counselor_transfer_callback_handler(update, context):
+async def counselor_transfer_callback_handler(update, context):
     chat_id = Int64(update.effective_chat.id)
     q = update.callback_query.data
     q_head = q.split("=")
@@ -1083,7 +1077,7 @@ def counselor_transfer_callback_handler(update, context):
     user = db.users.find_one({"chat_id": chat_id})
     new_pastor = db.users.find_one({"chat_id": new_counselor_id})
 
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["counselor_transfer_details"].format(
             new_pastor["first_name"]
@@ -1094,7 +1088,7 @@ def counselor_transfer_callback_handler(update, context):
     set_user_last_command(chat_id, f"transfer_req={new_counselor_id}={last_command}")
 
 
-def counselor_transfer_msg_handler(update, context):
+async def counselor_transfer_msg_handler(update, context):
     chat_id = Int64(update.effective_chat.id)
     user = db.users.find_one({"chat_id": chat_id})
     msg = update.message.text.strip()
@@ -1109,7 +1103,7 @@ def counselor_transfer_msg_handler(update, context):
             {"$set": {"counselor_transfer_msg": msg}},
         )
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_transfer_msg_confirm"],
             reply_markup=InlineKeyboardMarkup(
@@ -1134,12 +1128,12 @@ def counselor_transfer_msg_handler(update, context):
         # Retry by re-setting the last_command
         last_command = "=".join(user["last_command"].split("=")[2:])
         set_user_last_command(chat_id, f"transfer_req={last_command}")
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id, text=config["messages"]["counselor_transfer_msg_prompt"]
         )
 
 
-def counselor_transfer_msg_confirm_cb_handler(update, context):
+async def counselor_transfer_msg_confirm_cb_handler(update, context):
     chat_id = Int64(update.effective_chat.id)
     user = db.users.find_one({"chat_id": chat_id})
     callback_data = update.callback_query.data
@@ -1148,7 +1142,7 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
     new_pastor = db.users.find_one({"chat_id": new_counselor_id})
 
     if not user or not user.get("last_command"):
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counseling_request_transferred"],
             reply_markup=ReplyKeyboardMarkup(
@@ -1164,7 +1158,7 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
 
     if transfer_confirmed:
         # ✅ Step 1: Confirm transfer to user
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_transfer_confirm"].format(
                 new_pastor["first_name"]
@@ -1200,7 +1194,7 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
         )
 
         # ✅ Step 4: Notify the new counselor
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=new_counselor_id,
             text=config["messages"]["counselor_transfer_notify"].format(
                 user["first_name"],
@@ -1221,7 +1215,6 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
                         )
                     ]
                 ],
-                resize_keyboard=True,
             ),
         )
 
@@ -1229,7 +1222,7 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
         feedback_keyboard = get_counseling_feedback_keyboard(
             original_user_chat_id, chat_id
         )
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=original_user_chat_id,
             text=config["messages"]["counselor_transfer_notify_user"].format(
                 new_pastor["first_name"], user["first_name"]
@@ -1268,7 +1261,7 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
         last_command = "=".join(user["last_command"].split("=")[-4:])
         set_user_last_command(chat_id, f"transfer_req={last_command}")
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_transfer_edit"],
             reply_markup=InlineKeyboardMarkup(
@@ -1281,6 +1274,5 @@ def counselor_transfer_msg_confirm_cb_handler(update, context):
                     ]
                     for pastor in pastors
                 ],
-                resize_keyboard=True,
             ),
         )
