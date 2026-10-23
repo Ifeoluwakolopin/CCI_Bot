@@ -21,13 +21,13 @@ from telegram import (
 from telegram.ext import CallbackContext
 
 
-def counseling(update: Update, context: CallbackContext):
+async def counseling(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     counseling_topics = get_all_counseling_topics()
     categories_keyboard = create_buttons_from_data(
         counseling_topics, "counsel", rows=5, cols=1
     )
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["counseling_start"],
         parse_mode="markdown",
@@ -36,7 +36,7 @@ def counseling(update: Update, context: CallbackContext):
     )
 
 
-def handle_counseling(update, context):
+async def handle_counseling(update, context):
     query_data = update.callback_query.data.split("=")
     chat_id = update.effective_chat.id
 
@@ -45,7 +45,7 @@ def handle_counseling(update, context):
         updated_buttons = handle_view_more(
             update.callback_query, counseling_topics, "counsel", 5, 1
         )
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counseling_start_view_more"],
             reply_markup=updated_buttons,
@@ -56,10 +56,10 @@ def handle_counseling(update, context):
         # Add topic to database or update the count.
         update_counseling_topics(topic)
         # Send prompt to user to ask new question or request a counselor
-        request_counselor(update, context, topic)
+        await request_counselor(update, context, topic)
 
 
-def request_counselor(update, context, topic):
+async def request_counselor(update, context, topic):
     chat_id = update.effective_chat.id
     ask_question_or_counseling_keyboard = InlineKeyboardMarkup(
         [
@@ -70,9 +70,8 @@ def request_counselor(update, context, topic):
                 )
             ],
         ],
-        resize_keyboard=True,
     )
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat_id,
         text=config["messages"]["add_question_or_request_counselor"].format(
             topic.capitalize()
@@ -82,20 +81,20 @@ def request_counselor(update, context, topic):
     )
 
 
-def handle_ask_question_or_request_counselor(update, context):
+async def handle_ask_question_or_request_counselor(update, context):
     chat_id = update.effective_chat.id
     user_request = find_text_for_callback(update.callback_query)
     topic = update.callback_query.data.split("=")[1]
 
     if user_request == config["messages"]["ask_for_a_counselor_text"]:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_request_yes"],
         )
         set_user_last_command(chat_id, f"counselor_request={topic}")
 
 
-def handle_counselor_request_yes(update, context, topic):
+async def handle_counselor_request_yes(update, context, topic):
     chat_id = update.effective_chat.id
     message = update.message
 
@@ -103,7 +102,7 @@ def handle_counselor_request_yes(update, context, topic):
         contact_info = message.text.split("\n")
 
         if len(contact_info) < 3:
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["counselor_request_invalid_info"]
                 + "\nPlease provide your name, email, and phone number, each on a separate line.",
@@ -118,7 +117,7 @@ def handle_counselor_request_yes(update, context, topic):
         # Email validation regex
         email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         if not re.match(email_pattern, email):
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text="Invalid email format. Please provide a valid email address.",
             )
@@ -139,7 +138,7 @@ def handle_counselor_request_yes(update, context, topic):
             }
         )
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_request_contact_info_confirm"].format(
                 name, email, phone
@@ -159,19 +158,18 @@ def handle_counselor_request_yes(update, context, topic):
                         )
                     ],
                 ],
-                resize_keyboard=True,
             ),
         )
     except Exception as e:
         # More detailed error handling
         error_msg = config["messages"]["counselor_request_invalid_info"]
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=f"{error_msg}\nPlease provide your information in the following format:\nName\nEmail\nPhone Number",
         )
 
 
-def handle_counseling_info_confirm(update, context):
+async def handle_counseling_info_confirm(update, context):
     chat_id = update.effective_chat.id
     query = update.callback_query.data.split("=")
 
@@ -185,7 +183,7 @@ def handle_counseling_info_confirm(update, context):
         else:
             branch = "Not specified"
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_request_location_confirm"].format(
                 branch
@@ -205,28 +203,27 @@ def handle_counseling_info_confirm(update, context):
                         )
                     ],
                 ],
-                resize_keyboard=True,
             ),
         )
 
     else:
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counselor_request_invalid_info"],
         )
         db.counseling_requests.delete_one({"request_message_id": int(query[2])})
 
 
-def handle_counseling_location_confirm(update, context):
+async def handle_counseling_location_confirm(update, context):
     chat_id = update.effective_chat.id
     query = update.callback_query.data.split("=")
 
     if query[1] == "yes":
-        add_note(
+        await add_note(
             update, context, config["messages"]["counselor_request_note"], query[-1]
         )
     else:
-        PromptHelper.location_prompt(
+        await PromptHelper.location_prompt(
             chat_id, config["messages"]["lc_prompt_counseling"]
         )
         db.users.update_one(
@@ -235,7 +232,7 @@ def handle_counseling_location_confirm(update, context):
         )
 
 
-def handle_get_faq_callback(update, context):
+async def handle_get_faq_callback(update, context):
     chat_id = update.effective_chat.id
     question_id = find_text_for_callback(update.callback_query).lower()
     q_head = update.callback_query.data.split("=")
@@ -262,7 +259,7 @@ def handle_get_faq_callback(update, context):
             ["{0}. {1}".format(faq["id"], faq["q"]) for faq in displayed_faqs]
         )
 
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=config["messages"]["counseling_topic_reply"].format(
                 topic.capitalize(), questions
@@ -280,16 +277,15 @@ def handle_get_faq_callback(update, context):
                         )
                     ],
                 ],
-                resize_keyboard=True,
             )
-            context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id,
                 text=config["messages"]["counseling_topic_reply_end"],
                 reply_markup=ask_question_or_counseling_keyboard,
             )
     else:
         answer = response["faqs"][int(question_id) - 1]["a"].strip()
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text=answer,
         )

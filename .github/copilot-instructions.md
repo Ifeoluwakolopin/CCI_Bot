@@ -3,11 +3,11 @@
 - This repository contains CCI Bot, a Python Telegram bot for Celebration Church International.
 - Primary user-facing features include onboarding, sermon lookup, devotionals, church/MAP locations, broadcasts, feedback, and counseling requests.
 - Use Python 3.11; the pinned runtime is in `runtime.txt` and dependencies are in `requirements.txt`.
-- The Telegram framework is `python-telegram-bot==12.8`, so prefer v12 APIs and `Updater`/dispatcher patterns.
+- The Telegram framework is `python-telegram-bot[webhooks]==22.8`; use the sequential `Application` and explicitly await handlers and SDK calls.
 - MongoDB access is via `pymongo` using shared objects initialized in `bot/__init__.py`.
-- Scheduled work uses APScheduler's `BlockingScheduler` in `jobs.py`.
+- Scheduled work uses APScheduler's `AsyncIOScheduler` in `jobs.py`; jobs are async and run on the same loop as their Telegram client.
 - Scrapers in `bot/scrapers.py` use `requests` and Beautiful Soup for CCI media, Eventbrite tickets, and devotional/location data.
-- `app.py` starts `bot.main.main()` and then starts the blocking scheduler.
+- `app.py` starts `bot.main.main()`; run `jobs.py` separately for scheduled work, as Compose does.
 - `bot/main.py` wires command, message, and callback handlers.
 - `bot/commands.py` contains most command handlers and administrative flows.
 - `chat/` contains counseling request, conversation, transfer, feedback, and callback handling.
@@ -19,7 +19,7 @@
 - Keep `.env.example` limited to variable names with empty values.
 - Expected environment variables are `BOT_TOKEN`, `MONGO_URI`, `DB_NAME`, `EVENT_TOKEN`, `COUNSELOR_PASSWORD`, `COUNSELOR_REQUEST_PASSWORD`, and optional `PORT`.
 - Do not start the live bot or scheduler during routine validation unless explicitly asked and secrets/network access are confirmed.
-- The safe validation gate is `python -m compileall -q .`; activate `.venv` first when it exists.
+- The local validation gate is `python -m compileall -q .`; activate `.venv` first when it exists. Pull requests also run the isolated SDK/database procedural smoke and resolved dependency audit.
 - Importing `app.py` can initialize Telegram and MongoDB clients, so rely on compileall if import side effects are risky.
 - Run locally with `python app.py` for polling mode after secrets are configured.
 - Run deploy webhook mode with `python app.py --deploy` or `python app.py -d`.

@@ -1,18 +1,19 @@
-import requests
+import asyncio
 from datetime import datetime, timedelta
 from bot import bot, db, config, logger
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-from apscheduler.schedulers.blocking import BlockingScheduler
+from telegram.error import Forbidden
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot.commands import notify_new_sermon
 from bot.database import insert_sermon
 from bot.scrapers import WebScrapers
 from bot.helpers import MessageHelper, BroadcastHandlers
 
-sched = BlockingScheduler()
+sched = AsyncIOScheduler()
 
 
 @sched.scheduled_job("cron", day_of_week="mon-sun", hour=23, minute=0)
-def birthday_notifier():
+async def birthday_notifier():
     """
     This function sends out daily notifications to users on their birthdays.
     """
@@ -39,7 +40,7 @@ def birthday_notifier():
 
     # Use BroadcastHandlers to send the messages
     for message in messages:
-        BroadcastHandlers.broadcast_message(
+        await BroadcastHandlers.broadcast_message(
             [message["chat_id"]],  # List containing one user's chat ID
             message["photo"],
             MessageHelper.send_photo,
@@ -51,7 +52,7 @@ def birthday_notifier():
 
 
 @sched.scheduled_job("cron", day_of_week="mon-sun", hour=6)
-def new_sermons():
+async def new_sermons():
     """
     This functions updates the latest sermon and notifies users about the new sermon
 
@@ -74,22 +75,22 @@ def new_sermons():
         logger.info("Updated latest Sermon to {}".format(lsermon["title"]))
         t = [i["title"] for i in titles]
         for user in db.users.find({}):
-            notify_new_sermon(user["chat_id"], t)
+            await notify_new_sermon(user["chat_id"], t)
 
 
 numbers = {1: "first", 2: "second", 3: "third"}
 
 
 @sched.scheduled_job("cron", day_of_week="sat", hour=6)
-def check_feedback():
+async def check_feedback():
     feedback = db.feedback.find({"status": "pending"})
     if feedback:
-        bot.send_message(
+        await bot.send_message(
             chat_id=792501227, text=config["messages"]["feedback_notifier"]
         )
 
 
-def notify_tickets():
+async def notify_tickets():
     """
     This function sends a notification to every active user about an upcoming
     event
@@ -122,18 +123,18 @@ def notify_tickets():
     )
     for user in users:
         try:
-            bot.send_photo(
+            await bot.send_photo(
                 chat_id=user["chat_id"],
                 photo=ticket[0]["image"],
                 caption=config["messages"]["tickets"],
                 reply_markup=InlineKeyboardMarkup(buttons),
             )
-        except Exception as e:
-            pass
+        except Exception as error:
+            logger.warning("Ticket notification failed (%s)", type(error).__name__)
 
 
 # @sched.scheduled_job('cron', day_of_week='mon-sat', hour=5)
-def send_devotional():
+async def send_devotional():
     """
     This sends the current devotional of the day to all active
     users.
@@ -147,7 +148,7 @@ def send_devotional():
     button = [[InlineKeyboardButton("Read more", url=d["link"])]]
     for user in db.users.find({"mute": False}):
         try:
-            bot.send_photo(
+            await bot.send_photo(
                 chat_id=user["chat_id"],
                 photo=d["image"],
                 caption=config["messages"]["t30_caption"].format(
@@ -157,16 +158,24 @@ def send_devotional():
             )
         except Exception as e:
             # sets the user as inactive if telegram throws an exception.
-            if str(e) == "Forbidden: bot was blocked by the user":
+            if isinstance(e, Forbidden) and "blocked by the user" in str(e).lower():
                 db.users.update_one(
                     {"chat_id": user["chat_id"]}, {"$set": {"active": False}}
                 )
-            pass
+            logger.warning("Devotional notification failed (%s)", type(e).__name__)
     u = db.users.count_documents({"mute": False, "active": True})
     db.devotionals.insert_one(d)
     logger.info(f"DEVOTIONAL: Sent devotional to {u} users")
 
 
+async def main():
+    async with bot:
+        sched.start()
+        try:
+            await asyncio.Event().wait()
+        finally:
+            sched.shutdown()
+
 
 if __name__ == "__main__":
-    sched.start()
+    asyncio.run(main())

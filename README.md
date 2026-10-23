@@ -5,7 +5,7 @@ CCI Bot is a Python Telegram bot for Celebration Church International. It helps 
 ## Stack
 
 - Python 3.11 (`runtime.txt`, `Dockerfile`)
-- [`python-telegram-bot`](https://python-telegram-bot.org/) 12.8 for Telegram polling/webhooks
+- [`python-telegram-bot`](https://python-telegram-bot.org/) 22.8 for Telegram polling/webhooks
 - MongoDB via `pymongo`
 - `python-dotenv` for local environment variables
 - APScheduler for scheduled jobs in `jobs.py`
@@ -24,7 +24,8 @@ Setuptools 84.2.1 and the pip 26.2.2 installation step address additional
 installer/build-dependency advisories found when checking the resolved
 environment. APScheduler moves to 3.11.3 because 3.9.1 imports `pkg_resources`,
 which the patched setuptools no longer provides. The scheduler is still
-APScheduler 3's `BlockingScheduler`; no job schedules are changed.
+APScheduler 3; its asyncio scheduler now awaits Telegram jobs, without changing
+cron schedules.
 CMake stays on major version 3 at 3.31.10 because the 3.27.7 macOS wheel's
 malformed wheel metadata fails the patched pip's platform check.
 
@@ -54,18 +55,30 @@ See the [PyMongo migration guide](https://pymongo.readthedocs.io/en/4.18.2/migra
 for renamed/removed URI options. The application continues to use `tlsCAFile`
 with the certifi CA bundle.
 
-The Telegram framework remains at 12.8 to preserve its v12 handler APIs.
-`telegram.utils.request` imports a separate
-`telegram.vendor.ptb_urllib3` transport whose version marker is `dev`;
-updating the top-level urllib3 pin does not replace that bundled code.
-Dependency-metadata scans do not establish the security of that unversioned
-vendored code. A feature-preserving Telegram migration needs a separate
-assessment; this update is not a security certification of the legacy framework.
+### Maintained Telegram transport
+
+The October 22 follow-up upgrades the same Telegram SDK from 12.8 to 22.8,
+removing its bundled, unversioned urllib3 transport. That legacy transport
+contained the unbounded chunk-size read described by GHSA-vxq7-64xx-v4gw;
+the separate top-level urllib3 2.8.0 pin did not patch it. Telegram requests
+now use `telegram.request.HTTPXRequest`, HTTPX 0.28.1, httpcore 1.0.9 and
+h11 0.16.0, with anyio 4.15.1 and typing_extensions 4.16.0 pinned.
+The `webhooks` SDK extra retains the webhook entrypoint.
+
+Handlers and their messaging helpers explicitly await the SDK. Application
+dispatch stays sequential, preserving command/conversation state ordering;
+broadcast delivery remains bounded to 20 concurrent recipients on the same
+event loop. Delivery failures are counted rather than reported as successes.
+Commands, callback data, keyboard values, MongoDB fields and counseling
+request/conversation/transfer/follow-up flows are retained. Unsupported
+`resize_keyboard` arguments are removed only from inline keyboards, not reply
+keyboards. Synchronous database access and scraper calls remain synchronous;
+this migration is not a performance or product rewrite.
 
 ## Project structure
 
 ```text
-app.py                 # Starts the Telegram bot and blocking scheduler
+app.py                 # Starts the Telegram bot (polling or webhook)
 jobs.py                # APScheduler jobs for birthdays, sermons, tickets, and devotionals
 bot/                   # Bot setup, commands, database helpers, keyboards, scrapers
 chat/                  # Counseling chat message and callback handlers
@@ -107,7 +120,7 @@ See `.env.example` for the complete list of expected variable names.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `BOT_TOKEN` | Yes | Telegram bot token used by `telegram.Bot` and `Updater` |
+| `BOT_TOKEN` | Yes | Telegram bot token used by the SDK Application and shared bot |
 | `MONGO_URI` | Yes | MongoDB connection string |
 | `DB_NAME` | Yes | MongoDB database name |
 | `EVENT_TOKEN` | Yes | Eventbrite API token used by ticket scraping |
@@ -124,17 +137,25 @@ source .venv/bin/activate
 python app.py
 ```
 
-`python app.py` starts the bot in polling mode and then starts the blocking scheduler. For webhook deploy mode, use:
+`python app.py` starts the bot in polling mode. For webhook deploy mode, use:
 
 ```bash
 python app.py --deploy
 ```
 
-The scheduler can also be run directly:
+Run scheduled work in a separate process, as Docker Compose already does:
 
 ```bash
 python jobs.py
 ```
+
+The scheduler owns an asyncio event loop and initializes/closes its Telegram
+client around the scheduled jobs. Daily birthday (23:00), daily sermon (06:00)
+and Saturday feedback (06:00) jobs retain their existing local-time schedules;
+ticket/devotional helper functions remain available, and the previously
+disabled devotional schedule stays disabled. The obsolete scheduler start
+after the blocking bot runner returned is removed: stopping the bot no longer
+starts a second scheduler after shutdown.
 
 ## Validation
 
@@ -160,6 +181,21 @@ effective replica-discovery default, an explicit `directConnection=true` URI,
 and rejection of the private CA when only public certifi roots are trusted.
 The driver protocol minimum of MongoDB 4.4 is not an integration result for
 every supported server version.
+
+The same hosted workflow runs `.github/scripts/telegram_smoke.py` against a
+separate empty disposable database. It injects synthetic configuration and
+environment variables before importing the actual application; `.env` is not
+loaded and the real `config.json` is not opened. Real SDK requests use HTTPX's
+mock transport, with non-loopback socket connections forbidden. The procedural
+smoke covers registration, sequential dispatch, awaited calls, onboarding,
+commands, counseling messages/transfers/follow-ups, broadcasts (including
+failed/empty delivery), cron definitions and an actual asyncio-scheduled send.
+Polling/webhook runner selection and arguments are intercepted, not started.
+Every resolved Python dependency, including installer packages, is checked
+against published PyPI advisories and the versions/audit are retained as a
+workflow artifact. No live Telegram service, provider credentials, production
+database or production deployment is used. This is not live Bot API,
+Raspberry Pi, external scraper or production-data validation.
 
 ## Docker
 

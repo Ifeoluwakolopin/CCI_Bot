@@ -40,7 +40,7 @@ jobs:
           export TMPDIR="$PWD/.security-build"
           python -m venv .security-venv
           .security-venv/bin/python -m pip install --upgrade pip==26.2.2
-          .security-venv/bin/python -m pip install -r requirements.txt
+          .security-venv/bin/python -m pip install -r requirements.txt --report .security-build/install.json
           .security-venv/bin/python -m pip check
           .security-venv/bin/python -m compileall -q app.py jobs.py bot chat __init__.py
       - name: Start disposable TLS MongoDB replica set
@@ -170,13 +170,46 @@ jobs:
               require(manager.is_counselor_in_conversation(cid) and manager.route_message(cid, "synthetic")["request_message_id"] == 201, "Conversation routing failed")
               manager.end_conversation(cid, uid, 201)
               require(not manager.get_counselor_conversations(cid) and helpers.get_user_last_command(cid) == "stats" and helpers.get_user_last_command(uid) is None, "Counseling state restoration failed")
-              stats = next(n for n in ast.parse(Path("bot/commands.py").read_text()).body if isinstance(n, ast.FunctionDef) and n.name == "stats")
+              stats = next(n for n in ast.parse(Path("bot/commands.py").read_text()).body if isinstance(n, ast.AsyncFunctionDef) and n.name == "stats")
               assignment = next(n for n in ast.walk(stats) if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "pipeline" for t in n.targets))
               require(sum(doc["count"] for doc in db.users.aggregate(ast.literal_eval(assignment.value))) == db.users.count_documents({}), "Statistics aggregation failed")
               db.temporary.update_one({"synthetic":True}, {"$set":{"latest_sermon":True}}, upsert=True)
               require(db.temporary.delete_one({"synthetic":True}).deleted_count == 1, "Upsert/delete failed")
           print("Isolated real TLS/replica/driver/database-helper smoke passed; no production or Telegram services contacted.")
           PY
+      - name: Exercise maintained Telegram SDK without provider credentials
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTHONWARNINGS: error::RuntimeWarning
+        run: |
+          export TMPDIR="$PWD/.security-build"
+          .security-venv/bin/python .github/scripts/telegram_smoke.py
+      - name: Audit every resolved Python dependency
+        run: |
+          export TMPDIR="$PWD/.security-build"
+          .security-venv/bin/python -m pip list --format=json > .security-build/resolved.json
+          .security-venv/bin/python - <<'PY'
+          import concurrent.futures, json, urllib.request
+          from pathlib import Path
+          packages = json.loads(Path(".security-build/resolved.json").read_text())
+          def audit(package):
+              name, version = package["name"], package["version"]
+              with urllib.request.urlopen(f"https://pypi.org/pypi/{name}/{version}/json", timeout=30) as response:
+                  metadata = json.load(response)
+              return {**package, "vulnerabilities": metadata["vulnerabilities"]}
+          with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+              results = list(executor.map(audit, packages))
+          Path(".security-build/advisory-audit.json").write_text(json.dumps(results, indent=2))
+          print(json.dumps(results))
+          assert not any(result["vulnerabilities"] for result in results), "Known resolved dependency advisory"
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-dependency-evidence
+          path: |
+            .security-build/install.json
+            .security-build/resolved.json
+            .security-build/advisory-audit.json
       - name: Remove only this job's disposable resources
         if: always()
         run: |
