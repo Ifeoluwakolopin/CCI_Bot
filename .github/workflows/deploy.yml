@@ -83,7 +83,7 @@ jobs:
           PY
           task="cci-security-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           docker network create --label "cci.security-task=$task" "$task-net" > .security-mongo/network-id
-          docker pull mongo@sha256:4c7d0fb8fde0681e2ae443b0b09371ec9c31a81caab05af9579458bfcb30d656
+          docker pull mongo@sha256:d97fea17ccb8d004cd137be8dab54d70d0df11be69c9f422aefe4484c8414ab7
           docker create --name "$task" --label "cci.security-task=$task" \
             --network "$task-net" --user "$(id -u):$(id -g)" \
             --memory 1g --cpus 1 --pids-limit 256 --cap-drop ALL --security-opt no-new-privileges \
@@ -91,7 +91,7 @@ jobs:
             --tmpfs "/data/configdb:rw,size=33554432,uid=$(id -u),gid=$(id -g),mode=0700" \
             --mount "type=bind,source=$PWD/.security-mongo,target=/run/task-tls,readonly" \
             --env HOME=/data/db --publish 127.0.0.1:27017:27017 \
-            mongo@sha256:4c7d0fb8fde0681e2ae443b0b09371ec9c31a81caab05af9579458bfcb30d656 \
+            mongo@sha256:d97fea17ccb8d004cd137be8dab54d70d0df11be69c9f422aefe4484c8414ab7 \
             mongod --bind_ip_all --replSet cci_security_smoke --wiredTigerCacheSizeGB 0.25 --nounixsocket \
             --tlsMode requireTLS --tlsCertificateKeyFile /run/task-tls/server.pem \
             --tlsCAFile /run/task-tls/ca.pem --tlsAllowConnectionsWithoutCertificates > .security-mongo/container-id
